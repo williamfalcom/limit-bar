@@ -405,11 +405,11 @@ T4 → T15
 
 **Done when**:
 
-- [ ] IntervalValidator rejects <60, >3600, non-numeric with allowed-range message (unit-tested)
-- [ ] Adding/removing an account updates store and (for Go) stores/deletes its Keychain secret
-- [ ] Displayed-window change persists per account
-- [ ] Gate check passes: quick gate
-- [ ] Test count: 5 tests pass (validator suite)
+- [x] IntervalValidator rejects <60, >3600, non-numeric with allowed-range message (unit-tested)
+- [x] Adding/removing an account updates store and (for Go) stores/deletes its Keychain secret
+- [x] Displayed-window change persists per account
+- [x] Gate check passes: quick gate
+- [x] Test count: 5 tests pass (validator suite)
 
 **Tests**: unit
 **Gate**: quick
