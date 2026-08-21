@@ -1,0 +1,60 @@
+name: limit-bar
+
+options:
+  bundleIdPrefix: dev.limitbar
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    MACOSX_DEPLOYMENT_TARGET: "14.0"
+    CODE_SIGN_STYLE: Manual
+    CODE_SIGN_IDENTITY: "-"
+    DEVELOPMENT_TEAM: ""
+
+targets:
+  limit-bar:
+    type: application
+    platform: macOS
+    sources:
+      - path: Sources/LimitBar
+    info:
+      path: Sources/LimitBar/Info.plist
+      properties:
+        CFBundleDisplayName: limit-bar
+        CFBundleShortVersionString: "1.0"
+        CFBundleVersion: "1"
+        LSUIElement: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.limitbar.app
+        PRODUCT_NAME: limit-bar
+        GENERATE_INFOPLIST_FILE: false
+
+  limit-barTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: Tests/LimitBarTests
+    dependencies:
+      - target: limit-bar
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.limitbar.tests
+        GENERATE_INFOPLIST_FILE: true
+
+schemes:
+  limit-bar:
+    build:
+      targets:
+        limit-bar: all
+        limit-barTests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - limit-barTests
