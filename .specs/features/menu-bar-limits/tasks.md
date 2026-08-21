@@ -196,11 +196,11 @@ T4 → T15
 
 **Done when**:
 
-- [ ] Removing an account drops its snapshot and clears active selection when needed
-- [ ] Multiple accounts per provider coexist distinguished by label
-- [ ] Snapshot state transitions cover all five cases
-- [ ] Gate check passes: quick gate
-- [ ] Test count: 10 tests pass (no silent deletions)
+- [x] Removing an account drops its snapshot and clears active selection when needed
+- [x] Multiple accounts per provider coexist distinguished by label
+- [x] Snapshot state transitions cover all five cases
+- [x] Gate check passes: quick gate
+- [x] Test count: 10 tests pass (no silent deletions)
 
 **Tests**: unit
 **Gate**: quick
