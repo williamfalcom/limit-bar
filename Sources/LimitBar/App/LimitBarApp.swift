@@ -63,5 +63,12 @@ private struct PanelContainer: View {
                 openSettings()
             }
         )
+        .id(panelKey)
+    }
+
+    private var panelKey: String {
+        let id = store.activeAccountID ?? store.accounts.first?.id
+        let fetchedAt = id.flatMap { store.snapshot(for: $0)?.fetchedAt }
+        return "\(id?.uuidString ?? "none")-\(fetchedAt?.timeIntervalSince1970 ?? 0)"
     }
 }

@@ -202,7 +202,7 @@ private struct ReauthInstructions: View {
     private var instructionText: String {
         switch providerID {
         case .claudeCode:
-            "The Claude Code credential was rejected or is missing. Log in again with the Claude Code CLI, then refresh."
+            "The Claude Code credential was rejected, missing, or Keychain access was denied. Log in with the Claude Code CLI and allow limit-bar to read \"Claude Code-credentials\" when macOS asks."
         case .codex:
             "Codex authentication failed or auth.json is missing. Log in again with the Codex CLI, then refresh."
         case .openCodeGo:
