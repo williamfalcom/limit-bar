@@ -145,10 +145,10 @@ T4 → T15
 
 **Done when**:
 
-- [ ] All seven types match design field-for-field
-- [ ] Codable round-trips preserve every field including optional dates/percentages
-- [ ] Gate check passes: quick gate
-- [ ] Test count: 8 tests pass (no silent deletions)
+- [x] All seven types match design field-for-field
+- [x] Codable round-trips preserve every field including optional dates/percentages
+- [x] Gate check passes: quick gate
+- [x] Test count: 8 tests pass (no silent deletions)
 
 **Tests**: unit
 **Gate**: quick
