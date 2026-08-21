@@ -64,6 +64,8 @@ private struct PanelContainer: View {
             }
         )
         .id(panelKey)
+        .transition(.identity)
+        .animation(nil, value: panelKey)
     }
 
     private var panelKey: String {

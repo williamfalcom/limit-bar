@@ -20,27 +20,37 @@ struct PanelView: View {
 
     private var tabs: some View {
         VStack(spacing: 10) {
-            Picker("Account", selection: selection) {
-                ForEach(store.accounts) { account in
-                    Text(account.label).tag(Optional(account.id))
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 6) {
+                    ForEach(store.accounts) { account in
+                        tabButton(account)
+                    }
                 }
+                .padding(.horizontal, 2)
             }
-            .pickerStyle(.segmented)
-            .labelsHidden()
-
             activeTabContent
         }
     }
 
-    private var selection: Binding<UUID?> {
-        Binding(
-            get: { store.activeAccountID ?? store.accounts.first?.id },
-            set: { newValue in
-                if let newValue {
-                    store.selectActive(newValue)
-                }
-            }
-        )
+    private func tabButton(_ account: Account) -> some View {
+        let activeID = store.activeAccountID ?? store.accounts.first?.id
+        let isActive = activeID == account.id
+        return Button {
+            store.selectActive(account.id)
+        } label: {
+            Text(account.label)
+                .font(.caption.weight(isActive ? .semibold : .regular))
+                .lineLimit(1)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 4)
+                .background(
+                    isActive ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(Color.primary.opacity(0.08)),
+                    in: Capsule()
+                )
+                .foregroundStyle(isActive ? Color.white : Color.primary)
+        }
+        .buttonStyle(.plain)
+        .help(account.label)
     }
 
     private var activeSnapshot: AccountSnapshot? {
