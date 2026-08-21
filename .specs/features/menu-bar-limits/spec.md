@@ -219,8 +219,8 @@ Juggling multiple AI coding subscriptions (Claude Code, Codex, OpenCode Go) mean
 | LIM-26 | P1: Settings | - | Pending |
 | LIM-27 | P1: Settings | - | Pending |
 | LIM-28 | P1: Settings | - | Pending |
-| LIM-29 | P2: OpenCode Go | - | Pending |
-| LIM-30 | P2: OpenCode Go | - | Pending |
+| LIM-29 | P2: OpenCode Go | - | Implementing |
+| LIM-30 | P2: OpenCode Go | - | Implementing |
 | LIM-31 | P2: Launch at login | - | Pending |
 | LIM-32 | P2: Launch at login | - | Pending |
 | LIM-33 | P3: Notifications | - | Pending |

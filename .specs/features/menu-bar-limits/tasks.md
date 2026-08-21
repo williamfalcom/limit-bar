@@ -300,11 +300,11 @@ T4 → T15
 
 **Done when**:
 
-- [ ] Probe sequence documented in code matches design spike list
-- [ ] Successful fixture yields 5h/weekly/monthly windows vs $12/$30/$60 caps
-- [ ] All-fail produces `.unsupported` (not error)
-- [ ] Gate check passes: quick gate
-- [ ] Test count: 6 tests pass (no silent deletions)
+- [x] Probe sequence documented in code matches design spike list
+- [x] Successful fixture yields 5h/weekly/monthly windows vs $12/$30/$60 caps
+- [x] All-fail produces `.unsupported` (not error)
+- [x] Gate check passes: quick gate
+- [x] Test count: 6 tests pass (no silent deletions)
 
 **Tests**: unit
 **Gate**: quick
