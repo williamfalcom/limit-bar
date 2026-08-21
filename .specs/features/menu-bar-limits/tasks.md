@@ -273,12 +273,12 @@ T4 → T15
 
 **Done when**:
 
-- [ ] ~18k s window→fiveHour, ≥6-day window→weekly classification from fixtures
-- [ ] App-server transport failure falls back to auth.json path (verified with stubbed runner)
-- [ ] Optional `codexHomeOverride` honored when reading auth.json
-- [ ] Error mapping: 401/403→unauthorized, network→network, bad payload→parseFailed
-- [ ] Gate check passes: quick gate
-- [ ] Test count: 10 tests pass (no silent deletions)
+- [x] ~18k s window→fiveHour, ≥6-day window→weekly classification from fixtures
+- [x] App-server transport failure falls back to auth.json path (verified with stubbed runner)
+- [x] Optional `codexHomeOverride` honored when reading auth.json
+- [x] Error mapping: 401/403→unauthorized, network→network, bad payload→parseFailed
+- [x] Gate check passes: quick gate
+- [x] Test count: 10 tests pass (no silent deletions)
 
 **Tests**: unit
 **Gate**: quick

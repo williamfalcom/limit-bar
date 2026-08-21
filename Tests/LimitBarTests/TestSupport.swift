@@ -22,11 +22,13 @@ final class StubURLProtocol: URLProtocol, @unchecked Sendable {
     }
 
     final class Router: @unchecked Sendable {
+        typealias Handler = @Sendable (URLRequest) throws -> Response
+
         private let lock = NSLock()
-        private var handlers: [String: @Sendable (URLRequest) -> Response] = [:]
+        private var handlers: [String: Handler] = [:]
         private var recordedRequests: [String: [URLRequest]] = [:]
 
-        func install(id: String, handler: @escaping @Sendable (URLRequest) -> Response) {
+        func install(id: String, handler: @escaping Handler) {
             lock.lock()
             defer { lock.unlock() }
             handlers[id] = handler
@@ -39,12 +41,12 @@ final class StubURLProtocol: URLProtocol, @unchecked Sendable {
             recordedRequests.removeValue(forKey: id)
         }
 
-        func handle(_ request: URLRequest) -> Response? {
+        func handle(_ request: URLRequest) throws -> Response? {
             guard let id = StubURLProtocol.id(for: request) else { return nil }
             lock.lock()
             defer { lock.unlock() }
             recordedRequests[id, default: []].append(request)
-            return handlers[id]?(request)
+            return try handlers[id]?(request)
         }
 
         func requests(id: String) -> [URLRequest] {
@@ -66,19 +68,23 @@ final class StubURLProtocol: URLProtocol, @unchecked Sendable {
     override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
 
     override func startLoading() {
-        guard let response = Self.router.handle(request) else {
-            client?.urlProtocol(self, didFailWithError: URLError(.unsupportedURL))
-            return
+        do {
+            guard let response = try Self.router.handle(request) else {
+                client?.urlProtocol(self, didFailWithError: URLError(.unsupportedURL))
+                return
+            }
+            let http = HTTPURLResponse(
+                url: request.url!,
+                statusCode: response.status,
+                httpVersion: "HTTP/1.1",
+                headerFields: response.headers
+            )!
+            client?.urlProtocol(self, didReceive: http, cacheStoragePolicy: .notAllowed)
+            client?.urlProtocol(self, didLoad: response.body)
+            client?.urlProtocolDidFinishLoading(self)
+        } catch {
+            client?.urlProtocol(self, didFailWithError: error)
         }
-        let http = HTTPURLResponse(
-            url: request.url!,
-            statusCode: response.status,
-            httpVersion: "HTTP/1.1",
-            headerFields: response.headers
-        )!
-        client?.urlProtocol(self, didReceive: http, cacheStoragePolicy: .notAllowed)
-        client?.urlProtocol(self, didLoad: response.body)
-        client?.urlProtocolDidFinishLoading(self)
     }
 
     override func stopLoading() {}
