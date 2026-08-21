@@ -29,7 +29,6 @@ struct CodexAdapter: ProviderAdapter, Sendable {
             let stdout = try await appServerStdout()
             return try Self.parseAppServerOutput(stdout, now: now())
         } catch {
-            if case ProviderError.parseFailed = error { throw error }
             return try await fetchViaAuthJSON(account)
         }
     }
@@ -95,11 +94,41 @@ struct CodexAdapter: ProviderAdapter, Sendable {
     }
 
     static func parseAppServerOutput(_ stdout: String, now: Date) throws -> [LimitWindow] {
+        if let windows = try? parseAppServerEnvelope(stdout) { return windows }
         for line in stdout.split(separator: "\n") {
             guard let obj = try? JSONSerialization.jsonObject(with: Data(line.utf8)) as? [String: Any],
                   let result = obj["result"],
                   let windows = windows(from: result, now: now) else { continue }
             return windows
+        }
+        throw ProviderError.parseFailed
+    }
+
+    private static func window(fromEntry entry: [String: Any]) -> LimitWindow? {
+        let percent = (entry["usedPercent"] as? Double) ?? ((entry["usedPercent"] as? Int).map(Double.init))
+        guard let percent else { return nil }
+        let minutes = (entry["windowDurationMins"] as? Double) ?? ((entry["windowDurationMins"] as? Int).map(Double.init))
+        let epoch = (entry["resetsAt"] as? Double) ?? ((entry["resetsAt"] as? Int).map(Double.init))
+        let kind = minutes.map { classify(seconds: $0 * 60) } ?? .fiveHour
+        let resetsAt = epoch.map { Date(timeIntervalSince1970: $0) }
+        return LimitWindow(kind: kind, usedPercent: percent, usedAbsolute: nil, resetsAt: resetsAt)
+    }
+
+    private static func windowsFromRateLimits(_ rateLimits: [String: Any]) -> [LimitWindow] {
+        ["primary", "secondary"].compactMap { key in
+            (rateLimits[key] as? [String: Any]).flatMap(window(fromEntry:))
+        }
+    }
+
+    static func parseAppServerEnvelope(_ stdout: String) throws -> [LimitWindow] {
+        for line in stdout.split(separator: "\n") {
+            guard let obj = try? JSONSerialization.jsonObject(with: Data(line.utf8)) as? [String: Any],
+                  obj["id"] != nil,
+                  obj["error"] == nil,
+                  let result = obj["result"] as? [String: Any],
+                  let rateLimits = result["rateLimits"] as? [String: Any] else { continue }
+            let windows = windowsFromRateLimits(rateLimits)
+            if !windows.isEmpty { return windows }
         }
         throw ProviderError.parseFailed
     }
@@ -147,6 +176,8 @@ struct CodexAdapter: ProviderAdapter, Sendable {
 }
 
 struct CodexAppServerClient: Sendable {
+    static let responseTimeout: TimeInterval = 6
+
     func fetchRateLimitsStdout() async throws -> String {
         try await Task.detached(priority: .utility) {
             let process = Process()
@@ -158,22 +189,33 @@ struct CodexAppServerClient: Sendable {
             process.standardOutput = stdout
             process.standardError = Pipe()
             try process.run()
-            let request = #"{"jsonrpc":"2.0","id":1,"method":"account/rateLimits/read","params":{}}"# + "\n"
-            stdin.fileHandleForWriting.write(Data(request.utf8))
-            try stdin.fileHandleForWriting.close()
+            defer { process.terminateIfNeeded() }
+
+            let initialize = #"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"clientInfo":{"name":"limit-bar","title":"limit-bar","version":"1.0.0"}}}"# + "\n"
+            let read = #"{"jsonrpc":"2.0","id":2,"method":"account/rateLimits/read","params":{}}"# + "\n"
+            stdin.fileHandleForWriting.write(Data(initialize.utf8))
+            stdin.fileHandleForWriting.write(Data(read.utf8))
 
             var collected = Data()
-            while true {
+            let deadline = Date().addingTimeInterval(Self.responseTimeout)
+            while Date() < deadline {
                 let chunk = stdout.fileHandleForReading.availableData
                 if chunk.isEmpty { break }
                 collected.append(chunk)
+                if String(decoding: collected, as: UTF8.self).contains(#""id":2"#) { break }
                 if collected.count > 4 * 1_024 * 1_024 { break }
             }
-            process.waitUntilExit()
-            guard process.terminationStatus == 0 else {
+            guard !collected.isEmpty else {
                 throw CocoaError(.fileNoSuchFile)
             }
             return String(decoding: collected, as: UTF8.self)
         }.value
+    }
+}
+
+extension Process {
+    fileprivate func terminateIfNeeded() {
+        guard isRunning else { return }
+        terminate()
     }
 }

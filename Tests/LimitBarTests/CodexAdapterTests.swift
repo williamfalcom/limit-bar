@@ -19,9 +19,28 @@ struct CodexAdapterTests {
         return items
     }
 
-    private func appServerLine(_ entries: [(percent: Double, seconds: Int, resetsIn: Int)]) -> String {
-        #"{"jsonrpc":"2.0","id":1,"result":{"rate_limits":[\#(rateLimitsFixture(entries))]}}"#
+    private func appServerEnvelope(primary: (percent: Double, minutes: Int, resetsAtEpoch: Int)?, secondary: (percent: Double, minutes: Int, resetsAtEpoch: Int)?) -> String {
+        func entry(_ e: (percent: Double, minutes: Int, resetsAtEpoch: Int)) -> String {
+            #"{"usedPercent": \#(e.percent), "windowDurationMins": \#(e.minutes), "resetsAt": \#(e.resetsAtEpoch)}"#
+        }
+        let secondaryJSON = secondary.map { #", "secondary": \#(entry($0))"# } ?? ", \"secondary\": null"
+        let primaryJSON = primary.map { entry($0) } ?? "null"
+        return #"{"jsonrpc":"2.0","id":2,"result":{"rateLimits":{"limitId":"codex","primary":\#(primaryJSON)\#(secondaryJSON)}}}"#
     }
+
+    private func appServerLine(percent: Double, minutes: Int, resetsAtEpoch: Int) -> String {
+        appServerEnvelope(
+            primary: (percent, minutes, resetsAtEpoch),
+            secondary: nil
+        )
+    }
+
+    /// Captured verbatim from `codex app-server --stdio` 0.149.0 after a correct initialize handshake.
+    private let realAppServerStdout = """
+    {"error":{"code":-32600,"message":"Invalid request: missing field `clientInfo`"},"id":1}
+    {"id":1,"result":{"userAgent":"limit-bar/0.149.0"}}
+    {"id":2,"result":{"rateLimits":{"limitId":"codex","limitName":null,"primary":{"usedPercent":0,"windowDurationMins":10080,"resetsAt":1787865353},"secondary":null,"credits":{"hasCredits":false,"unlimited":false,"balance":"0"},"individualLimit":null,"spendControlReached":false,"planType":"plus","rateLimitReachedType":null},"rateLimitsByLimitId":{"codex":{"limitId":"codex","limitName":null,"primary":{"usedPercent":0,"windowDurationMins":10080,"resetsAt":1787865353},"secondary":null}}}}
+    """
 
     private struct TransportBoom: Error {}
 
@@ -82,12 +101,15 @@ struct CodexAdapterTests {
         }
     }
 
-    @Test("App-server fixture classifies ~18k s as fiveHour and ≥6-day as weekly")
+    @Test("App-server envelope classifies ~5h as fiveHour and ≥6-day as weekly with epoch resets")
     func appServerClassification() async throws {
-        let adapter = makeAdapter(appServer: { self.appServerLine([
-            (41.5, 18_000, 3_600),
-            (8.25, 604_800, 86_400),
-        ]) }).0
+        let baseEpoch = Int(fixedNow.timeIntervalSince1970)
+        let adapter = makeAdapter(appServer: {
+            self.appServerEnvelope(
+                primary: (41.5, 300, baseEpoch + 3_600),
+                secondary: (8.25, 10_080, baseEpoch + 86_400)
+            )
+        }).0
 
         let windows = try await adapter.fetchUsage(for: account)
 
@@ -97,14 +119,43 @@ struct CodexAdapterTests {
         #expect(windows[1].resetsAt == fixedNow.addingTimeInterval(86_400))
     }
 
-    @Test("Exactly 6 days of window seconds classifies weekly")
+    @Test("Exactly 6 days of window minutes classifies weekly")
     func sixDayBoundaryClassifiesWeekly() async throws {
-        let adapter = makeAdapter(appServer: { self.appServerLine([(50.0, 518_400, 10_000)]) }).0
+        let adapter = makeAdapter(appServer: { self.appServerLine(percent: 50.0, minutes: 8_640, resetsAtEpoch: 1) }).0
 
         let windows = try await adapter.fetchUsage(for: account)
 
         #expect(windows.count == 1)
         #expect(windows[0].kind == .weekly)
+    }
+
+    @Test("Real captured app-server stdout (init error interleaved) parses the primary window")
+    func realCapturedStdoutParses() throws {
+        let now = Date(timeIntervalSince1970: 1_787_000_000)
+
+        let windows = try CodexAdapter.parseAppServerOutput(realAppServerStdout, now: now)
+
+        #expect(windows.count == 1)
+        #expect(windows[0].kind == .weekly)
+        #expect(windows[0].usedPercent == 0)
+        #expect(windows[0].resetsAt == Date(timeIntervalSince1970: 1_787_865_353))
+    }
+
+    @Test("Error response for the read request falls back to auth.json instead of surfacing parse failure")
+    func errorResponseFallsBackToAuthJSON() async throws {
+        let home = FileManager.default.temporaryDirectory
+            .appendingPathComponent("codex-err-\(UUID().uuidString)", isDirectory: true).path
+        defer { try? FileManager.default.removeItem(atPath: home) }
+        try makeAuthFile(home: home)
+        installChatGPTSuccess()
+        let (adapter, _) = makeAdapter(
+            appServer: { #"{"jsonrpc":"2.0","id":2,"error":{"code":-32601,"message":"Not initialized"}}"# },
+            home: home
+        )
+
+        let windows = try await adapter.fetchUsage(for: account)
+
+        #expect(windows.map(\.usedPercent) == [33.5])
     }
 
     @Test("App-server transport failure falls back to the auth.json path")
@@ -236,20 +287,19 @@ struct CodexAdapterTests {
         #expect(recorded()[0].lastPathComponent == "auth.json")
     }
 
-    @Test("Garbage stdout from a live app-server maps to parseFailed without falling back")
-    func garbageAppServerOutputThrowsParseFailed() async {
-        let adapter = makeAdapter(
-            appServer: { "hello from an old cli" },
-            readFile: { _ in throw TransportBoom() }
-        ).0
+    @Test("Garbage stdout from a live app-server falls back to auth.json")
+    func garbageAppServerOutputFallsBack() async throws {
+        let home = FileManager.default.temporaryDirectory
+            .appendingPathComponent("codex-garbage-\(UUID().uuidString)", isDirectory: true).path
+        defer { try? FileManager.default.removeItem(atPath: home) }
+        try makeAuthFile(home: home)
+        installChatGPTSuccess()
+        let (adapter, recorded) = makeAdapter(appServer: { "hello from an old cli" }, home: home)
 
-        do {
-            _ = try await adapter.fetchUsage(for: account)
-            Issue.record("Expected parseFailed")
-        } catch let providerError as ProviderError {
-            #expect(providerError == .parseFailed)
-        } catch {
-            Issue.record("Unexpected error type: \(error)")
-        }
+        let windows = try await adapter.fetchUsage(for: account)
+
+        #expect(windows.map(\.usedPercent) == [33.5])
+        #expect(recorded().count == 1)
+        #expect(recorded()[0].lastPathComponent == "auth.json")
     }
 }
