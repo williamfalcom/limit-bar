@@ -455,12 +455,12 @@ T4 → T15
 
 **Done when**:
 
-- [ ] Selecting a tab changes the icon source immediately from cached data
-- [ ] Esc and outside click close the panel
-- [ ] Relaunch restores accounts, snapshots, active account, and interval
-- [ ] Manual UAT script from spec ACs executes clean end-to-end
-- [ ] Gate check passes: build gate
-- [ ] Test count: unchanged (integration is scene-level wiring; store/engine logic already tested)
+- [ ] Selecting a tab changes the icon source immediately from cached data <!-- deferred to UAT: label observably bound to store.activeAccountID in LimitBarApp -->
+- [x] Esc and outside click close the panel
+- [x] Relaunch restores accounts, snapshots, active account, and interval
+- [ ] Manual UAT script from spec ACs executes clean end-to-end <!-- deferred to UAT: build succeeds and scene wiring present -->
+- [x] Gate check passes: build gate
+- [x] Test count: unchanged (integration is scene-level wiring; store/engine logic already tested)
 
 **Tests**: none
 **Gate**: build

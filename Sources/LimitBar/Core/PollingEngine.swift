@@ -189,5 +189,11 @@ actor PollingEngine {
         for id in schedules.keys where !ids.contains(id) {
             schedules.removeValue(forKey: id)
         }
+        for id in ids {
+            if var schedule = schedules[id], schedule.policy.baseInterval != interval {
+                schedule.policy.changeBase(to: interval)
+                schedules[id] = schedule
+            }
+        }
     }
 }
