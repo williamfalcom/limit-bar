@@ -2,20 +2,25 @@ import Foundation
 
 struct ClaudeAdapter: ProviderAdapter, Sendable {
     static let credentialService = "Claude Code-credentials"
-    static let credentialKey = "Claude Code-credentials"
     static let usageURL = URL(string: "https://api.anthropic.com/api/oauth/usage")!
     static let betaHeaderValue = "oauth-2025-04-20"
+    static let securityBinary = "/usr/bin/security"
 
-    private let credentials: any CredentialStore
+    private let readCredential: @Sendable () async throws -> String
     private let session: URLSession
 
-    init(credentials: any CredentialStore, session: URLSession = .shared) {
-        self.credentials = credentials
+    init(
+        readCredential: @escaping @Sendable () async throws -> String = {
+            try await SecurityCLICredentialReader().read(service: Self.credentialService)
+        },
+        session: URLSession = .shared
+    ) {
+        self.readCredential = readCredential
         self.session = session
     }
 
     func fetchUsage(for account: Account) async throws -> [LimitWindow] {
-        let token = try accessToken()
+        let token = try await accessToken()
         var request = URLRequest(url: Self.usageURL)
         request.httpMethod = "GET"
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
@@ -62,9 +67,9 @@ struct ClaudeAdapter: ProviderAdapter, Sendable {
         return ISO8601DateFormatter().date(from: fractionLess)
     }
 
-    private func accessToken() throws -> String {
+    private func accessToken() async throws -> String {
         do {
-            let raw = try credentials.secret(forKey: Self.credentialKey)
+            let raw = try await readCredential()
             guard let data = raw.data(using: .utf8),
                   let envelope = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                   let oauth = envelope["claudeAiOauth"] as? [String: Any],
@@ -75,5 +80,29 @@ struct ClaudeAdapter: ProviderAdapter, Sendable {
         } catch {
             throw ProviderError.missingCredentials
         }
+    }
+}
+
+struct SecurityCLICredentialReader: Sendable {
+    func read(service: String) async throws -> String {
+        try await Task.detached(priority: .utility) {
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: ClaudeAdapter.securityBinary)
+            process.arguments = ["find-generic-password", "-s", service, "-w"]
+            let stdout = Pipe()
+            let stderr = Pipe()
+            process.standardInput = Pipe()
+            process.standardOutput = stdout
+            process.standardError = stderr
+            try process.run()
+            let data = stdout.fileHandleForReading.readDataToEndOfFile()
+            stderr.fileHandleForReading.readDataToEndOfFile()
+            process.waitUntilExit()
+            guard process.terminationStatus == 0 else {
+                throw CocoaError(.fileNoSuchFile)
+            }
+            return String(decoding: data, as: UTF8.self)
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+        }.value
     }
 }

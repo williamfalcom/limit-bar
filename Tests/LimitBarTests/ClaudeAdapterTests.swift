@@ -7,11 +7,19 @@ struct ClaudeAdapterTests {
 
     private let testID = UUID().uuidString
 
-    private func makeAdapter() -> ClaudeAdapter {
-        ClaudeAdapter(
-            credentials: CredentialFake(.token("stub-\(testID)")),
-            session: stubbedSession()
-        )
+    private func makeAdapter(
+        readCredential: (@Sendable () async throws -> String)? = nil
+    ) -> ClaudeAdapter {
+        let credentialImpl: @Sendable () async throws -> String
+        if let readCredential {
+            credentialImpl = readCredential
+        } else {
+            let stubToken = "stub-\(testID)"
+            credentialImpl = {
+                #"{"claudeAiOauth":{"accessToken":"\#(stubToken)","refreshToken":"stub-refresh","expiresAt":9999999999,"scopes":["user:inference"]}}"#
+            }
+        }
+        return ClaudeAdapter(readCredential: credentialImpl, session: stubbedSession())
     }
 
     private func installDefaultHandler() {
@@ -106,22 +114,27 @@ struct ClaudeAdapterTests {
         }
     }
 
-    @Test("Missing keychain item maps to missingCredentials")
-    func missingCredentialsMapping() async {
-        let adapter = ClaudeAdapter(credentials: CredentialFake(.notFound), session: stubbedSession())
+    @Test("Security CLI failure (missing item or denied access) maps to missingCredentials")
+    func securityCLIFailureMapsToMissingCredentials() async {
+        let adapter = makeAdapter(readCredential: { throw CocoaError(.fileNoSuchFile) })
 
         await #expect(throws: ProviderError.missingCredentials) {
             try await adapter.fetchUsage(for: self.account)
         }
     }
 
-    @Test("Denied keychain access also maps to missingCredentials")
-    func deniedCredentialsMapping() async {
-        let adapter = ClaudeAdapter(credentials: CredentialFake(.denied), session: stubbedSession())
-
-        await #expect(throws: ProviderError.missingCredentials) {
-            try await adapter.fetchUsage(for: self.account)
+    @Test("Non-JSON CLI output falls through verbatim to the bearer")
+    func bareTokenPassthrough() async throws {
+        let routeID = "notjson-\(testID)"
+        let adapter = makeAdapter(readCredential: { "stub-\(routeID)" })
+        StubURLProtocol.router.install(id: routeID) { _ in
+            .init(status: 200, json: Self.usageFixture)
         }
+
+        let windows = try await adapter.fetchUsage(for: account)
+
+        #expect(StubURLProtocol.router.requests(id: routeID).count == 1)
+        #expect(windows.count == 2)
     }
 
     @Test("Null or unknown payload entries are tolerated; present window still parses")

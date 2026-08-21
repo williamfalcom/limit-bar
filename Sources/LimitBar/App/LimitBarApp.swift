@@ -8,7 +8,7 @@ struct LimitBarApp: App {
     init() {
         let store = AccountStore(persistence: PersistenceController())
         let adapters: [ProviderKind: any ProviderAdapter] = [
-            .claudeCode: ClaudeAdapter(credentials: KeychainStore(service: ClaudeAdapter.credentialService)),
+            .claudeCode: ClaudeAdapter(),
             .codex: CodexAdapter(),
             .openCodeGo: GoAdapter(credentials: KeychainStore()),
         ]
