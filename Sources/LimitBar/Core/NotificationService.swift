@@ -78,7 +78,7 @@ actor NotificationService {
         content.body = body
 
         let period = window.resetsAt.map { String(Int($0.timeIntervalSince1970)) } ?? "unknown"
-        let identifier = "limit-bar.\(accountID.uuidString).\(window.kind.rawValue).\(period)"
+        let identifier = "limit-bar.\(accountID.uuidString).\(window.kind.identifierValue).\(period)"
         return UNNotificationRequest(identifier: identifier, content: content, trigger: nil)
     }
 
@@ -87,6 +87,18 @@ actor NotificationService {
         case .fiveHour: "5-hour"
         case .weekly: "Weekly"
         case .monthly: "Monthly"
+        case .weeklyModel(let model): "Weekly · \(model)"
+        }
+    }
+}
+
+private extension WindowKind {
+    var identifierValue: String {
+        switch self {
+        case .fiveHour: "fiveHour"
+        case .weekly: "weekly"
+        case .monthly: "monthly"
+        case .weeklyModel(let model): "weeklyModel:\(model)"
         }
     }
 }

@@ -35,7 +35,11 @@ struct ClaudeAdapterTests {
     private static let usageFixture = """
     {
       "five_hour": {"utilization": 42.5, "resets_at": "2026-08-21T18:00:00Z"},
-      "seven_day": {"utilization": 12.25, "resets_at": "2026-08-27T00:00:00Z"}
+      "seven_day": {"utilization": 12.25, "resets_at": "2026-08-27T00:00:00Z"},
+      "seven_day_opus": null,
+      "seven_day_fable": {"utilization": 16.0, "resets_at": "2026-08-27T07:59:00Z"},
+      "iguana_necktie": null,
+      "extra_usage": {"is_enabled": false, "monthly_limit": null}
     }
     """
 
@@ -43,8 +47,8 @@ struct ClaudeAdapterTests {
         Account(id: UUID(), provider: .claudeCode, label: "Claude", displayedWindow: .fiveHour, codexHomeOverride: nil)
     }
 
-    @Test("Fixture maps to two windows with utilization and reset dates")
-    func parsesTwoWindows() async throws {
+    @Test("Fixture maps to 5h, weekly, and per-model windows in stable order")
+    func parsesWindows() async throws {
         let adapter = makeAdapter()
         installDefaultHandler()
 
@@ -52,13 +56,15 @@ struct ClaudeAdapterTests {
 
         let expectedFiveHourReset = ISO8601DateFormatter().date(from: "2026-08-21T18:00:00Z")
         let expectedWeeklyReset = ISO8601DateFormatter().date(from: "2026-08-27T00:00:00Z")
-        #expect(windows.map(\.kind) == [.fiveHour, .weekly])
-        #expect(windows.map(\.usedPercent) == [42.5, 12.25])
+        let expectedFableReset = ISO8601DateFormatter().date(from: "2026-08-27T07:59:00Z")
+        #expect(windows.map(\.kind) == [.fiveHour, .weekly, .weeklyModel("Fable")])
+        #expect(windows.map(\.usedPercent) == [42.5, 12.25, 16.0])
         #expect(windows[0].resetsAt == expectedFiveHourReset)
         #expect(windows[1].resetsAt == expectedWeeklyReset)
+        #expect(windows[2].resetsAt == expectedFableReset)
     }
 
-    @Test("Request carries GET to the usage endpoint with Bearer token and beta header")
+    @Test("Request carries GET to the usage endpoint with Bearer token, beta header, and claude-code user agent")
     func requestHeadersAndEndpoint() async throws {
         let adapter = makeAdapter()
         installDefaultHandler()
@@ -67,6 +73,7 @@ struct ClaudeAdapterTests {
 
         let requests = StubURLProtocol.router.requests(id: testID)
         #expect(requests.count == 1)
+        #expect(requests[0].value(forHTTPHeaderField: "User-Agent") == ClaudeAdapter.userAgentHeaderValue)
         let request = requests[0]
         #expect(request.url?.absoluteString == "https://api.anthropic.com/api/oauth/usage")
         #expect(request.httpMethod == "GET")
@@ -134,7 +141,7 @@ struct ClaudeAdapterTests {
         let windows = try await adapter.fetchUsage(for: account)
 
         #expect(StubURLProtocol.router.requests(id: routeID).count == 1)
-        #expect(windows.count == 2)
+        #expect(windows.count == 3)
     }
 
     @Test("Null or unknown payload entries are tolerated; present window still parses")

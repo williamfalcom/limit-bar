@@ -178,6 +178,7 @@ private struct WindowRow: View {
         case .fiveHour: "5-hour"
         case .weekly: "Weekly"
         case .monthly: "Monthly"
+        case .weeklyModel(let model): "Weekly · \(model)"
         }
     }
 

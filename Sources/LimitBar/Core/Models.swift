@@ -1,7 +1,48 @@
 import Foundation
 
 enum ProviderKind: String, Codable, Sendable, Equatable { case claudeCode, codex, openCodeGo }
-enum WindowKind: String, Codable, Sendable, Equatable { case fiveHour, weekly, monthly }
+enum WindowKind: Sendable, Equatable, Hashable {
+    case fiveHour
+    case weekly
+    case monthly
+    case weeklyModel(String)
+
+    static let modelPrefix = "weeklyModel:"
+}
+
+extension WindowKind: Codable {
+    var rawValue: String {
+        switch self {
+        case .fiveHour: "fiveHour"
+        case .weekly: "weekly"
+        case .monthly: "monthly"
+        case .weeklyModel(let model): Self.modelPrefix + model
+        }
+    }
+
+    init(from decoder: Decoder) throws {
+        let raw = try decoder.singleValueContainer().decode(String.self)
+        if raw.hasPrefix(Self.modelPrefix) {
+            self = .weeklyModel(String(raw.dropFirst(Self.modelPrefix.count)))
+        } else if raw == "fiveHour" {
+            self = .fiveHour
+        } else if raw == "weekly" {
+            self = .weekly
+        } else if raw == "monthly" {
+            self = .monthly
+        } else {
+            throw DecodingError.dataCorrupted(.init(
+                codingPath: decoder.codingPath,
+                debugDescription: "Unknown WindowKind raw value \(raw)"
+            ))
+        }
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(rawValue)
+    }
+}
 
 struct Account: Identifiable, Codable, Sendable, Equatable {
     var id: UUID

@@ -22,6 +22,19 @@ struct ModelsTests {
         #expect(WindowKind.monthly.rawValue == "monthly")
     }
 
+    @Test("WindowKind weeklyModel survives JSON round-trip and unknown raws throw")
+    func weeklyModelCodableRoundTrip() throws {
+        let encoded = try JSONEncoder().encode(WindowKind.weeklyModel("Fable"))
+        #expect(String(decoding: encoded, as: UTF8.self) == "\"weeklyModel:Fable\"")
+        let decoded = try JSONDecoder().decode(WindowKind.self, from: encoded)
+        #expect(decoded == .weeklyModel("Fable"))
+        #expect(decoded.hashValue == WindowKind.weeklyModel("Fable").hashValue)
+
+        #expect(throws: DecodingError.self) {
+            try JSONDecoder().decode(WindowKind.self, from: Data("\"bogus\"".utf8))
+        }
+    }
+
     @Test("Account round-trip preserves every field including set codexHomeOverride")
     func accountRoundTripWithCodexHomeOverride() throws {
         let account = Account(
