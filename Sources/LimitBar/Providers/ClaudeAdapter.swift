@@ -4,6 +4,7 @@ struct ClaudeAdapter: ProviderAdapter, Sendable {
     static let credentialService = "Claude Code-credentials"
     static let usageURL = URL(string: "https://api.anthropic.com/api/oauth/usage")!
     static let betaHeaderValue = "oauth-2025-04-20"
+    static let userAgentHeaderValue = "claude-code/2.1.170"
     static let securityBinary = "/usr/bin/security"
 
     private let readCredential: @Sendable () async throws -> String
@@ -25,6 +26,7 @@ struct ClaudeAdapter: ProviderAdapter, Sendable {
         request.httpMethod = "GET"
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.setValue(Self.betaHeaderValue, forHTTPHeaderField: "anthropic-beta")
+        request.setValue(Self.userAgentHeaderValue, forHTTPHeaderField: "User-Agent")
 
         let (data, response) = try await session.data(for: request)
         guard let http = response as? HTTPURLResponse else { throw ProviderError.parseFailed }
@@ -48,7 +50,23 @@ struct ClaudeAdapter: ProviderAdapter, Sendable {
         var windows: [LimitWindow] = []
         if let fiveHour = window(from: payload["five_hour"], kind: .fiveHour) { windows.append(fiveHour) }
         if let sevenDay = window(from: payload["seven_day"], kind: .weekly) { windows.append(sevenDay) }
+        let modelKeys = payload.keys.filter { $0.hasPrefix("seven_day_") }.sorted()
+        for key in modelKeys {
+            let model = Self.modelDisplayName(fromKey: key)
+            if let modelWindow = window(from: payload[key], kind: .weeklyModel(model)) {
+                windows.append(modelWindow)
+            }
+        }
         return windows
+    }
+
+    static func modelDisplayName(fromKey key: String) -> String {
+        let suffix = String(key.dropFirst("seven_day_".count))
+        guard suffix != "oauth_apps" else { return "OAuth Apps" }
+        return suffix
+            .split(separator: "_")
+            .map { $0.prefix(1).uppercased() + $0.dropFirst() }
+            .joined(separator: " ")
     }
 
     private static func window(from payload: Any?, kind: WindowKind) -> LimitWindow? {
