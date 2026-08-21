@@ -247,11 +247,11 @@ T4 → T15
 
 **Done when**:
 
-- [ ] Fixture JSON maps to two windows with utilization % and resets_at
-- [ ] 401→`.unauthorized`, 429→`.rateLimited(retryAfter:)`, malformed body→`.parseFailed`, missing keychain item→`.missingCredentials`
-- [ ] Request carries Bearer token and beta header (asserted on stubbed request)
-- [ ] Gate check passes: quick gate
-- [ ] Test count: 9 tests pass (no silent deletions)
+- [x] Fixture JSON maps to two windows with utilization % and resets_at
+- [x] 401→`.unauthorized`, 429→`.rateLimited(retryAfter:)`, malformed body→`.parseFailed`, missing keychain item→`.missingCredentials`
+- [x] Request carries Bearer token and beta header (asserted on stubbed request)
+- [x] Gate check passes: quick gate
+- [x] Test count: 9 tests pass (no silent deletions)
 
 **Tests**: unit
 **Gate**: quick

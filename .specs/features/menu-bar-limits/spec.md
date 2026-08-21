@@ -210,10 +210,10 @@ Juggling multiple AI coding subscriptions (Claude Code, Codex, OpenCode Go) mean
 | LIM-17 | P1: Polling service | - | Pending |
 | LIM-18 | P1: Polling service | - | Pending |
 | LIM-19 | P1: Polling service | - | Pending |
-| LIM-20 | P1: Credentials & accounts | - | Pending |
+| LIM-20 | P1: Credentials & accounts | - | Implementing |
 | LIM-21 | P1: Credentials & accounts | - | Pending |
 | LIM-22 | P1: Credentials & accounts | - | Implementing |
-| LIM-23 | P1: Credentials & accounts | - | Pending |
+| LIM-23 | P1: Credentials & accounts | - | Implementing |
 | LIM-24 | P1: Credentials & accounts | - | Implementing |
 | LIM-25 | P1: Credentials & accounts | - | Implementing |
 | LIM-26 | P1: Settings | - | Pending |
