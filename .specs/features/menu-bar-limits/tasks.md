@@ -379,11 +379,11 @@ T4 → T15
 
 **Done when**:
 
-- [ ] Bar count matches provider window sets (Claude/Codex 2, Go 3)
-- [ ] All four non-fresh tab states render their designated content
-- [ ] Fixed compact frame; footer shows relative time from fetchedAt
-- [ ] Gate check passes: build gate
-- [ ] Test count: 0 automated (view layer per matrix; UAT script covers)
+- [x] Bar count matches provider window sets (Claude/Codex 2, Go 3)
+- [x] All four non-fresh tab states render their designated content
+- [x] Fixed compact frame; footer shows relative time from fetchedAt
+- [x] Gate check passes: build gate
+- [x] Test count: 0 automated (view layer per matrix; UAT script covers)
 
 **Tests**: none
 **Gate**: build
