@@ -222,10 +222,10 @@ T4 → T15
 
 **Done when**:
 
-- [ ] set/get/delete round-trip through the injected seam
-- [ ] Not-found and access-denied OSStatus codes map to distinct typed errors
-- [ ] Gate check passes: quick gate
-- [ ] Test count: 6 tests pass (no silent deletions)
+- [x] set/get/delete round-trip through the injected seam
+- [x] Not-found and access-denied OSStatus codes map to distinct typed errors
+- [x] Gate check passes: quick gate
+- [x] Test count: 6 tests pass (no silent deletions)
 
 **Tests**: unit
 **Gate**: quick
