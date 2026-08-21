@@ -170,11 +170,11 @@ T4 → T15
 
 **Done when**:
 
-- [ ] Save→load round-trip identical state (temp-dir injected location)
-- [ ] Corrupt JSON yields nil without throwing
-- [ ] Writes are atomic (no partial file observed on simulated failure)
-- [ ] Gate check passes: quick gate
-- [ ] Test count: 6 tests pass (no silent deletions)
+- [x] Save→load round-trip identical state (temp-dir injected location)
+- [x] Corrupt JSON yields nil without throwing
+- [x] Writes are atomic (no partial file observed on simulated failure)
+- [x] Gate check passes: quick gate
+- [x] Test count: 6 tests pass (no silent deletions)
 
 **Tests**: unit
 **Gate**: quick
