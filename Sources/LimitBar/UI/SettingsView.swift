@@ -32,6 +32,8 @@ struct SettingsView: View {
     @State private var showingAddSheet = false
     @State private var intervalText: String
     @State private var intervalError: String?
+    @State private var launchAtLoginEnabled = false
+    @State private var launchAtLogin = LaunchAtLoginController()
 
     init(store: AccountStore, keychain: any CredentialStore = KeychainStore()) {
         self.store = store
@@ -46,7 +48,10 @@ struct SettingsView: View {
             intervalSection
         }
         .padding()
-        .frame(width: 420, height: 320)
+        .frame(width: 420, height: 360)
+        .onAppear {
+            launchAtLoginEnabled = launchAtLogin.isEnabled
+        }
         .sheet(isPresented: $showingAddSheet) {
             AddAccountSheet { account, apiKey in
                 add(account:account, goAPIKey: apiKey)
@@ -75,22 +80,29 @@ struct SettingsView: View {
     }
 
     private var intervalSection: some View {
-        HStack(alignment: .top) {
-            Text("Refresh every")
-            TextField("Seconds", text: $intervalText)
-                .frame(width: 70)
-                .textFieldStyle(.roundedBorder)
-                .onSubmit(commitInterval)
-            Text("seconds")
-            Spacer()
-            if let intervalError {
-                Text(intervalError)
-                    .font(.caption)
-                    .foregroundStyle(.red)
-                    .frame(maxWidth: 180, alignment: .leading)
-            } else {
-                EmptyView()
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .top) {
+                Text("Refresh every")
+                TextField("Seconds", text: $intervalText)
+                    .frame(width: 70)
+                    .textFieldStyle(.roundedBorder)
+                    .onSubmit(commitInterval)
+                Text("seconds")
+                Spacer()
+                if let intervalError {
+                    Text(intervalError)
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                        .frame(maxWidth: 180, alignment: .leading)
+                } else {
+                    EmptyView()
+                }
             }
+            Toggle("Start at Login", isOn: $launchAtLoginEnabled)
+                .onChange(of: launchAtLoginEnabled) { _, newValue in
+                    launchAtLogin.setEnabled(newValue)
+                    launchAtLoginEnabled = launchAtLogin.isEnabled
+                }
         }
         .padding(.top, 8)
     }

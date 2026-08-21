@@ -431,9 +431,9 @@ T4 → T15
 
 **Done when**:
 
-- [ ] Toggle on registers, off unregisters, status reflects current SMAppService state (manual verification)
-- [ ] Gate check passes: build gate
-- [ ] Test count: 0 automated (live system service per matrix)
+- [ ] Toggle on registers, off unregisters, status reflects current SMAppService state (manual verification) <!-- deferred to UAT: build succeeds, SMAppService wrapper + toggle wired -->
+- [x] Gate check passes: build gate
+- [x] Test count: 0 automated (live system service per matrix)
 
 **Tests**: none
 **Gate**: build
