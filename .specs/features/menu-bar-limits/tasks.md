@@ -326,12 +326,12 @@ T4 → T15
 
 **Done when**:
 
-- [ ] BackoffPolicy table-driven tests: doubling, 30-min cap, reset-on-success/manual
-- [ ] Mock-clock loop fires at base interval then backed-off intervals
-- [ ] Wake catch-up refreshes exactly the stale accounts (predicate unit-tested)
-- [ ] Failed fetch keeps previous snapshot visible (store untouched on error paths)
-- [ ] Gate check passes: quick gate
-- [ ] Test count: 12 tests pass (no silent deletions)
+- [x] BackoffPolicy table-driven tests: doubling, 30-min cap, reset-on-success/manual
+- [x] Mock-clock loop fires at base interval then backed-off intervals
+- [x] Wake catch-up refreshes exactly the stale accounts (predicate unit-tested)
+- [x] Failed fetch keeps previous snapshot visible (store untouched on error paths)
+- [x] Gate check passes: quick gate
+- [x] Test count: 12 tests pass (no silent deletions)
 
 **Tests**: unit
 **Gate**: quick

@@ -204,12 +204,12 @@ Juggling multiple AI coding subscriptions (Claude Code, Codex, OpenCode Go) mean
 | LIM-11 | P1: Panel tabs & bars | - | Pending |
 | LIM-12 | P1: Panel tabs & bars | - | Pending |
 | LIM-13 | P1: Panel tabs & bars | - | Pending |
-| LIM-14 | P1: Polling service | - | Pending |
-| LIM-15 | P1: Polling service | - | Pending |
-| LIM-16 | P1: Polling service | - | Pending |
-| LIM-17 | P1: Polling service | - | Pending |
-| LIM-18 | P1: Polling service | - | Pending |
-| LIM-19 | P1: Polling service | - | Pending |
+| LIM-14 | P1: Polling service | - | Implementing |
+| LIM-15 | P1: Polling service | - | Implementing |
+| LIM-16 | P1: Polling service | - | Implementing |
+| LIM-17 | P1: Polling service | - | Implementing |
+| LIM-18 | P1: Polling service | - | Implementing |
+| LIM-19 | P1: Polling service | - | Implementing |
 | LIM-20 | P1: Credentials & accounts | - | Implementing |
 | LIM-21 | P1: Credentials & accounts | - | Implementing |
 | LIM-22 | P1: Credentials & accounts | - | Implementing |
