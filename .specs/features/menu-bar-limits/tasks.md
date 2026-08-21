@@ -482,10 +482,10 @@ T4 → T15
 
 **Done when**:
 
-- [ ] Detector fires exactly once per window per reset period across repeated polls (table-driven tests incl. 79.9→80.1 and reset-period rollover)
-- [ ] Denied authorization center short-circuits without error
-- [ ] Gate check passes: quick gate
-- [ ] Test count: 5 tests pass (no silent deletions)
+- [x] Detector fires exactly once per window per reset period across repeated polls (table-driven tests incl. 79.9→80.1 and reset-period rollover)
+- [x] Denied authorization center short-circuits without error
+- [x] Gate check passes: quick gate
+- [x] Test count: 5 tests pass (no silent deletions)
 
 **Tests**: unit
 **Gate**: quick

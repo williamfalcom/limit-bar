@@ -12,7 +12,11 @@ struct LimitBarApp: App {
             .codex: CodexAdapter(),
             .openCodeGo: GoAdapter(credentials: KeychainStore()),
         ]
-        let engine = PollingEngine(store: store, adapters: adapters)
+        let engine = PollingEngine(
+            store: store,
+            adapters: adapters,
+            notifications: NotificationService()
+        )
         self.store = store
         self.engine = engine
         Task {

@@ -47,6 +47,7 @@ actor PollingEngine {
 
     private let store: AccountStore
     private let adapters: [ProviderKind: any ProviderAdapter]
+    private let notifications: NotificationService?
     private let now: @Sendable () -> Date
     private let sleep: @Sendable (TimeInterval) async throws -> Void
 
@@ -57,11 +58,13 @@ actor PollingEngine {
     init(
         store: AccountStore,
         adapters: [ProviderKind: any ProviderAdapter],
+        notifications: NotificationService? = nil,
         now: @escaping @Sendable () -> Date = { Date() },
         sleep: @escaping @Sendable (TimeInterval) async throws -> Void = { try await Task.sleep(for: .seconds($0)) }
     ) {
         self.store = store
         self.adapters = adapters
+        self.notifications = notifications
         self.now = now
         self.sleep = sleep
     }
@@ -169,6 +172,9 @@ actor PollingEngine {
             break
         }
         await store.apply(result, for: account.id)
+        if case .success(let windows) = result, let notifications {
+            await notifications.process(success: windows, accountID: account.id)
+        }
     }
 
     private func nextWakeDelay(after date: Date) -> TimeInterval? {

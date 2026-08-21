@@ -223,8 +223,8 @@ Juggling multiple AI coding subscriptions (Claude Code, Codex, OpenCode Go) mean
 | LIM-30 | P2: OpenCode Go | - | Implementing |
 | LIM-31 | P2: Launch at login | - | Implementing |
 | LIM-32 | P2: Launch at login | - | Implementing |
-| LIM-33 | P3: Notifications | - | Pending |
-| LIM-34 | P3: Notifications | - | Pending |
+| LIM-33 | P3: Notifications | - | Implementing |
+| LIM-34 | P3: Notifications | - | Implementing |
 
 **Coverage:** 34 total, 0 mapped to tasks yet, 34 unmapped (Tasks phase pending).
 
