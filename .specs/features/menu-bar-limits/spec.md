@@ -192,11 +192,11 @@ Juggling multiple AI coding subscriptions (Claude Code, Codex, OpenCode Go) mean
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
 | LIM-01 | P1: Menu bar icon | - | Implementing |
-| LIM-02 | P1: Menu bar icon | - | Pending |
-| LIM-03 | P1: Menu bar icon | - | Pending |
-| LIM-04 | P1: Menu bar icon | - | Pending |
-| LIM-05 | P1: Menu bar icon | - | Pending |
-| LIM-06 | P1: Menu bar icon | - | Pending |
+| LIM-02 | P1: Menu bar icon | - | Implementing |
+| LIM-03 | P1: Menu bar icon | - | Implementing |
+| LIM-04 | P1: Menu bar icon | - | Implementing |
+| LIM-05 | P1: Menu bar icon | - | Implementing |
+| LIM-06 | P1: Menu bar icon | - | Implementing |
 | LIM-07 | P1: Panel tabs & bars | - | Pending |
 | LIM-08 | P1: Panel tabs & bars | - | Implementing |
 | LIM-09 | P1: Panel tabs & bars | - | Implementing |

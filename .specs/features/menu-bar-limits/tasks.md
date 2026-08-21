@@ -353,11 +353,11 @@ T4 → T15
 
 **Done when**:
 
-- [ ] Decision function covers boundary values 69.9/70/89/90/100 and nil snapshot
-- [ ] Countdown formatting renders h/m from resetsAt
-- [ ] Rendered image is non-nil template image at standard status-bar size
-- [ ] Gate check passes: quick gate
-- [ ] Test count: 8 tests pass (no silent deletions)
+- [x] Decision function covers boundary values 69.9/70/89/90/100 and nil snapshot
+- [x] Countdown formatting renders h/m from resetsAt
+- [x] Rendered image is non-nil template image at standard status-bar size
+- [x] Gate check passes: quick gate
+- [x] Test count: 8 tests pass (no silent deletions)
 
 **Tests**: unit
 **Gate**: quick
