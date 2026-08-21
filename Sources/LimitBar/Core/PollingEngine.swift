@@ -40,6 +40,11 @@ actor PollingEngine {
         return now.timeIntervalSince(fetchedAt) > interval
     }
 
+    static func wakeDelay(nextWake: TimeInterval?, fallback: TimeInterval, hasNeverAttempted: Bool) -> TimeInterval {
+        let base = nextWake ?? fallback
+        return hasNeverAttempted ? min(base, 1) : base
+    }
+
     private struct Schedule {
         var policy: BackoffPolicy
         var lastAttemptAt: Date?
@@ -111,7 +116,12 @@ actor PollingEngine {
             }
         }
         let fallback = await store.pollInterval
-        let delay = nextWakeDelay(after: now()) ?? fallback
+        let hasNeverAttempted = schedules.values.contains { $0.lastAttemptAt == nil }
+        let delay = Self.wakeDelay(
+            nextWake: nextWakeDelay(after: now()),
+            fallback: fallback,
+            hasNeverAttempted: hasNeverAttempted
+        )
         guard delay > 0 else { return }
         try? await sleep(delay)
     }

@@ -325,6 +325,14 @@ struct PollingEngineTests {
         #expect(PollingEngine.needsWakeRefresh(fetchedAt: fixedNow.addingTimeInterval(-301), interval: 300, now: fixedNow) == true)
     }
 
+    @Test("Wake delay caps at one second while any account has never been attempted")
+    func wakeDelayCappedForNeverAttemptedAccounts() {
+        #expect(PollingEngine.wakeDelay(nextWake: nil, fallback: 300, hasNeverAttempted: true) == 1)
+        #expect(PollingEngine.wakeDelay(nextWake: 120, fallback: 300, hasNeverAttempted: true) == 1)
+        #expect(PollingEngine.wakeDelay(nextWake: 120, fallback: 300, hasNeverAttempted: false) == 120)
+        #expect(PollingEngine.wakeDelay(nextWake: nil, fallback: 300, hasNeverAttempted: false) == 300)
+    }
+
     @MainActor
     @Test("Wake catch-up refreshes exactly the stale accounts")
     func wakeRefreshesExactlyStaleAccounts() async {
