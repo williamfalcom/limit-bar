@@ -60,6 +60,7 @@ private struct PanelContainer: View {
             store: store,
             onRefresh: onRefresh,
             onOpenSettings: {
+                NSApp.activate(ignoringOtherApps: true)
                 openSettings()
             }
         )
