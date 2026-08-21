@@ -73,10 +73,13 @@ enum IconRenderer {
         }
 
         let barY = (height - barHeight) / 2
+        NSColor.tertiaryLabelColor.withAlphaComponent(0.35).setFill()
+        NSBezierPath(
+            roundedRect: NSRect(x: 0.5, y: barY, width: barWidth - 1, height: barHeight),
+            xRadius: barHeight / 2,
+            yRadius: barHeight / 2
+        ).fill()
         if let fill = style.fill {
-            let track = NSRect(x: 0.5, y: barY, width: barWidth - 1, height: barHeight)
-            NSColor.tertiaryLabelColor.withAlphaComponent(0.35).setFill()
-            NSBezierPath(roundedRect: track, xRadius: barHeight / 2, yRadius: barHeight / 2).fill()
             let filledWidth = max(barHeight, (barWidth - 1) * CGFloat(fill))
             let filled = NSRect(x: 0.5, y: barY, width: filledWidth, height: barHeight)
             color.setFill()
