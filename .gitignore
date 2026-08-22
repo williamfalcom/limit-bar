@@ -63,3 +63,10 @@ fastlane/Preview.html
 fastlane/screenshots/**/*.png
 fastlane/test_output
 dist/
+
+.DS_Store
+.agents/
+.claude/
+.cursor/
+.windsurf/
+skills-lock.json
