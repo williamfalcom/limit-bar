@@ -45,9 +45,7 @@ struct LimitBarApp: App {
         let entries = store.accounts.map { account in
             (label: account.label, snapshot: store.snapshot(for: account.id), window: account.displayedWindow)
         }
-        let activeID = store.activeAccountID ?? store.accounts.first?.id
-        let activeIndex = store.accounts.firstIndex { $0.id == activeID }
-        return Image(nsImage: IconRenderer.image(for: entries, activeIndex: activeIndex))
+        return Image(nsImage: IconRenderer.image(for: entries))
     }
 }
 

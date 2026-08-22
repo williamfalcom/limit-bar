@@ -47,53 +47,53 @@ enum IconRenderer {
     }
 
     static func image(for snapshot: AccountSnapshot?, window: WindowKind, now: Date = Date()) -> NSImage {
-        image(
-            for: [(label: "account", snapshot: snapshot, window: window)],
-            activeIndex: 0,
-            now: now
-        )
+        image(for: [(label: "account", snapshot: snapshot, window: window)], now: now)
     }
 
-    /// One mini progress bar per account; the active account may append its %/countdown text.
+    /// One wide progress bar plus its own percentage per account.
     static func image(
         for entries: [(label: String, snapshot: AccountSnapshot?, window: WindowKind)],
-        activeIndex: Int?,
         now: Date = Date()
     ) -> NSImage {
         let height = NSStatusBar.system.thickness
-        let barWidth: CGFloat = 12
+        let barWidth: CGFloat = 18
         let barHeight: CGFloat = 6
-        let barGap: CGFloat = 4
+        let textGap: CGFloat = 3
+        let entryGap: CGFloat = 8
         let styles = entries.map { Self.style(for: $0.snapshot, window: $0.window, now: now) }
 
-        var width = max(0, CGFloat(entries.count) * barWidth + CGFloat(max(0, entries.count - 1)) * barGap)
-        var textSize: CGSize = .zero
-        var trailingText: String?
-        if let activeIndex, entries.indices.contains(activeIndex) {
-            trailingText = styles[activeIndex].text
+        var textSizes: [CGSize] = []
+        var width: CGFloat = 0
+        for style in styles {
+            width += barWidth
+            if let text = style.text {
+                let size = (text as NSString).size(withAttributes: textAttributes)
+                textSizes.append(size)
+                width += textGap + ceil(size.width)
+            } else {
+                textSizes.append(.zero)
+            }
+            width += entryGap
         }
-        if let text = trailingText {
-            textSize = (text as NSString).size(withAttributes: textAttributes)
-            width += barGap + ceil(textSize.width)
-        }
+        width -= entryGap
 
         let image = NSImage(size: NSSize(width: max(width, barWidth), height: height))
         image.lockFocusFlipped(false)
         defer { image.unlockFocus() }
 
         var xOffset: CGFloat = 0.5
-        for style in styles {
+        for (index, style) in styles.enumerated() {
             drawBar(style: style, x: xOffset, width: barWidth, y: (height - barHeight) / 2, height: barHeight)
-            xOffset += barWidth + barGap
-        }
-
-        if let text = trailingText {
-            let tint = color(for: styles[activeIndex!].tint)
-            let attributed = NSAttributedString(string: text, attributes: [
-                NSAttributedString.Key.font: font,
-                NSAttributedString.Key.foregroundColor: tint,
-            ])
-            attributed.draw(at: NSPoint(x: xOffset - barGap + 0.5 - 1, y: (height - textSize.height) / 2))
+            xOffset += barWidth
+            if let text = style.text {
+                let attributed = NSAttributedString(string: text, attributes: [
+                    NSAttributedString.Key.font: font,
+                    NSAttributedString.Key.foregroundColor: color(for: style.tint),
+                ])
+                attributed.draw(at: NSPoint(x: xOffset + textGap, y: (height - textSizes[index].height) / 2))
+                xOffset += textGap + textSizes[index].width
+            }
+            xOffset += entryGap
         }
 
         image.isTemplate = styles.allSatisfy { $0.tint == .neutral }

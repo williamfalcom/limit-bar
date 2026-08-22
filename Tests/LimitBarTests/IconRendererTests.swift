@@ -135,20 +135,19 @@ struct IconRendererTests {
         #expect(colored.isTemplate == false)
     }
 
-    @Test("Multi-account icon draws one segment per account and widens accordingly")
+    @Test("Multi-account icon draws one wide bar with its own percent per account")
     func multiAccountSegmentWidths() {
         let claude = ("Claude", snapshot(windows: [window(.fiveHour, percent: 42)]), WindowKind.fiveHour)
         let codex = ("Codex", snapshot(windows: [window(.weekly, percent: 8)]), WindowKind.weekly)
+        let neutralA = ("A", nil as AccountSnapshot?, WindowKind.fiveHour)
+        let neutralB = ("B", nil as AccountSnapshot?, WindowKind.weekly)
 
-        let barsOnlyOne = IconRenderer.image(for: [claude], activeIndex: nil, now: fixedNow)
-        let barsOnlyPair = IconRenderer.image(for: [claude, codex], activeIndex: nil, now: fixedNow)
-        #expect(barsOnlyOne.size.width == 12)
-        #expect(barsOnlyPair.size.width == 28)
+        let neutralPair = IconRenderer.image(for: [neutralA, neutralB], now: fixedNow)
+        #expect(abs(neutralPair.size.width - 44) < 0.5)
 
-        let withActiveText = IconRenderer.image(for: [claude, codex], activeIndex: 0, now: fixedNow)
-        #expect(withActiveText.size.width > barsOnlyPair.size.width)
-
-        #expect(barsOnlyPair.isTemplate == false)
+        let coloredPair = IconRenderer.image(for: [claude, codex], now: fixedNow)
+        #expect(coloredPair.size.width > neutralPair.size.width)
+        #expect(coloredPair.isTemplate == false)
     }
 
     @Test("Icon tooltip composes every account label")
@@ -158,7 +157,6 @@ struct IconRendererTests {
                 ("Claude", snapshot(windows: [window(.fiveHour, percent: 42)]), .fiveHour),
                 ("Codex", nil, .fiveHour),
             ],
-            activeIndex: 0,
             now: fixedNow
         )
 
