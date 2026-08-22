@@ -95,6 +95,25 @@ struct GoAdapterTests {
         }
     }
 
+    @Test("Legacy bare-UUID key location is honored as fallback")
+    func legacyKeyLocationFallback() async throws {
+        let goAccount = makeGoAccount()
+        let adapter = GoAdapter(
+            credentials: CredentialFake(.keys([goAccount.id.uuidString: "stub-legacy"])),
+            session: stubbedSession()
+        )
+        StubURLProtocol.router.install(id: "legacy") { _ in
+            .init(status: 200, json: #"{"five_hour": {"used_usd": 6}, "weekly": {"used_usd": 15}, "monthly": {"used_usd": 30}}"#)
+        }
+        defer { StubURLProtocol.router.drop(id: "legacy") }
+
+        let windows = try await adapter.fetchUsage(for: goAccount)
+
+        #expect(windows.count == 3)
+        let requests = StubURLProtocol.router.requests(id: "legacy")
+        #expect(requests.first?.value(forHTTPHeaderField: "Authorization") == "Bearer stub-legacy")
+    }
+
     @Test("Reachable-but-unparseable responses across every candidate also degrade to unsupported")
     func unparseableEverywhereProducesUnsupported() async {
         StubURLProtocol.router.install(id: testID) { _ in

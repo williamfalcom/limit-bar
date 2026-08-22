@@ -120,7 +120,7 @@ struct SettingsView: View {
 
     private func add(account: Account, goAPIKey apiKey: String?) {
         if account.provider == .openCodeGo, let apiKey, !apiKey.isEmpty {
-            try? keychain.set(apiKey, forKey: account.id.uuidString)
+            try? keychain.set(apiKey, forKey: GoAdapter.apiKey(for: account))
         }
         store.add(account: account)
         if store.activeAccountID == nil {

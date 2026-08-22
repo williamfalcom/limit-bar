@@ -101,6 +101,7 @@ struct CredentialFake: CredentialStore, @unchecked Sendable {
         case token(String)
         case notFound
         case denied
+        case keys([String: String])
     }
 
     private let mode: Mode
@@ -119,6 +120,11 @@ struct CredentialFake: CredentialStore, @unchecked Sendable {
             throw KeychainStore.KeychainError.itemNotFound
         case .denied:
             throw KeychainStore.KeychainError.accessDenied
+        case .keys(let map):
+            guard let value = map[key], !value.isEmpty else {
+                throw KeychainStore.KeychainError.itemNotFound
+            }
+            return value
         }
     }
 

@@ -25,7 +25,7 @@ struct GoAdapter: ProviderAdapter, Sendable {
     func fetchUsage(for account: Account) async throws -> [LimitWindow] {
         let apiKey: String
         do {
-            apiKey = try credentials.secret(forKey: Self.apiKey(for: account))
+            apiKey = try Self.readKey(credentials: credentials, account: account)
         } catch {
             throw ProviderError.missingCredentials
         }
@@ -69,5 +69,13 @@ struct GoAdapter: ProviderAdapter, Sendable {
 
     static func apiKey(for account: Account) -> String {
         "go.api-key.\(account.id.uuidString)"
+    }
+
+    /// Canonical key first; falls back to the pre-fix bare-UUID key written by early Settings builds.
+    static func readKey(credentials: any CredentialStore, account: Account) throws -> String {
+        if let key = try? credentials.secret(forKey: apiKey(for: account)), !key.isEmpty {
+            return key
+        }
+        return try credentials.secret(forKey: account.id.uuidString)
     }
 }
