@@ -13,9 +13,9 @@ struct PanelView: View {
                 tabs
             }
         }
-        .frame(width: 300)
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
+        .frame(width: 380)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
     }
 
     private var tabs: some View {
@@ -39,12 +39,12 @@ struct PanelView: View {
             store.selectActive(account.id)
         } label: {
             Text(account.label)
-                .font(.caption.weight(isActive ? .semibold : .regular))
+                .font(.system(size: 15, weight: isActive ? .semibold : .medium))
                 .lineLimit(1)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 4)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 5)
                 .background(
-                    isActive ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(Color.primary.opacity(0.08)),
+                    isActive ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(Color.primary.opacity(0.10)),
                     in: Capsule()
                 )
                 .foregroundStyle(isActive ? Color.white : Color.primary)
@@ -66,7 +66,7 @@ struct PanelView: View {
             VStack(spacing: 8) {
                 if case .error(let message) = snapshot?.state {
                     Label(message, systemImage: "exclamationmark.triangle")
-                        .font(.caption)
+                        .font(.system(size: 13, weight: .medium))
                         .foregroundStyle(.red)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
@@ -102,16 +102,18 @@ struct PanelView: View {
     private func footer(fetchedAt: Date?, isStale: Bool) -> some View {
         HStack {
             Text(Self.updatedText(fetchedAt: fetchedAt, now: Date(), stale: isStale))
-                .font(.caption2)
-                .foregroundStyle(isStale ? .secondary : .tertiary)
+                .font(.system(size: 13, weight: .medium).monospacedDigit())
+                .foregroundStyle(.secondary)
             Spacer()
             Button(action: onOpenSettings) {
                 Image(systemName: "gearshape")
+                    .font(.system(size: 14, weight: .medium))
             }
             .buttonStyle(.borderless)
             .help("Open Settings")
             Button(action: onRefresh) {
                 Image(systemName: "arrow.clockwise")
+                    .font(.system(size: 14, weight: .medium))
             }
             .buttonStyle(.borderless)
             .help("Refresh all accounts now")
@@ -152,25 +154,25 @@ private struct WindowRow: View {
     let now: Date
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 3) {
-            HStack {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(alignment: .firstTextBaseline) {
                 Text(title)
-                    .font(.caption.weight(.medium))
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(.primary)
                 Spacer()
                 if let absolute = window.usedAbsolute {
                     Text(absolute)
-                        .font(.caption.monospacedDigit())
+                        .font(.system(size: 14, weight: .medium).monospacedDigit())
                         .foregroundStyle(.secondary)
                 }
                 Text("\(Int(window.usedPercent.rounded()))%")
-                    .font(.caption.monospacedDigit().weight(.semibold))
+                    .font(.system(size: 15, weight: .bold).monospacedDigit())
+                    .foregroundStyle(.primary)
             }
-            ProgressView(value: min(max(window.usedPercent, 0), 100), total: 100)
-                .progressViewStyle(.linear)
-                .tint(tint)
+            LimitProgressBar(percent: window.usedPercent, tint: tint)
             if let resetsAt = window.resetsAt {
                 Text("resets in \(IconRenderer.formatCountdown(until: resetsAt, now: now))")
-                    .font(.caption2)
+                    .font(.system(size: 13, weight: .medium).monospacedDigit())
                     .foregroundStyle(.secondary)
             }
         }
@@ -191,6 +193,25 @@ private struct WindowRow: View {
         if window.usedPercent >= IconRenderer.redThreshold { return .red }
         if window.usedPercent >= IconRenderer.amberThreshold { return .orange }
         return .green
+    }
+}
+
+private struct LimitProgressBar: View {
+    let percent: Double
+    let tint: Color
+
+    var body: some View {
+        GeometryReader { geo in
+            ZStack(alignment: .leading) {
+                Capsule()
+                    .fill(Color.primary.opacity(0.12))
+                Capsule()
+                    .fill(tint)
+                    .frame(width: max(10, geo.size.width * min(max(percent, 0), 100) / 100))
+            }
+        }
+        .frame(height: 10)
+        .accessibilityHidden(true)
     }
 }
 
