@@ -44,11 +44,11 @@
 
 ## Handoff
 
-- **Feature**: `.specs/features/menu-bar-limits/` - COMPLETE (Verifier PASS)
-- **Phase / Task**: All 15 tasks committed (`ffa8feb`…`ae05130`); validation.md written, `validate_state.py` exit 0
-- **Completed**: T1-T15; suite 85 tests / 0 failed; sensor killed 5/5 mutants
+- **Feature**: `.specs/features/menu-bar-limits/` - COMPLETE + UAT hardening round done
+- **Phase / Task**: 24 commits on main (`ffa8feb`…`281a8c1`); suite 95 tests / 0 failed
+- **Completed**: UAT fixes: visible neutral icon, immediate fetch on account add (sleep interruption), codex app-server handshake, claude security-cli credential read, claude-code User-Agent, normalized limits[] parsing (per-model weekly incl. Fable), multi-account icon bars with per-account %, settings gear, go key location unified
 - **In-progress** (file:line): none
-- **Next step**: User runs manual UAT (panel open/dismissal, icon live states, tab handoff, SMAppService toggle, real Keychain Go-key round-trip); optional minor fixes from validation.md ranked gaps (LIM-30 spec wording drift, staleness log, 3 thin assertions)
+- **Next step**: OpenCode Go intentionally shows .unsupported until provider ships public usage API (upstream #10448/#18648). If user requests scraping or local estimation, treat as new spec decision. Re-run validate_state only if more code changes land.
 - **Blockers**: none
-- **Uncommitted files**: AGENTS.md conventions update, .specs/STATE.md + context/design/validation.md (tooling dirs stay untracked by design)
+- **Uncommitted files**: .specs/STATE.md handoff refresh
 - **Branch**: main
