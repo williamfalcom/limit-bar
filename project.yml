@@ -28,6 +28,7 @@ targets:
       path: Sources/LimitBar/Info.plist
       properties:
         CFBundleDisplayName: limit-bar
+        CFBundleIconFile: limit-bar
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         LSUIElement: true
