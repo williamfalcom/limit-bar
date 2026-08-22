@@ -74,11 +74,11 @@ struct IconRendererTests {
     func missingDataIsNeutral() {
         let nilStyle = IconRenderer.style(for: nil, window: .fiveHour, now: fixedNow)
         #expect(nilStyle.tint == .neutral)
-        #expect(nilStyle.toolTip == "no data yet")
+        #expect(nilStyle.toolTip == IconRenderer.noDataToolTip)
 
         let emptyStyle = IconRenderer.style(for: snapshot(windows: []), window: .fiveHour, now: fixedNow)
         #expect(emptyStyle.tint == .neutral)
-        #expect(emptyStyle.toolTip == "no data yet")
+        #expect(emptyStyle.toolTip == IconRenderer.noDataToolTip)
 
         let unsupported = IconRenderer.style(
             for: snapshot(windows: [], state: .unsupported),
@@ -169,6 +169,6 @@ struct IconRendererTests {
         let description = image.accessibilityDescription ?? ""
         #expect(description.contains("Claude"))
         #expect(description.contains("Codex"))
-        #expect(description.contains("no data yet"))
+        #expect(description.contains(IconRenderer.noDataToolTip))
     }
 }
