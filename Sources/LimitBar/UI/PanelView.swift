@@ -13,9 +13,9 @@ struct PanelView: View {
                 tabs
             }
         }
-        .frame(width: 380)
-        .padding(.horizontal, 14)
-        .padding(.vertical, 12)
+        .frame(width: 420)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
     }
 
     private var tabs: some View {
@@ -39,7 +39,7 @@ struct PanelView: View {
             store.selectActive(account.id)
         } label: {
             Text(account.label)
-                .font(.system(size: 15, weight: isActive ? .semibold : .medium))
+                .font(.system(size: 16, weight: isActive ? .semibold : .medium))
                 .lineLimit(1)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 5)
@@ -66,7 +66,7 @@ struct PanelView: View {
             VStack(spacing: 8) {
                 if case .error(let message) = snapshot?.state {
                     Label(message, systemImage: "exclamationmark.triangle")
-                        .font(.system(size: 13, weight: .medium))
+                        .font(.system(size: 14, weight: .medium))
                         .foregroundStyle(.red)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
@@ -89,7 +89,7 @@ struct PanelView: View {
                     .foregroundStyle(.tertiary)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
+            .padding(.vertical, 14)
         case nil:
             ContentUnavailableView("No data", systemImage: "gauge", description: Text("Select an account"))
         }
@@ -102,18 +102,18 @@ struct PanelView: View {
     private func footer(fetchedAt: Date?, isStale: Bool) -> some View {
         HStack {
             Text(Self.updatedText(fetchedAt: fetchedAt, now: Date(), stale: isStale))
-                .font(.system(size: 13, weight: .medium).monospacedDigit())
+                .font(.system(size: 15, weight: .medium).monospacedDigit())
                 .foregroundStyle(.secondary)
             Spacer()
             Button(action: onOpenSettings) {
                 Image(systemName: "gearshape")
-                    .font(.system(size: 14, weight: .medium))
+                    .font(.system(size: 16, weight: .medium))
             }
             .buttonStyle(.borderless)
             .help("Open Settings")
             Button(action: onRefresh) {
                 Image(systemName: "arrow.clockwise")
-                    .font(.system(size: 14, weight: .medium))
+                    .font(.system(size: 16, weight: .medium))
             }
             .buttonStyle(.borderless)
             .help("Refresh all accounts now")
@@ -157,22 +157,22 @@ private struct WindowRow: View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(alignment: .firstTextBaseline) {
                 Text(title)
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.system(size: 17, weight: .semibold))
                     .foregroundStyle(.primary)
                 Spacer()
                 if let absolute = window.usedAbsolute {
                     Text(absolute)
-                        .font(.system(size: 14, weight: .medium).monospacedDigit())
+                        .font(.system(size: 15, weight: .medium).monospacedDigit())
                         .foregroundStyle(.secondary)
                 }
                 Text("\(Int(window.usedPercent.rounded()))%")
-                    .font(.system(size: 15, weight: .bold).monospacedDigit())
+                    .font(.system(size: 17, weight: .bold).monospacedDigit())
                     .foregroundStyle(.primary)
             }
             LimitProgressBar(percent: window.usedPercent, tint: tint)
             if let resetsAt = window.resetsAt {
                 Text("resets in \(IconRenderer.formatCountdown(until: resetsAt, now: now))")
-                    .font(.system(size: 13, weight: .medium).monospacedDigit())
+                    .font(.system(size: 15, weight: .medium).monospacedDigit())
                     .foregroundStyle(.secondary)
             }
         }
@@ -210,7 +210,7 @@ private struct LimitProgressBar: View {
                     .frame(width: max(10, geo.size.width * min(max(percent, 0), 100) / 100))
             }
         }
-        .frame(height: 10)
+        .frame(height: 12)
         .accessibilityHidden(true)
     }
 }
