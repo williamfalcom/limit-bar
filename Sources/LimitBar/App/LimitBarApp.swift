@@ -8,9 +8,9 @@ struct LimitBarApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
     var body: some Scene {
-        Settings {
-            SettingsView(store: appDelegate.store, keychain: KeychainStore())
-        }
+        // Settings live in an AppKit window managed by AppDelegate; this scene
+        // only satisfies the SwiftUI lifecycle requirement.
+        Settings { EmptyView() }
     }
 }
 
@@ -134,9 +134,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         openSettings()
     }
 
+    private var settingsWindow: NSWindow?
+
     private func openSettings() {
         NSApp.activate(ignoringOtherApps: true)
-        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+        if let settingsWindow, settingsWindow.isVisible {
+            settingsWindow.makeKeyAndOrderFront(nil)
+            return
+        }
+        let root = SettingsView(store: store, keychain: KeychainStore())
+        let window = NSWindow(contentViewController: NSHostingController(rootView: root))
+        window.title = NSLocalizedString("Settings…", comment: "settings window title")
+        window.styleMask = [.titled, .closable, .miniaturizable]
+        window.setContentSize(NSSize(width: 480, height: 540))
+        window.center()
+        settingsWindow = window
+        window.makeKeyAndOrderFront(nil)
     }
 
     // MARK: - Esc dismissal
