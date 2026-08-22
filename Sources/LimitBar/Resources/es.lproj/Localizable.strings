@@ -1,0 +1,46 @@
+/* limit-bar — Español */
+
+"5-hour" = "5 horas";
+"Weekly" = "Semanal";
+"Monthly" = "Mensual";
+"Weekly · %@" = "Semanal · %@";
+
+"No accounts configured" = "No hay cuentas configuradas";
+"Add your first account" = "Agrega tu primera cuenta";
+"No data" = "Sin datos";
+"Select an account" = "Selecciona una cuenta";
+
+"Sign-in required" = "Se requiere iniciar sesión";
+"The Claude Code credential was rejected, missing, or Keychain access was denied. Log in with the Claude Code CLI and allow limit-bar to read \"Claude Code-credentials\" when macOS asks." = "La credencial de Claude Code fue rechazada, falta o se denegó el acceso al llavero. Inicia sesión con la CLI de Claude Code y permite que limit-bar lea \"Claude Code-credentials\" cuando macOS lo pregunte.";
+"The Codex authentication failed or auth.json is missing. Log in again with the Codex CLI, then refresh." = "La autenticación de Codex falló o falta auth.json. Inicia sesión de nuevo con la CLI de Codex y actualiza.";
+"Your OpenCode Go API key was rejected. Paste a valid key in Settings." = "Tu clave de API de OpenCode Go fue rechazada. Pega una clave válida en Ajustes.";
+
+"OpenCode Go usage API not available yet" = "La API de uso de OpenCode Go aún no está disponible";
+"Limits will appear here once the provider exposes a usage endpoint." = "Los límites aparecerán aquí cuando el proveedor exponga un endpoint de uso.";
+
+"resets in %@" = "reinicia en %@";
+"no data yet" = "aún sin datos";
+"%dm ago" = "hace %dmin";
+"%dh %dm ago" = "hace %dh %dmin";
+"(stale)" = "(obsoleto)";
+
+"Limit near cap" = "Límite cerca del tope";
+"%1$@ limit at %2$d%% used, resets in %3$@" = "límite %1$@ con %2$d%% usado, reinicia en %3$@";
+"Response could not be parsed" = "No se pudo interpretar la respuesta";
+"Allowed range: 60–3600 seconds" = "Rango permitido: 60–3600 segundos";
+
+"Accounts" = "Cuentas";
+"Add Account…" = "Agregar cuenta…";
+"Add Account" = "Agregar cuenta";
+"Refresh every" = "Actualizar cada";
+"seconds" = "segundos";
+"Start at Login" = "Iniciar al iniciar sesión";
+"Remove account" = "Eliminar cuenta";
+"Provider" = "Proveedor";
+"Label" = "Etiqueta";
+"API key" = "Clave de API";
+"Paste your OpenCode Go API key" = "Pega tu clave de API de OpenCode Go";
+"Cancel" = "Cancelar";
+"Add" = "Agregar";
+"Open Settings" = "Abrir Ajustes";
+"Refresh all accounts now" = "Actualizar todas las cuentas ahora";

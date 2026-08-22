@@ -11,7 +11,7 @@ enum FetchResult: Sendable, Equatable {
 @MainActor
 final class AccountStore {
     static let defaultPollInterval: TimeInterval = 300
-    static let parseFailureMessage = "Response could not be parsed"
+    static let parseFailureMessage = NSLocalizedString("Response could not be parsed", comment: "parse failure")
     static let minPollInterval: TimeInterval = 60
     static let maxPollInterval: TimeInterval = 3600
 

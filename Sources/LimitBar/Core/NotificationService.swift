@@ -70,11 +70,13 @@ actor NotificationService {
 
     static func request(accountID: UUID, window: LimitWindow, now: Date) -> UNNotificationRequest {
         let content = UNMutableNotificationContent()
-        content.title = "Limit near cap"
-        var body = "\(Self.windowName(window.kind)) limit at \(Int(window.usedPercent.rounded()))% used"
-        if let resetsAt = window.resetsAt {
-            body += ", resets in \(IconRenderer.formatCountdown(until: resetsAt, now: now))"
-        }
+        content.title = NSLocalizedString("Limit near cap", comment: "notification title")
+        var body = String(
+            format: NSLocalizedString("%1$@ limit at %2$d%% used, resets in %3$@", comment: "notification body"),
+            Self.windowName(window.kind),
+            Int(window.usedPercent.rounded()),
+            window.resetsAt.map { IconRenderer.formatCountdown(until: $0, now: now) } ?? "—"
+        )
         content.body = body
 
         let period = window.resetsAt.map { String(Int($0.timeIntervalSince1970)) } ?? "unknown"
@@ -84,10 +86,11 @@ actor NotificationService {
 
     static func windowName(_ kind: WindowKind) -> String {
         switch kind {
-        case .fiveHour: "5-hour"
-        case .weekly: "Weekly"
-        case .monthly: "Monthly"
-        case .weeklyModel(let model): "Weekly · \(model)"
+        case .fiveHour: NSLocalizedString("5-hour", comment: "window name")
+        case .weekly: NSLocalizedString("Weekly", comment: "window name")
+        case .monthly: NSLocalizedString("Monthly", comment: "window name")
+        case .weeklyModel(let model):
+            String(format: NSLocalizedString("Weekly · %@", comment: "per-model weekly window name"), model)
         }
     }
 }

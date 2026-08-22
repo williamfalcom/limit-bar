@@ -81,10 +81,10 @@ struct PanelView: View {
             }
         case .unsupported:
             VStack(spacing: 6) {
-                Label("OpenCode Go usage API not available yet", systemImage: "hourglass")
+                Label(NSLocalizedString(NSLocalizedString("OpenCode Go usage API not available yet", comment: ""), comment: ""), systemImage: "hourglass")
                     .font(.callout)
                     .foregroundStyle(.secondary)
-                Text("Limits will appear here once the provider exposes a usage endpoint.")
+                Text(NSLocalizedString(NSLocalizedString("Limits will appear here once the provider exposes a usage endpoint.", comment: ""), comment: ""))
                     .font(.caption)
                     .foregroundStyle(.tertiary)
             }
@@ -139,12 +139,15 @@ struct PanelView: View {
     static func updatedText(fetchedAt: Date?, now: Date, stale: Bool = false) -> String {
         guard let fetchedAt else { return "" }
         let minutes = max(1, Int(now.timeIntervalSince(fetchedAt) / 60))
-        let suffix = stale ? " (stale)" : ""
+        let suffix = stale ? " " + NSLocalizedString("(stale)", comment: "stale data marker") : ""
         if minutes >= 60 {
             let hours = minutes / 60
-            return "updated \(hours)h \(minutes % 60)m ago\(suffix)"
+            return String(
+                format: NSLocalizedString("%dh %dm ago", comment: "updated hours and minutes ago"),
+                hours, minutes % 60
+            ) + suffix
         }
-        return "updated \(minutes)m ago\(suffix)"
+        return String(format: NSLocalizedString("%dm ago", comment: "updated minutes ago"), minutes) + suffix
     }
 }
 
@@ -182,10 +185,11 @@ private struct WindowRow: View {
 
     private var title: String {
         switch window.kind {
-        case .fiveHour: "5-hour"
-        case .weekly: "Weekly"
-        case .monthly: "Monthly"
-        case .weeklyModel(let model): "Weekly · \(model)"
+        case .fiveHour: NSLocalizedString("5-hour", comment: "window title")
+        case .weekly: NSLocalizedString("Weekly", comment: "window title")
+        case .monthly: NSLocalizedString("Monthly", comment: "window title")
+        case .weeklyModel(let model):
+            String(format: NSLocalizedString("Weekly · %@", comment: "per-model weekly window title"), model)
         }
     }
 
@@ -239,11 +243,11 @@ private struct ReauthInstructions: View {
     private var instructionText: String {
         switch providerID {
         case .claudeCode:
-            "The Claude Code credential was rejected, missing, or Keychain access was denied. Log in with the Claude Code CLI and allow limit-bar to read \"Claude Code-credentials\" when macOS asks."
+            NSLocalizedString("The Claude Code credential was rejected, missing, or Keychain access was denied. Log in with the Claude Code CLI and allow limit-bar to read \"Claude Code-credentials\" when macOS asks.", comment: "Claude reauth instructions")
         case .codex:
-            "Codex authentication failed or auth.json is missing. Log in again with the Codex CLI, then refresh."
+            NSLocalizedString("Codex authentication failed or auth.json is missing. Log in again with the Codex CLI, then refresh.", comment: "Codex reauth instructions")
         case .openCodeGo:
-            "Your OpenCode Go API key was rejected. Paste a valid key in Settings."
+            NSLocalizedString("Your OpenCode Go API key was rejected. Paste a valid key in Settings.", comment: "Go reauth instructions")
         }
     }
 

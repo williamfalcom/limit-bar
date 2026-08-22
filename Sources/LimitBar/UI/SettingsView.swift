@@ -5,7 +5,7 @@ enum IntervalValidator {
         let message: String
     }
 
-    static let allowedRangeMessage = "Allowed range: 60–3600 seconds"
+    static let allowedRangeMessage = NSLocalizedString("Allowed range: 60–3600 seconds", comment: "interval validation")
     static let floor: TimeInterval = 60
     static let ceiling: TimeInterval = 3600
 

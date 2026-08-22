@@ -15,7 +15,7 @@ enum IconRenderer {
 
     static let amberThreshold = 70.0
     static let redThreshold = 90.0
-    static let noDataToolTip = "no data yet"
+    static var noDataToolTip: String { NSLocalizedString("no data yet", comment: "no data tooltip") }
 
     static func style(for snapshot: AccountSnapshot?, window: WindowKind, now: Date) -> Style {
         guard let snapshot, snapshot.fetchedAt != nil, !snapshot.windows.isEmpty else {

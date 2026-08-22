@@ -2,6 +2,7 @@ name: limit-bar
 
 options:
   bundleIdPrefix: dev.limitbar
+  developmentLanguage: en
   deploymentTarget:
     macOS: "14.0"
   createIntermediateGroups: true
