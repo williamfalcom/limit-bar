@@ -334,6 +334,38 @@ struct PollingEngineTests {
     }
 
     @MainActor
+    @Test("Adding an account interrupts the in-flight sleep and fetches it promptly")
+    func addingAccountInterruptsSleep() async {
+        let settled = account(.claudeCode, "Settled")
+        let (engine, store, log, sleeps, _) = makeEngine(
+            accounts: [settled],
+            outcomes: [
+                .claudeCode: [.success([LimitWindow(kind: .fiveHour, usedPercent: 5, usedAbsolute: nil, resetsAt: nil)])],
+                .openCodeGo: [.failure(.unsupported)],
+            ]
+        )
+        await engine.start()
+        var waited = 0
+        while !(sleeps.recorded.contains(300)) && waited < 2_000 {
+            try? await Task.sleep(for: .milliseconds(10))
+            waited += 10
+        }
+        #expect(sleeps.recorded.first == 300)
+
+        let goAccount = Account(id: UUID(), provider: .openCodeGo, label: "Go", displayedWindow: .fiveHour, codexHomeOverride: nil)
+        let deadline = Date().addingTimeInterval(2)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+            store.add(account: goAccount)
+        }
+        while log.count(goAccount.id) < 1 && Date() < deadline {
+            try? await Task.sleep(for: .milliseconds(10))
+        }
+
+        #expect(log.count(goAccount.id) >= 1)
+        await engine.stop()
+    }
+
+    @MainActor
     @Test("Wake catch-up refreshes exactly the stale accounts")
     func wakeRefreshesExactlyStaleAccounts() async {
         let stale = account(.claudeCode, "Old")

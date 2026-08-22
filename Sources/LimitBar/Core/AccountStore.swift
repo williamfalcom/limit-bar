@@ -22,6 +22,7 @@ final class AccountStore {
 
     private let persistence: StatePersisting
     private let now: @Sendable () -> Date
+    var onAccountsChanged: (@Sendable () -> Void)?
 
     init(persistence: StatePersisting, now: @escaping @Sendable () -> Date = { Date() }) {
         self.persistence = persistence
@@ -46,6 +47,7 @@ final class AccountStore {
     func add(account: Account) {
         accounts.append(account)
         persist()
+        onAccountsChanged?()
     }
 
     func update(account: Account) {

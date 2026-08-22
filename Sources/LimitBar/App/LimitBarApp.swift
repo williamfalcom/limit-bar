@@ -19,6 +19,9 @@ struct LimitBarApp: App {
         )
         self.store = store
         self.engine = engine
+        store.onAccountsChanged = { [weak engine] in
+            Task { await engine?.interruptSleep() }
+        }
         Task {
             await engine.start()
         }

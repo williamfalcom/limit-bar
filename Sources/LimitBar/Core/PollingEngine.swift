@@ -58,6 +58,7 @@ actor PollingEngine {
 
     private var schedules: [UUID: Schedule] = [:]
     private var loopTask: Task<Void, Never>?
+    private var sleepTask: Task<Void, Never>?
     private var wakeObserver: NSObjectProtocol?
 
     init(
@@ -94,6 +95,8 @@ actor PollingEngine {
     func stop() {
         loopTask?.cancel()
         loopTask = nil
+        sleepTask?.cancel()
+        sleepTask = nil
         if let wakeObserver {
             NotificationCenter.default.removeObserver(wakeObserver)
             self.wakeObserver = nil
@@ -116,14 +119,22 @@ actor PollingEngine {
             }
         }
         let fallback = await store.pollInterval
-        let hasNeverAttempted = schedules.values.contains { $0.lastAttemptAt == nil }
         let delay = Self.wakeDelay(
             nextWake: nextWakeDelay(after: now()),
             fallback: fallback,
-            hasNeverAttempted: hasNeverAttempted
+            hasNeverAttempted: schedules.values.contains { $0.lastAttemptAt == nil }
         )
         guard delay > 0 else { return }
-        try? await sleep(delay)
+        let task = Task<Void, Never> { [sleep] in
+            try? await sleep(delay)
+        }
+        self.sleepTask = task
+        _ = await task.result
+        self.sleepTask = nil
+    }
+
+    func interruptSleep() {
+        sleepTask?.cancel()
     }
 
     func refreshAllNow() async {
