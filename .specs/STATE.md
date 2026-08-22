@@ -44,11 +44,11 @@
 
 ## Handoff
 
-- **Feature**: `.specs/features/menu-bar-limits/` - COMPLETE + UAT hardening round done
-- **Phase / Task**: 24 commits on main (`ffa8feb`…`281a8c1`); suite 95 tests / 0 failed
-- **Completed**: UAT fixes: visible neutral icon, immediate fetch on account add (sleep interruption), codex app-server handshake, claude security-cli credential read, claude-code User-Agent, normalized limits[] parsing (per-model weekly incl. Fable), multi-account icon bars with per-account %, settings gear, go key location unified
+- **Feature**: `.specs/features/menu-bar-limits/` - RELEASED as v0.1.1 (tag pushed to origin)
+- **Phase / Task**: Project closed for the session; 33 commits on main, 95 tests / 0 failed
+- **Completed**: v0.1.0 pipeline (spec→design→tasks→2 batches→Verifier PASS→UAT hardening); v0.1.1: NSStatusItem right-click menu (Refresh/Settings…/Quit), own settings window replacing private selector; app icon + icns; trilingual README w/ screenshots; build.sh dev/prod/dmg/test; VERSION semver
 - **In-progress** (file:line): none
-- **Next step**: OpenCode Go intentionally shows .unsupported until provider ships public usage API (upstream #10448/#18648). If user requests scraping or local estimation, treat as new spec decision. Re-run validate_state only if more code changes land.
+- **Next step**: If resuming — OpenCode Go still .unsupported by design until upstream API (#10448/#18648); candidate follow-ups are dashboard scraping or local estimation (needs new spec decision), plus GitHub Release attachments upload
 - **Blockers**: none
-- **Uncommitted files**: .specs/STATE.md handoff refresh
+- **Uncommitted files**: none expected besides this handoff edit (committed with lessons)
 - **Branch**: main

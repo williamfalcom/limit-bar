@@ -1,0 +1,117 @@
+{
+  "schema": 1,
+  "promote_threshold": 2,
+  "window_days": 45,
+  "quarantine_threshold": 2,
+  "next_id": 7,
+  "lessons": [
+    {
+      "id": "L-001",
+      "key": "spec_precision_gap::menubarextra window content does not re render on observable changes force identity rebuild id or host in nspopover nsstatusitem ad 001 fallback",
+      "text": "MenuBarExtra window content does not re-render on @Observable changes; force identity rebuild (.id) or host in NSPopover/NSStatusItem (AD-001 fallback).",
+      "signal": "spec_precision_gap",
+      "scope": "ui",
+      "status": "candidate",
+      "features": [
+        "menu-bar-limits"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "UAT: invisible icon (ui)"
+      ],
+      "created": "2026-08-22T03:44:37Z",
+      "last_seen": "2026-08-22T03:44:37Z"
+    },
+    {
+      "id": "L-002",
+      "key": "ac_gap::always draw the track of a status item progress bar a nil fill neutral state must still render visibly",
+      "text": "Always draw the track of a status-item progress bar; a nil-fill neutral state must still render visibly.",
+      "signal": "ac_gap",
+      "scope": "ui",
+      "status": "candidate",
+      "features": [
+        "menu-bar-limits"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "UAT: LIM-06 neutral state (ui)"
+      ],
+      "created": "2026-08-22T03:44:37Z",
+      "last_seen": "2026-08-22T03:44:37Z"
+    },
+    {
+      "id": "L-003",
+      "key": "ac_gap::interrupt the polling sleep when an account is added never let a fresh account wait out an in flight 300s cycle",
+      "text": "Interrupt the polling sleep when an account is added; never let a fresh account wait out an in-flight 300s cycle.",
+      "signal": "ac_gap",
+      "scope": "core",
+      "status": "candidate",
+      "features": [
+        "menu-bar-limits"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "UAT: new accounts stale (core)"
+      ],
+      "created": "2026-08-22T03:44:37Z",
+      "last_seen": "2026-08-22T03:44:37Z"
+    },
+    {
+      "id": "L-004",
+      "key": "spec_precision_gap::codex app server requires initialize with clientinfo before any request and returns camelcase result ratelimits primary secondary with epoch seconds resetsat",
+      "text": "Codex app-server requires initialize with clientInfo before any request and returns camelCase result.rateLimits.{primary,secondary} with epoch-seconds resetsAt.",
+      "signal": "spec_precision_gap",
+      "scope": "providers",
+      "status": "candidate",
+      "features": [
+        "menu-bar-limits"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "codex app-server live probe (providers)"
+      ],
+      "created": "2026-08-22T03:44:37Z",
+      "last_seen": "2026-08-22T03:44:37Z"
+    },
+    {
+      "id": "L-005",
+      "key": "spec_precision_gap::anthropic oauth usage needs user agent claude code to avoid the throttled bucket parse the normalized limits array session weekly all weekly scoped first legacy seven day as fallback",
+      "text": "Anthropic oauth usage needs User-Agent claude-code/* to avoid the throttled bucket; parse the normalized limits[] array (session/weekly_all/weekly_scoped) first, legacy seven_day_* as fallback.",
+      "signal": "spec_precision_gap",
+      "scope": "providers",
+      "status": "candidate",
+      "features": [
+        "menu-bar-limits"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "anthropic usage live probe (providers)"
+      ],
+      "created": "2026-08-22T03:44:37Z",
+      "last_seen": "2026-08-22T03:44:37Z"
+    },
+    {
+      "id": "L-006",
+      "key": "gate_fail::unit tests resolve nslocalizedstring in the user language assert against source constants never against english literals",
+      "text": "Unit tests resolve NSLocalizedString in the user language; assert against source constants, never against English literals.",
+      "signal": "gate_fail",
+      "scope": "tests",
+      "status": "candidate",
+      "features": [
+        "menu-bar-limits"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "IconRendererTests locale failures (tests)"
+      ],
+      "created": "2026-08-22T03:44:37Z",
+      "last_seen": "2026-08-22T03:44:37Z"
+    }
+  ]
+}
