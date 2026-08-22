@@ -118,6 +118,19 @@ struct IconRendererTests {
         #expect(IconRenderer.formatCountdown(until: fixedNow.addingTimeInterval(59), now: fixedNow) == "0m")
     }
 
+    @Test("Displayed window falls back to the highest-usage window when the kind is absent")
+    func displayedWindowFallsBackToMaxUsage() {
+        let style = IconRenderer.style(
+            for: snapshot(windows: [window(.weekly, percent: 8)]),
+            window: .fiveHour,
+            now: fixedNow
+        )
+
+        #expect(style.text == "8%")
+        #expect(style.fill == 0.08)
+        #expect(style.tint == .green)
+    }
+
     @Test("Rendered icon is a standard status-bar sized image, template only when neutral")
     func renderedImageProperties() {
         let neutral = IconRenderer.image(for: nil, window: .fiveHour, now: fixedNow)

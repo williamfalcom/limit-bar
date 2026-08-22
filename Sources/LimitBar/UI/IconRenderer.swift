@@ -26,6 +26,7 @@ enum IconRenderer {
             return Style(tint: .red, text: countdown, fill: 1.0, toolTip: nil)
         }
         let usage = snapshot.windows.first { $0.kind == window }?.usedPercent
+            ?? snapshot.windows.map(\.usedPercent).max()
         guard let usage else {
             return Style(tint: .neutral, text: nil, fill: nil, toolTip: noDataToolTip)
         }
@@ -128,7 +129,7 @@ enum IconRenderer {
     }
 
     private static var font: NSFont {
-        NSFont.monospacedDigitSystemFont(ofSize: 10, weight: .medium)
+        NSFont.monospacedDigitSystemFont(ofSize: 12, weight: .medium)
     }
 
     private static var textAttributes: [NSAttributedString.Key: Any] {
