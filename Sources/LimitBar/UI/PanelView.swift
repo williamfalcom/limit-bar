@@ -105,6 +105,11 @@ struct PanelView: View {
                 .font(.caption2)
                 .foregroundStyle(isStale ? .secondary : .tertiary)
             Spacer()
+            Button(action: onOpenSettings) {
+                Image(systemName: "gearshape")
+            }
+            .buttonStyle(.borderless)
+            .help("Open Settings")
             Button(action: onRefresh) {
                 Image(systemName: "arrow.clockwise")
             }

@@ -42,10 +42,12 @@ struct LimitBarApp: App {
     }
 
     private var statusIcon: Image {
-        let accountID = store.activeAccountID ?? store.accounts.first?.id
-        let snapshot = accountID.flatMap { store.snapshot(for: $0) }
-        let windowKind = store.accounts.first { $0.id == accountID }?.displayedWindow ?? .fiveHour
-        return Image(nsImage: IconRenderer.image(for: snapshot, window: windowKind))
+        let entries = store.accounts.map { account in
+            (label: account.label, snapshot: store.snapshot(for: account.id), window: account.displayedWindow)
+        }
+        let activeID = store.activeAccountID ?? store.accounts.first?.id
+        let activeIndex = store.accounts.firstIndex { $0.id == activeID }
+        return Image(nsImage: IconRenderer.image(for: entries, activeIndex: activeIndex))
     }
 }
 

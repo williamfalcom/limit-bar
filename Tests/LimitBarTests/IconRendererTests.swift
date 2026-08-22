@@ -134,4 +134,37 @@ struct IconRendererTests {
         #expect(colored.size.width > 18)
         #expect(colored.isTemplate == false)
     }
+
+    @Test("Multi-account icon draws one segment per account and widens accordingly")
+    func multiAccountSegmentWidths() {
+        let claude = ("Claude", snapshot(windows: [window(.fiveHour, percent: 42)]), WindowKind.fiveHour)
+        let codex = ("Codex", snapshot(windows: [window(.weekly, percent: 8)]), WindowKind.weekly)
+
+        let barsOnlyOne = IconRenderer.image(for: [claude], activeIndex: nil, now: fixedNow)
+        let barsOnlyPair = IconRenderer.image(for: [claude, codex], activeIndex: nil, now: fixedNow)
+        #expect(barsOnlyOne.size.width == 12)
+        #expect(barsOnlyPair.size.width == 28)
+
+        let withActiveText = IconRenderer.image(for: [claude, codex], activeIndex: 0, now: fixedNow)
+        #expect(withActiveText.size.width > barsOnlyPair.size.width)
+
+        #expect(barsOnlyPair.isTemplate == false)
+    }
+
+    @Test("Icon tooltip composes every account label")
+    func tooltipComposesLabels() {
+        let image = IconRenderer.image(
+            for: [
+                ("Claude", snapshot(windows: [window(.fiveHour, percent: 42)]), .fiveHour),
+                ("Codex", nil, .fiveHour),
+            ],
+            activeIndex: 0,
+            now: fixedNow
+        )
+
+        let description = image.accessibilityDescription ?? ""
+        #expect(description.contains("Claude"))
+        #expect(description.contains("Codex"))
+        #expect(description.contains("no data yet"))
+    }
 }

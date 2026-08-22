@@ -47,56 +47,84 @@ enum IconRenderer {
     }
 
     static func image(for snapshot: AccountSnapshot?, window: WindowKind, now: Date = Date()) -> NSImage {
-        let style = Self.style(for: snapshot, window: window, now: now)
-        let height = NSStatusBar.system.thickness
-        let barWidth: CGFloat = 18
-        let barHeight: CGFloat = 6
-        let gap: CGFloat = 4
+        image(
+            for: [(label: "account", snapshot: snapshot, window: window)],
+            activeIndex: 0,
+            now: now
+        )
+    }
 
-        var width = barWidth
+    /// One mini progress bar per account; the active account may append its %/countdown text.
+    static func image(
+        for entries: [(label: String, snapshot: AccountSnapshot?, window: WindowKind)],
+        activeIndex: Int?,
+        now: Date = Date()
+    ) -> NSImage {
+        let height = NSStatusBar.system.thickness
+        let barWidth: CGFloat = 12
+        let barHeight: CGFloat = 6
+        let barGap: CGFloat = 4
+        let styles = entries.map { Self.style(for: $0.snapshot, window: $0.window, now: now) }
+
+        var width = max(0, CGFloat(entries.count) * barWidth + CGFloat(max(0, entries.count - 1)) * barGap)
         var textSize: CGSize = .zero
-        if let text = style.text {
+        var trailingText: String?
+        if let activeIndex, entries.indices.contains(activeIndex) {
+            trailingText = styles[activeIndex].text
+        }
+        if let text = trailingText {
             textSize = (text as NSString).size(withAttributes: textAttributes)
-            width += gap + ceil(textSize.width)
+            width += barGap + ceil(textSize.width)
         }
 
-        let image = NSImage(size: NSSize(width: width, height: height))
+        let image = NSImage(size: NSSize(width: max(width, barWidth), height: height))
         image.lockFocusFlipped(false)
         defer { image.unlockFocus() }
 
-        let color: NSColor
-        switch style.tint {
-        case .green: color = .systemGreen
-        case .amber: color = .systemOrange
-        case .red: color = .systemRed
-        case .neutral: color = .tertiaryLabelColor
+        var xOffset: CGFloat = 0.5
+        for style in styles {
+            drawBar(style: style, x: xOffset, width: barWidth, y: (height - barHeight) / 2, height: barHeight)
+            xOffset += barWidth + barGap
         }
 
-        let barY = (height - barHeight) / 2
-        NSColor.tertiaryLabelColor.withAlphaComponent(0.35).setFill()
-        NSBezierPath(
-            roundedRect: NSRect(x: 0.5, y: barY, width: barWidth - 1, height: barHeight),
-            xRadius: barHeight / 2,
-            yRadius: barHeight / 2
-        ).fill()
-        if let fill = style.fill {
-            let filledWidth = max(barHeight, (barWidth - 1) * CGFloat(fill))
-            let filled = NSRect(x: 0.5, y: barY, width: filledWidth, height: barHeight)
-            color.setFill()
-            NSBezierPath(roundedRect: filled, xRadius: barHeight / 2, yRadius: barHeight / 2).fill()
-        }
-
-        if let text = style.text {
+        if let text = trailingText {
+            let tint = color(for: styles[activeIndex!].tint)
             let attributed = NSAttributedString(string: text, attributes: [
                 NSAttributedString.Key.font: font,
-                NSAttributedString.Key.foregroundColor: color,
+                NSAttributedString.Key.foregroundColor: tint,
             ])
-            attributed.draw(at: NSPoint(x: barWidth + gap, y: (height - textSize.height) / 2))
+            attributed.draw(at: NSPoint(x: xOffset - barGap + 0.5 - 1, y: (height - textSize.height) / 2))
         }
 
-        image.isTemplate = style.tint == .neutral
-        image.accessibilityDescription = style.toolTip
+        image.isTemplate = styles.allSatisfy { $0.tint == .neutral }
+        let tooltipParts = zip(entries, styles).map { entry, style in
+            "\(entry.label): \(style.toolTip ?? style.text ?? "ok")"
+        }
+        image.accessibilityDescription = tooltipParts.joined(separator: " · ")
         return image
+    }
+
+    private static func color(for tint: Style.Tint) -> NSColor {
+        switch tint {
+        case .green: .systemGreen
+        case .amber: .systemOrange
+        case .red: .systemRed
+        case .neutral: .tertiaryLabelColor
+        }
+    }
+
+    private static func drawBar(style: Style, x: CGFloat, width: CGFloat, y: CGFloat, height: CGFloat) {
+        NSColor.tertiaryLabelColor.withAlphaComponent(0.35).setFill()
+        NSBezierPath(
+            roundedRect: NSRect(x: x, y: y, width: width, height: height),
+            xRadius: height / 2,
+            yRadius: height / 2
+        ).fill()
+        guard let fill = style.fill else { return }
+        let filledWidth = max(height, width * CGFloat(fill))
+        let filled = NSRect(x: x, y: y, width: filledWidth, height: height)
+        color(for: style.tint).setFill()
+        NSBezierPath(roundedRect: filled, xRadius: height / 2, yRadius: height / 2).fill()
     }
 
     private static var font: NSFont {
