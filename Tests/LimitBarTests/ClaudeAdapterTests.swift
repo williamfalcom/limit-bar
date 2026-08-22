@@ -47,6 +47,31 @@ struct ClaudeAdapterTests {
         Account(id: UUID(), provider: .claudeCode, label: "Claude", displayedWindow: .fiveHour, codexHomeOverride: nil)
     }
 
+    /// Captured verbatim from the live endpoint (2026-08-21), trimmed of spend/extra_usage noise.
+    private static let normalizedLimitsFixture = """
+    {
+      "five_hour": {"utilization": 0.0, "resets_at": "2026-08-22T04:19:59.565296+00:00"},
+      "seven_day": {"utilization": 8.0, "resets_at": "2026-08-28T10:59:59.565321+00:00"},
+      "seven_day_oauth_apps": null,
+      "seven_day_opus": null,
+      "limits": [
+        {"kind": "session", "group": "session", "percent": 0, "severity": "normal", "resets_at": "2026-08-22T04:19:59.565296+00:00", "scope": null, "is_active": false},
+        {"kind": "weekly_all", "group": "weekly", "percent": 8, "severity": "normal", "resets_at": "2026-08-28T10:59:59.565321+00:00", "scope": null, "is_active": false},
+        {"kind": "weekly_scoped", "group": "weekly", "percent": 16, "severity": "normal", "resets_at": "2026-08-28T10:59:59.565537+00:00", "scope": {"model": {"id": null, "display_name": "Fable"}, "surface": null}, "is_active": true}
+      ]
+    }
+    """
+
+    @Test("Normalized limits array maps session, weekly_all, and scoped model windows")
+    func parsesNormalizedLimitsArray() throws {
+        let windows = try ClaudeAdapter.parse(Data(Self.normalizedLimitsFixture.utf8))
+
+        let expectedScopedReset = ISO8601DateFormatter().date(from: "2026-08-28T10:59:59+00:00")
+        #expect(windows.map(\.kind) == [.fiveHour, .weekly, .weeklyModel("Fable")])
+        #expect(windows.map(\.usedPercent) == [0, 8, 16])
+        #expect(windows[2].resetsAt == expectedScopedReset)
+    }
+
     @Test("Fixture maps to 5h, weekly, and per-model windows in stable order")
     func parsesWindows() async throws {
         let adapter = makeAdapter()

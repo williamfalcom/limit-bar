@@ -47,6 +47,10 @@ struct ClaudeAdapter: ProviderAdapter, Sendable {
         guard let payload = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             throw ProviderError.parseFailed
         }
+        if let limits = payload["limits"] as? [[String: Any]] {
+            let windows = limits.compactMap(Self.window(fromLimitEntry:))
+            if !windows.isEmpty { return windows }
+        }
         var windows: [LimitWindow] = []
         if let fiveHour = window(from: payload["five_hour"], kind: .fiveHour) { windows.append(fiveHour) }
         if let sevenDay = window(from: payload["seven_day"], kind: .weekly) { windows.append(sevenDay) }
@@ -58,6 +62,24 @@ struct ClaudeAdapter: ProviderAdapter, Sendable {
             }
         }
         return windows
+    }
+
+    private static func window(fromLimitEntry entry: [String: Any]) -> LimitWindow? {
+        guard let percent = (entry["percent"] as? Double) ?? ((entry["percent"] as? Int).map(Double.init)) else {
+            return nil
+        }
+        let kind: WindowKind
+        switch entry["kind"] as? String {
+        case "session": kind = .fiveHour
+        case "weekly_all": kind = .weekly
+        case "weekly_scoped":
+            let modelName = ((entry["scope"] as? [String: Any])?["model"] as? [String: Any])?["display_name"] as? String
+            kind = .weeklyModel(modelName ?? "Scoped")
+        default:
+            return nil
+        }
+        let resetsAt = (entry["resets_at"] as? String).flatMap { Self.parseUTCDate($0) }
+        return LimitWindow(kind: kind, usedPercent: percent, usedAbsolute: nil, resetsAt: resetsAt)
     }
 
     static func modelDisplayName(fromKey key: String) -> String {
