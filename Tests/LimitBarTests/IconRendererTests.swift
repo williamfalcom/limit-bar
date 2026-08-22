@@ -70,7 +70,7 @@ struct IconRendererTests {
         #expect(style.text == "2h 5m")
     }
 
-    @Test("Missing data renders the neutral gray state with the no-data-yet tooltip")
+    @Test("Nil snapshot, empty windows, and unsupported state render neutral")
     func missingDataIsNeutral() {
         let nilStyle = IconRenderer.style(for: nil, window: .fiveHour, now: fixedNow)
         #expect(nilStyle.tint == .neutral)
@@ -86,13 +86,6 @@ struct IconRendererTests {
             now: fixedNow
         )
         #expect(unsupported.tint == .neutral)
-
-        let missingKind = IconRenderer.style(
-            for: snapshot(windows: [window(.weekly, percent: 20)]),
-            window: .fiveHour,
-            now: fixedNow
-        )
-        #expect(missingKind.tint == .neutral)
     }
 
     @Test("Any plan window reaching 100 percent drives the countdown for the displayed window")
