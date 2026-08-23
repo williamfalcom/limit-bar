@@ -181,8 +181,17 @@ struct CodexAppServerClient: Sendable {
     func fetchRateLimitsStdout() async throws -> String {
         try await Task.detached(priority: .utility) {
             let process = Process()
-            process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-            process.arguments = ["codex", "app-server", "--stdio"]
+            // GUI apps launched from Finder/Dock get a minimal PATH
+            // (/usr/bin:/bin:/usr/sbin:/sbin), so "/usr/bin/env codex" fails when
+            // the CLI is installed via Homebrew/npm. Resolve the absolute path,
+            // falling back to a login shell that sources the user's profile.
+            if let codex = Self.locateExecutable("codex") {
+                process.executableURL = codex
+                process.arguments = ["app-server", "--stdio"]
+            } else {
+                process.executableURL = URL(fileURLWithPath: "/bin/zsh")
+                process.arguments = ["-l", "-c", "exec codex app-server --stdio"]
+            }
             let stdin = Pipe()
             let stdout = Pipe()
             process.standardInput = stdin
@@ -210,6 +219,38 @@ struct CodexAppServerClient: Sendable {
             }
             return String(decoding: collected, as: UTF8.self)
         }.value
+    }
+
+    /// Directories that are searched in addition to `$PATH`. GUI processes do not
+    /// inherit the shell profile, so Homebrew (Apple Silicon/Intel) and common
+    /// user-local install prefixes must be probed explicitly.
+    static let extraSearchDirectories: [String] = [
+        "/opt/homebrew/bin",
+        "/usr/local/bin",
+        "~/.local/bin",
+        "~/bin",
+        "~/.npm-global/bin",
+        "~/.volta/bin",
+        "~/node_modules/.bin",
+    ]
+
+    /// Returns the absolute URL of an executable on `$PATH` plus the known
+    /// install prefixes, or `nil` when it cannot be found deterministically.
+    static func locateExecutable(_ name: String) -> URL? {
+        var directories = ProcessInfo.processInfo.environment["PATH"]?
+            .split(separator: ":")
+            .map(String.init) ?? []
+        for extra in extraSearchDirectories {
+            let expanded = NSString(string: extra).expandingTildeInPath
+            if !directories.contains(expanded) { directories.append(expanded) }
+        }
+        for directory in directories {
+            let candidate = URL(fileURLWithPath: directory).appendingPathComponent(name)
+            if FileManager.default.isExecutableFile(atPath: candidate.path) {
+                return candidate
+            }
+        }
+        return nil
     }
 }
 

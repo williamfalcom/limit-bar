@@ -302,4 +302,21 @@ struct CodexAdapterTests {
         #expect(recorded().count == 1)
         #expect(recorded()[0].lastPathComponent == "auth.json")
     }
+
+    @Test("locateExecutable resolves a binary that lives only in extra search directories")
+    func locateExecutableSearchesKnownPrefixes() throws {
+        // Simulate the minimal PATH of a GUI process (no Homebrew directories).
+        let originalPATH = ProcessInfo.processInfo.environment["PATH"]
+        setenv("PATH", "/usr/bin:/bin:/usr/sbin:/sbin", 1)
+        defer { if let originalPATH { setenv("PATH", originalPATH, 1) } }
+
+        let resolved = CodexAppServerClient.locateExecutable("whoami")
+        #expect(resolved?.path == "/usr/bin/whoami")
+    }
+
+    @Test("locateExecutable returns nil for an unknown binary")
+    func locateExecutableReturnsNilWhenMissing() {
+        let resolved = CodexAppServerClient.locateExecutable("definitely-not-a-real-cli-\(UUID().uuidString)")
+        #expect(resolved == nil)
+    }
 }
