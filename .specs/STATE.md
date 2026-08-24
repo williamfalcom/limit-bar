@@ -44,11 +44,11 @@
 
 ## Handoff
 
-- **Feature**: `.specs/features/menu-bar-limits/` - RELEASED as v0.1.1 (tag pushed to origin)
-- **Phase / Task**: Project closed for the session; 33 commits on main, 95 tests / 0 failed
-- **Completed**: v0.1.0 pipeline (spec→design→tasks→2 batches→Verifier PASS→UAT hardening); v0.1.1: NSStatusItem right-click menu (Refresh/Settings…/Quit), own settings window replacing private selector; app icon + icns; trilingual README w/ screenshots; build.sh dev/prod/dmg/test; VERSION semver
+- **Feature**: `.specs/features/menu-bar-limits/` - RELEASED as v0.1.2 (tag pushed to origin)
+- **Phase / Task**: Project closed for the session; all suites green incl. 2 new CodexAdapter locator tests
+- **Completed**: v0.1.0 pipeline; v0.1.1 status menu/settings window; **v0.1.2: fixed Codex tab error in GUI-launched apps** — `CodexAppServerClient.locateExecutable` resolves the CLI over `$PATH` + known prefixes with `/bin/zsh -l` fallback (GUI processes get minimal PATH, breaking `/usr/bin/env codex`); release notes drafted in chat for manual GitHub upload
 - **In-progress** (file:line): none
-- **Next step**: If resuming — OpenCode Go still .unsupported by design until upstream API (#10448/#18648); candidate follow-ups are dashboard scraping or local estimation (needs new spec decision), plus GitHub Release attachments upload
+- **Next step**: If resuming — decide fate of the dead auth.json→chatgpt.com usage fallback (API key → 403, OAuth token → Cloudflare managed challenge 403; candidate AD-006 to remove or rework it). Prior follow-ups stand: OpenCode Go still .unsupported by design until upstream API (#10448/#18648); dashboard scraping/local estimation need a new spec decision
 - **Blockers**: none
-- **Uncommitted files**: none expected besides this handoff edit (committed with lessons)
+- **Uncommitted files**: only this handoff edit + `.claude/napkin.md` (committed on close)
 - **Branch**: main
