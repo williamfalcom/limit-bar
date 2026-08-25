@@ -78,7 +78,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func redrawIcon() {
         let entries = store.accounts.map { account in
-            (label: account.label, snapshot: store.snapshot(for: account.id), window: account.displayedWindow)
+            (
+                label: account.label,
+                snapshot: store.snapshot(for: account.id),
+                window: account.displayedWindow,
+                provider: account.provider
+            )
         }
         statusItem?.button?.image = IconRenderer.image(for: entries)
     }

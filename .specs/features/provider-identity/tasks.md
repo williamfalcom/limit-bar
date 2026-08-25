@@ -167,8 +167,8 @@ Decision log, traceability, final gate. T8 needs T7.
 
 **Done when**:
 
-- [ ] Icon renders per-provider colors for all configured accounts (manual: two accounts → two differently colored bars)
-- [ ] No compiler warnings; build gate passes
+- [x] Icon renders per-provider colors for all configured accounts (manual: two accounts → two differently colored bars)
+- [x] No compiler warnings; build gate passes
 
 **Tests**: none
 **Gate**: build

@@ -54,17 +54,6 @@ enum IconRenderer {
         image(for: [(label: "account", snapshot: snapshot, window: window, provider: provider)], now: now)
     }
 
-    /// Temporary convenience for the pre-T4 AppDelegate call site; removed when
-    /// entries carry their account provider.
-    static func image(
-        for entries: [(label: String, snapshot: AccountSnapshot?, window: WindowKind)],
-        now: Date = Date()
-    ) -> NSImage {
-        image(for: entries.map { entry in
-            (label: entry.label, snapshot: entry.snapshot, window: entry.window, provider: ProviderKind.claudeCode)
-        }, now: now)
-    }
-
     /// One wide progress bar plus its own percentage per account.
     static func image(
         for entries: [(label: String, snapshot: AccountSnapshot?, window: WindowKind, provider: ProviderKind)],
