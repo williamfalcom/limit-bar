@@ -273,9 +273,9 @@ Decision log, traceability, final gate. T8 needs T7.
 
 **Done when**:
 
-- [ ] AD-006 recorded with Decision/Reason/Trade-off/Scope/Date/Status
-- [ ] All 21 requirement IDs mapped to tasks with statuses updated
-- [ ] Full gate passes: `xcodegen generate && xcodebuild build … && xcodebuild test …`
+- [x] AD-006 recorded with Decision/Reason/Trade-off/Scope/Date/Status
+- [x] All 21 requirement IDs mapped to tasks with statuses updated
+- [x] Full gate passes: `xcodegen generate && xcodebuild build … && xcodebuild test …`
 
 **Tests**: none
 **Gate**: full

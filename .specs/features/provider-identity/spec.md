@@ -151,33 +151,33 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 
 | Requirement ID | Story       | Phase  | Status  |
 | -------------- | ----------- | ------ | ------- |
-| PID-01 | P1: Provider-colored popover bars | Design | Implementing |
-| PID-02 | P1: Provider-colored popover bars | Design | Implementing |
-| PID-03 | P1: Provider-colored popover bars | Design | Implementing |
-| PID-04 | P1: Provider-colored popover bars | Design | Implementing |
-| PID-05 | P1: Provider-colored popover bars | Design | Implementing |
-| PID-06 | P1: Provider-colored menu bar icon | Design | Implementing |
-| PID-07 | P1: Provider-colored menu bar icon | Design | Implementing |
-| PID-08 | P1: Provider-colored menu bar icon | Design | Implementing |
-| PID-09 | P1: OpenCode Go real usage | Design | Implementing |
-| PID-10 | P1: OpenCode Go real usage | Design | Implementing |
-| PID-11 | P1: OpenCode Go real usage | Design | Implementing |
-| PID-12 | P1: OpenCode Go real usage | Design | Implementing |
-| PID-13 | P1: OpenCode Go real usage | Design | Implementing |
-| PID-14 | P1: OpenCode Go real usage | Design | Implementing |
-| PID-15 | P2: "OpenCode" naming and copy | Design | Implementing |
-| PID-16 | P2: "OpenCode" naming and copy | Design | Implementing |
-| PID-17 | P2: "OpenCode" naming and copy | Design | Implementing |
-| PID-18 | P2: Version label in popover | Design | Implementing |
-| PID-19 | P2: Version label in popover | Design | Implementing |
-| PID-20 | P2: Version label in popover | Design | Implementing |
-| PID-21 | P2: Version label in popover | Design | Implementing |
+| PID-01 | P1: Provider-colored popover bars | Design | Verified |
+| PID-02 | P1: Provider-colored popover bars | Design | Verified |
+| PID-03 | P1: Provider-colored popover bars | Design | Verified |
+| PID-04 | P1: Provider-colored popover bars | Design | Verified |
+| PID-05 | P1: Provider-colored popover bars | Design | Verified |
+| PID-06 | P1: Provider-colored menu bar icon | Design | Verified |
+| PID-07 | P1: Provider-colored menu bar icon | Design | Verified |
+| PID-08 | P1: Provider-colored menu bar icon | Design | Verified |
+| PID-09 | P1: OpenCode Go real usage | Design | Verified |
+| PID-10 | P1: OpenCode Go real usage | Design | Verified |
+| PID-11 | P1: OpenCode Go real usage | Design | Verified |
+| PID-12 | P1: OpenCode Go real usage | Design | Verified |
+| PID-13 | P1: OpenCode Go real usage | Design | Verified |
+| PID-14 | P1: OpenCode Go real usage | Design | Verified |
+| PID-15 | P2: "OpenCode" naming and copy | Design | Verified |
+| PID-16 | P2: "OpenCode" naming and copy | Design | Verified |
+| PID-17 | P2: "OpenCode" naming and copy | Design | Verified |
+| PID-18 | P2: Version label in popover | Design | Verified |
+| PID-19 | P2: Version label in popover | Design | Verified |
+| PID-20 | P2: Version label in popover | Design | Verified |
+| PID-21 | P2: Version label in popover | Design | Verified |
 
 **ID format:** `PID-[NUMBER]`
 
 **Status values:** Pending → In Design → In Tasks → Implementing → Verified
 
-**Coverage:** 21 total, 0 mapped to tasks, 21 unmapped ⚠️
+**Coverage:** 21 total, 21 mapped to tasks, 0 unmapped ✅
 
 ---
 
