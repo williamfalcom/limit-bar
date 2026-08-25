@@ -113,11 +113,11 @@ Decision log, traceability, final gate. T8 needs T7.
 
 **Done when**:
 
-- [ ] `style` returns `.provider(kind)` tint in every data-bearing branch (normal, ≥70%, ≥90%, 100% countdown) — no usage-based color switch remains
-- [ ] Neutral branch (nil snapshot / empty windows) unchanged; `isTemplate` true only when all tints neutral
-- [ ] `image(for:)` entries tuple gains `provider:` field (call site fixed in T4; keep a convenience overload compiling until T4 lands in the same phase)
-- [ ] `IconRendererTests` rewritten: per-provider tint at low/mid/high/100% usage, neutral cases, template rule; old green/amber/red assertions removed with their behavior
-- [ ] Quick gate passes
+- [x] `style` returns `.provider(kind)` tint in every data-bearing branch (normal, ≥70%, ≥90%, 100% countdown) — no usage-based color switch remains
+- [x] Neutral branch (nil snapshot / empty windows) unchanged; `isTemplate` true only when all tints neutral
+- [x] `image(for:)` entries tuple gains `provider:` field (call site fixed in T4; keep a convenience overload compiling until T4 lands in the same phase)
+- [x] `IconRendererTests` rewritten: per-provider tint at low/mid/high/100% usage, neutral cases, template rule; old green/amber/red assertions removed with their behavior
+- [x] Quick gate passes
 
 **Tests**: unit
 **Gate**: quick

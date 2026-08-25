@@ -156,9 +156,9 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | PID-03 | P1: Provider-colored popover bars | Design | Implementing |
 | PID-04 | P1: Provider-colored popover bars | Design | Implementing |
 | PID-05 | P1: Provider-colored popover bars | Design | Implementing |
-| PID-06 | P1: Provider-colored menu bar icon | Design | Pending |
-| PID-07 | P1: Provider-colored menu bar icon | Design | Pending |
-| PID-08 | P1: Provider-colored menu bar icon | Design | Pending |
+| PID-06 | P1: Provider-colored menu bar icon | Design | Implementing |
+| PID-07 | P1: Provider-colored menu bar icon | Design | Implementing |
+| PID-08 | P1: Provider-colored menu bar icon | Design | Implementing |
 | PID-09 | P1: OpenCode Go real usage | Design | Pending |
 | PID-10 | P1: OpenCode Go real usage | Design | Pending |
 | PID-11 | P1: OpenCode Go real usage | Design | Pending |
