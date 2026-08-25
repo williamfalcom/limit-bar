@@ -96,10 +96,10 @@ struct PanelView: View {
             }
         case .unsupported:
             VStack(spacing: 6) {
-                Label(NSLocalizedString(NSLocalizedString("OpenCode Go usage API not available yet", comment: ""), comment: ""), systemImage: "hourglass")
+                Label(NSLocalizedString("OpenCode usage API not available yet", comment: ""), systemImage: "hourglass")
                     .font(.callout)
                     .foregroundStyle(.secondary)
-                Text(NSLocalizedString(NSLocalizedString("Limits will appear here once the provider exposes a usage endpoint.", comment: ""), comment: ""))
+                Text(NSLocalizedString("Limits will appear here once the provider exposes a usage endpoint.", comment: ""))
                     .font(.caption)
                     .foregroundStyle(.tertiary)
             }
@@ -260,7 +260,7 @@ private struct ReauthInstructions: View {
         case .codex:
             NSLocalizedString("Codex authentication failed or auth.json is missing. Log in again with the Codex CLI, then refresh.", comment: "Codex reauth instructions")
         case .openCodeGo:
-            NSLocalizedString("Your OpenCode Go API key was rejected. Paste a valid key in Settings.", comment: "Go reauth instructions")
+            NSLocalizedString("Your OpenCode API key was rejected. Paste a valid key in Settings.", comment: "Go reauth instructions")
         }
     }
 

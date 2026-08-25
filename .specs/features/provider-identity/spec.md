@@ -165,9 +165,9 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | PID-12 | P1: OpenCode Go real usage | Design | Implementing |
 | PID-13 | P1: OpenCode Go real usage | Design | Implementing |
 | PID-14 | P1: OpenCode Go real usage | Design | Implementing |
-| PID-15 | P2: "OpenCode" naming and copy | Design | Pending |
-| PID-16 | P2: "OpenCode" naming and copy | Design | Pending |
-| PID-17 | P2: "OpenCode" naming and copy | Design | Pending |
+| PID-15 | P2: "OpenCode" naming and copy | Design | Implementing |
+| PID-16 | P2: "OpenCode" naming and copy | Design | Implementing |
+| PID-17 | P2: "OpenCode" naming and copy | Design | Implementing |
 | PID-18 | P2: Version label in popover | Design | Implementing |
 | PID-19 | P2: Version label in popover | Design | Implementing |
 | PID-20 | P2: Version label in popover | Design | Implementing |

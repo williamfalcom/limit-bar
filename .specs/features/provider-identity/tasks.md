@@ -246,10 +246,10 @@ Decision log, traceability, final gate. T8 needs T7.
 
 **Done when**:
 
-- [ ] No user-facing "OpenCode Go" remains in the three tables or the touched views (`grep -ri "opencode go" Sources/LimitBar/Resources Sources/LimitBar/UI` returns only code identifiers/comments, not UI copy)
-- [ ] `ProviderKind.openCodeGo` identifier and persisted rawValue untouched
-- [ ] All three tables carry the changed keys (missing-key fallback never triggered)
-- [ ] Build gate passes
+- [x] No user-facing "OpenCode Go" remains in the three tables or the touched views (`grep -ri "opencode go" Sources/LimitBar/Resources Sources/LimitBar/UI` returns only code identifiers/comments, not UI copy)
+- [x] `ProviderKind.openCodeGo` identifier and persisted rawValue untouched
+- [x] All three tables carry the changed keys (missing-key fallback never triggered)
+- [x] Build gate passes
 
 **Tests**: none
 **Gate**: build
