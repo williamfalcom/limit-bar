@@ -154,8 +154,8 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | PID-01 | P1: Provider-colored popover bars | Design | Implementing |
 | PID-02 | P1: Provider-colored popover bars | Design | Implementing |
 | PID-03 | P1: Provider-colored popover bars | Design | Implementing |
-| PID-04 | P1: Provider-colored popover bars | Design | Pending |
-| PID-05 | P1: Provider-colored popover bars | Design | Pending |
+| PID-04 | P1: Provider-colored popover bars | Design | Implementing |
+| PID-05 | P1: Provider-colored popover bars | Design | Implementing |
 | PID-06 | P1: Provider-colored menu bar icon | Design | Pending |
 | PID-07 | P1: Provider-colored menu bar icon | Design | Pending |
 | PID-08 | P1: Provider-colored menu bar icon | Design | Pending |

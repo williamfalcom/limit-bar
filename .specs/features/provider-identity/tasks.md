@@ -141,9 +141,9 @@ Decision log, traceability, final gate. T8 needs T7.
 
 **Done when**:
 
-- [ ] Bar fill color equals provider color at 0%, 70%, 90%, 100% usage (no `.green/.orange/.red` references left in `WindowRow`)
-- [ ] Track capsule unchanged; accessibility label unchanged
-- [ ] Build gate passes (view layer: build + manual screenshot per matrix)
+- [x] Bar fill color equals provider color at 0%, 70%, 90%, 100% usage (no `.green/.orange/.red` references left in `WindowRow`)
+- [x] Track capsule unchanged; accessibility label unchanged
+- [x] Build gate passes (view layer: build + manual screenshot per matrix)
 
 **Tests**: none
 **Gate**: build
