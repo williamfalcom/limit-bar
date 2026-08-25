@@ -86,10 +86,10 @@ Decision log, traceability, final gate. T8 needs T7.
 
 **Done when**:
 
-- [ ] `ProviderKind.barNSColor: NSColor` returns `NSColor(srgbRed:green:blue:alpha:)` with exact components (255,140,0 / 65,105,225 / 192,192,192, alpha 1)
-- [ ] `ProviderKind.barColor: Color` bridges from `barNSColor`
-- [ ] Unit tests assert sRGB components per provider (red/green/blue ±0.001 after conversion)
-- [ ] Quick gate passes; test count ≥ 3 new (no silent deletions)
+- [x] `ProviderKind.barNSColor: NSColor` returns `NSColor(srgbRed:green:blue:alpha:)` with exact components (255,140,0 / 65,105,225 / 192,192,192, alpha 1)
+- [x] `ProviderKind.barColor: Color` bridges from `barNSColor`
+- [x] Unit tests assert sRGB components per provider (red/green/blue ±0.001 after conversion)
+- [x] Quick gate passes; test count ≥ 3 new (no silent deletions)
 
 **Tests**: unit
 **Gate**: quick
