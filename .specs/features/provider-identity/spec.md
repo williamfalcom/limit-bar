@@ -168,10 +168,10 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | PID-15 | P2: "OpenCode" naming and copy | Design | Pending |
 | PID-16 | P2: "OpenCode" naming and copy | Design | Pending |
 | PID-17 | P2: "OpenCode" naming and copy | Design | Pending |
-| PID-18 | P2: Version label in popover | Design | Pending |
-| PID-19 | P2: Version label in popover | Design | Pending |
-| PID-20 | P2: Version label in popover | Design | Pending |
-| PID-21 | P2: Version label in popover | Design | Pending |
+| PID-18 | P2: Version label in popover | Design | Implementing |
+| PID-19 | P2: Version label in popover | Design | Implementing |
+| PID-20 | P2: Version label in popover | Design | Implementing |
+| PID-21 | P2: Version label in popover | Design | Implementing |
 
 **ID format:** `PID-[NUMBER]`
 

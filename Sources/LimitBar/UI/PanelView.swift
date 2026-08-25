@@ -4,6 +4,7 @@ struct PanelView: View {
     var store: AccountStore
     var onRefresh: () -> Void = {}
     var onOpenSettings: () -> Void = {}
+    var appVersion: String?
 
     var body: some View {
         Group {
@@ -20,15 +21,27 @@ struct PanelView: View {
 
     private var tabs: some View {
         VStack(spacing: 10) {
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 6) {
-                    ForEach(store.accounts) { account in
-                        tabButton(account)
+            HStack(spacing: 8) {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 6) {
+                        ForEach(store.accounts) { account in
+                            tabButton(account)
+                        }
                     }
+                    .padding(.horizontal, 2)
                 }
-                .padding(.horizontal, 2)
+                versionLabel
             }
             activeTabContent
+        }
+    }
+
+    @ViewBuilder
+    private var versionLabel: some View {
+        if let appVersion {
+            Text("v\(appVersion)")
+                .font(.system(size: 12).monospacedDigit())
+                .foregroundStyle(.secondary)
         }
     }
 
@@ -136,6 +149,9 @@ struct PanelView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 18)
+        .overlay(alignment: .topTrailing) {
+            versionLabel
+        }
     }
 
     static func updatedText(fetchedAt: Date?, now: Date, stale: Bool = false) -> String {

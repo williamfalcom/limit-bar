@@ -192,9 +192,9 @@ Decision log, traceability, final gate. T8 needs T7.
 
 **Done when**:
 
-- [ ] Popover shows `v<VERSION>` top-right in tabbed AND empty states; matches `VERSION` file in dev build
-- [ ] Label hidden (no placeholder) when `appVersion` is nil; tab row never overlaps the label
-- [ ] Build gate passes + manual screenshot check
+- [x] Popover shows `v<VERSION>` top-right in tabbed AND empty states; matches `VERSION` file in dev build
+- [x] Label hidden (no placeholder) when `appVersion` is nil; tab row never overlaps the label
+- [x] Build gate passes + manual screenshot check
 
 **Tests**: none
 **Gate**: build

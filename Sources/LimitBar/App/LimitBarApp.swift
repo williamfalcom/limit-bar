@@ -22,6 +22,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let popover = NSPopover()
     private var statusItem: NSStatusItem?
     private var escMonitor: Any?
+    private let appVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
 
     override init() {
         let store = AccountStore(persistence: PersistenceController())
@@ -54,6 +55,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         popover.contentViewController = NSHostingController(
             rootView: PanelHost(
                 store: store,
+                appVersion: appVersion,
                 onRefresh: { [weak self] in
                     guard let self else { return }
                     Task { await self.engine.refreshAllNow() }
@@ -180,6 +182,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
 private struct PanelHost: View {
     var store: AccountStore
+    var appVersion: String?
     var onRefresh: () -> Void
     var onOpenSettings: () -> Void
 
@@ -190,7 +193,8 @@ private struct PanelHost: View {
             onOpenSettings: {
                 NSApp.activate(ignoringOtherApps: true)
                 onOpenSettings()
-            }
+            },
+            appVersion: appVersion
         )
         .id(panelKey)
         .transition(.identity)
