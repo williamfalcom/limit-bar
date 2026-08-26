@@ -9,6 +9,7 @@ All limit bars render in usage-level colors (green/amber/red), so users cannot t
 - [ ] Each provider is visually identifiable by a fixed accent color: Claude `#FF8C00`, Codex `#4169E1`, OpenCode `#C0C0C0`, in both the popover bars and the menu bar icon.
 - [ ] OpenCode accounts show real 5-hour/weekly/monthly usage from `https://opencode.ai/zen/go/v1/usage` instead of the "not available yet" placeholder.
 - [ ] The popover shows the running app version (e.g. `v0.1.3`) discretely in its top-right corner.
+- [ ] A GitHub Copilot tab shows real Premium requests usage and uses `#6A5ACD` for its bar and icon tint.
 
 ## Out of Scope
 
@@ -134,6 +135,25 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 
 ---
 
+### P1: GitHub Copilot Premium requests ⭐
+
+**User Story**: As a GitHub Copilot user, I want the Premium requests quota in its own tab so that I can monitor the quota that limits paid model usage.
+
+**Why P1**: Premium requests are the finite Copilot quota; chat and completions are unlimited for the validated account and add no useful percentage bar.
+
+**Acceptance Criteria**:
+
+1. The system SHALL persist a GitHub Copilot provider as `githubCopilot` and display "GitHub Copilot" in the account picker.
+2. WHILE a GitHub Copilot account has data, WHEN its bars or menu-bar icon render THEN fills and percentage text SHALL use the exact sRGB color `#6A5ACD` regardless of `usedPercent`.
+3. WHEN a Copilot refresh runs THEN the adapter SHALL launch the installed `copilot` CLI in headless stdio mode, complete the `connect` JSON-RPC handshake, and request `account.getQuota` using the CLI's existing logged-in credentials.
+4. WHEN `account.getQuota` returns `quotaSnapshots.premium_interactions` THEN the adapter SHALL return one `.monthly` `LimitWindow` whose `usedPercent` is `100 - remainingPercentage`, clamped to `0...100`, and whose `resetsAt` maps `resetDate` when parseable.
+5. The adapter SHALL ignore unlimited `chat` and `completions` snapshots and SHALL NOT create additional windows for them.
+6. IF the Copilot CLI is unavailable or transport fails THEN the adapter SHALL throw `ProviderError.network`; IF the RPC reports an authentication failure THEN it SHALL throw `ProviderError.unauthorized`; IF the response has no parseable `premium_interactions` quota THEN it SHALL throw `ProviderError.parseFailed`.
+
+**Independent Test**: With `copilot` authenticated, refresh the GitHub Copilot tab and verify the Premium requests percentage matches the CLI quota response; unit tests cover JSON-RPC framing, inversion/clamping, reset parsing, ignored unlimited quotas, and failure mapping.
+
+---
+
 ## Edge Cases
 
 Edge cases are usually unwanted-behavior (IF/THEN) or boundary (WHEN) criteria:
@@ -142,6 +162,9 @@ Edge cases are usually unwanted-behavior (IF/THEN) or boundary (WHEN) criteria:
 - IF the OpenCode API key is missing or blank in the Keychain THEN the adapter SHALL throw `missingCredentials` (existing behavior preserved)
 - IF the popover has more tabs than fit the width THEN the tab row SHALL scroll horizontally without the version label overlapping tab pills (version sits beside the scroll view, not on top of it)
 - WHEN an account is deleted THEN its provider color has no lingering state (colors are derived, not persisted)
+- IF `remainingPercentage` is below 0 or above 100 THEN the adapter SHALL clamp the derived used percentage into `0...100`
+- IF the Copilot response omits `resetDate` THEN `resetsAt` SHALL be nil
+- IF `chat` or `completions` is the only quota data THEN the adapter SHALL throw `parseFailed` because the finite Premium requests window is absent
 
 ---
 
@@ -172,12 +195,18 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | PID-19 | P2: Version label in popover | Design | Verified |
 | PID-20 | P2: Version label in popover | Design | Verified |
 | PID-21 | P2: Version label in popover | Design | Verified |
+| PID-22 | P1: GitHub Copilot Premium requests | Tasks | Implementing |
+| PID-23 | P1: GitHub Copilot Premium requests | Tasks | Implementing |
+| PID-24 | P1: GitHub Copilot Premium requests | Tasks | Implementing |
+| PID-25 | P1: GitHub Copilot Premium requests | Tasks | Implementing |
+| PID-26 | P1: GitHub Copilot Premium requests | Tasks | Implementing |
+| PID-27 | P1: GitHub Copilot Premium requests | Tasks | Implementing |
 
 **ID format:** `PID-[NUMBER]`
 
 **Status values:** Pending → In Design → In Tasks → Implementing → Verified
 
-**Coverage:** 21 total, 21 mapped to tasks, 0 unmapped ✅
+**Coverage:** 27 total, 27 mapped to tasks, 0 unmapped ✅
 
 ---
 
@@ -188,4 +217,5 @@ How we know the feature is successful:
 - [ ] With Claude, Codex, and OpenCode accounts configured, each tab's bars and the menu bar icon are instantly distinguishable by color at any usage level
 - [ ] The OpenCode tab shows real percentages from the official endpoint within one poll cycle (default 300 s) instead of "not available yet"
 - [ ] The popover's top-right corner shows `v<version>` matching the `VERSION` file in both empty and populated states
+- [ ] The GitHub Copilot tab shows finite Premium requests usage as a single monthly percentage window, colored `#6A5ACD`, using the CLI's authenticated quota
 - [ ] Full gate passes: `xcodegen generate && xcodebuild build && xcodebuild test` green, including rewritten `GoAdapterTests` and `IconRendererTests`

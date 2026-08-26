@@ -170,3 +170,13 @@ root.usage.monthly  { … }                                                     
 | `Style.Tint.provider(ProviderKind)` vs raw color | Semantic enum case | Testable, drives `isTemplate`, avoids NSColor identity comparisons |
 | OpenCode endpoint treatment | Single official URL, proper status mapping; `.unsupported` no longer thrown but kept in enum/UI | AD-003 graceful degradation; persisted-state decoding compatibility |
 | Version source | `CFBundleShortVersionString` read once in AppDelegate, injected | Testable view; VERSION→Info.plist chain already in place, no build changes |
+
+---
+
+## GitHub Copilot Extension
+
+The Copilot provider reuses the existing `ProviderAdapter` protocol and the CLI's local authentication. `CopilotAdapter` starts the installed `copilot` executable with `--headless --no-auto-update --stdio`, writes the length-delimited JSON-RPC `connect` request followed by `account.getQuota`, and reads the two responses. The adapter parses only `result.quotaSnapshots.premium_interactions`.
+
+The Copilot response reports `remainingPercentage`, while `LimitWindow.usedPercent` represents consumed usage. The adapter therefore returns `100 - remainingPercentage`, clamps it to `0...100`, and maps `resetDate` to `resetsAt`. Unlimited `chat` and `completions` snapshots are intentionally ignored. A missing executable or transport failure maps to `.network`; an RPC error maps to `.unauthorized`; a missing or malformed Premium requests snapshot maps to `.parseFailed`.
+
+The provider color source remains `ProviderKind.barNSColor`, extended with exact sRGB `#6A5ACD` (`106/255`, `90/255`, `205/255`). No persisted account schema changes are needed beyond the new `ProviderKind.githubCopilot` raw value.

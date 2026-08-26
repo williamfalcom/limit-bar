@@ -30,6 +30,14 @@ Three changes shipped as one feature: (1) fixed per-provider accent colors for l
 
 - Top-right of the popover, format `v<version>`, caption-scale, secondary color, in both empty and tabbed states; hidden if version unavailable.
 
+### GitHub Copilot Premium requests
+
+- Add a fourth provider tab named "GitHub Copilot" with accent `#6A5ACD` on the popover bar and menu-bar icon.
+- Read the quota through the installed Copilot CLI's headless stdio JSON-RPC interface (`connect`, then `account.getQuota`), using the CLI's existing login.
+- Display only `premium_interactions`: the source reports `remainingPercentage`, so `usedPercent` is `100 - remainingPercentage`, clamped to `0...100`; unlimited `chat` and `completions` quotas are not rendered.
+- Map the premium quota reset date to `LimitWindow.resetsAt`; no API-key field is added to Settings.
+- Persist the provider raw value as `githubCopilot`.
+
 ### Agent's Discretion
 
 - Exact layout mechanics of the version label (HStack beside the tab scroll view vs. overlay) as long as it never overlaps tab pills and appears in both states.
@@ -42,6 +50,7 @@ Three changes shipped as one feature: (1) fixed per-provider accent colors for l
 - `usedAbsolute` stays `nil` unless the payload explicitly carries a dollar amount (deriving from caps would mislead with "Use balance" enabled). Logged in spec Assumptions.
 - `.unsupported` enum case + popover branch retained as graceful-degradation safety even though GoAdapter stops throwing it. Logged in spec Assumptions.
 - Version label is not localized (locale-neutral `v%s`). Logged in spec Assumptions.
+- Copilot CLI quota access is experimental and version-coupled to the CLI's headless JSON-RPC protocol; unavailable CLI, RPC failure, or invalid quota payload degrades through existing network/unauthorized/parseFailed states.
 
 ---
 
