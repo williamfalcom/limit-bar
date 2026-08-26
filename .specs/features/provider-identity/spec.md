@@ -2,14 +2,14 @@
 
 ## Problem Statement
 
-All limit bars render in usage-level colors (green/amber/red), so users cannot tell at a glance which account belongs to Claude, Codex, or OpenCode — every provider looks the same in the popover and the menu bar icon. Additionally, the OpenCode integration is a dead spike (`.unsupported` by design) even though OpenCode now exposes an official Go quota endpoint, and the popover gives no hint of which app version is running.
+All limit bars render in usage-level colors (green/amber/red), so users cannot tell at a glance which account belongs to Claude, Codex, or OpenCode — every provider looks the same in the popover and the menu bar icon. Additionally, the OpenCode integration is a dead spike (`.unsupported` by design) even though OpenCode now exposes an official Go quota endpoint, the popover gives no hint of which app version is running, and GitHub Copilot has no quota tab.
 
 ## Goals
 
-- [ ] Each provider is visually identifiable by a fixed accent color: Claude `#FF8C00`, Codex `#4169E1`, OpenCode `#C0C0C0`, in both the popover bars and the menu bar icon.
-- [ ] OpenCode accounts show real 5-hour/weekly/monthly usage from `https://opencode.ai/zen/go/v1/usage` instead of the "not available yet" placeholder.
-- [ ] The popover shows the running app version (e.g. `v0.1.3`) discretely in its top-right corner.
-- [ ] A GitHub Copilot tab shows real Premium requests usage and uses `#6A5ACD` for its bar and icon tint.
+- [x] Each provider is visually identifiable by a fixed accent color: Claude `#FF8C00`, Codex `#4169E1`, OpenCode `#C0C0C0`, in both the popover bars and the menu bar icon.
+- [x] OpenCode accounts show real 5-hour/weekly/monthly usage from `https://opencode.ai/zen/go/v1/usage` instead of the "not available yet" placeholder.
+- [x] The popover shows the running app version (e.g. `v0.1.3`) discretely in its top-right corner.
+- [x] A GitHub Copilot tab shows real Premium requests usage and uses `#6A5ACD` for its bar and icon tint.
 
 ## Out of Scope
 
@@ -195,12 +195,12 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | PID-19 | P2: Version label in popover | Design | Verified |
 | PID-20 | P2: Version label in popover | Design | Verified |
 | PID-21 | P2: Version label in popover | Design | Verified |
-| PID-22 | P1: GitHub Copilot Premium requests | Tasks | Implementing |
-| PID-23 | P1: GitHub Copilot Premium requests | Tasks | Implementing |
-| PID-24 | P1: GitHub Copilot Premium requests | Tasks | Implementing |
-| PID-25 | P1: GitHub Copilot Premium requests | Tasks | Implementing |
-| PID-26 | P1: GitHub Copilot Premium requests | Tasks | Implementing |
-| PID-27 | P1: GitHub Copilot Premium requests | Tasks | Implementing |
+| PID-22 | P1: GitHub Copilot Premium requests | Tasks | Verified |
+| PID-23 | P1: GitHub Copilot Premium requests | Tasks | Verified |
+| PID-24 | P1: GitHub Copilot Premium requests | Tasks | Verified |
+| PID-25 | P1: GitHub Copilot Premium requests | Tasks | Verified |
+| PID-26 | P1: GitHub Copilot Premium requests | Tasks | Verified |
+| PID-27 | P1: GitHub Copilot Premium requests | Tasks | Verified |
 
 **ID format:** `PID-[NUMBER]`
 
@@ -214,8 +214,8 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 
 How we know the feature is successful:
 
-- [ ] With Claude, Codex, and OpenCode accounts configured, each tab's bars and the menu bar icon are instantly distinguishable by color at any usage level
-- [ ] The OpenCode tab shows real percentages from the official endpoint within one poll cycle (default 300 s) instead of "not available yet"
-- [ ] The popover's top-right corner shows `v<version>` matching the `VERSION` file in both empty and populated states
-- [ ] The GitHub Copilot tab shows finite Premium requests usage as a single monthly percentage window, colored `#6A5ACD`, using the CLI's authenticated quota
-- [ ] Full gate passes: `xcodegen generate && xcodebuild build && xcodebuild test` green, including rewritten `GoAdapterTests` and `IconRendererTests`
+- [x] With Claude, Codex, and OpenCode accounts configured, each tab's bars and the menu bar icon are instantly distinguishable by color at any usage level
+- [x] The OpenCode tab shows real percentages from the official endpoint within one poll cycle (default 300 s) instead of "not available yet"
+- [x] The popover's top-right corner shows `v<version>` matching the `VERSION` file in both empty and populated states
+- [x] The GitHub Copilot tab shows finite Premium requests usage as a single monthly percentage window, colored `#6A5ACD`, using the CLI's authenticated quota
+- [x] Full gate passes: `xcodegen generate && xcodebuild build && xcodebuild test` green, including rewritten `GoAdapterTests` and `IconRendererTests`

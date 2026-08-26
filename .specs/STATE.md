@@ -50,13 +50,21 @@
 - **Date**: 2026-08-25
 - **Status**: active
 
+### AD-007
+- **Decision**: GitHub Copilot usage is collected through the installed CLI's headless stdio JSON-RPC interface (`connect` followed by `account.getQuota`). Only the finite `premium_interactions` quota is rendered; its `remainingPercentage` is inverted into consumed usage, and unlimited `chat`/`completions` quotas are ignored.
+- **Reason**: The Copilot CLI exposes the authenticated quota through a structured local RPC surface, while the user approved Premium requests as the useful quota to display.
+- **Trade-off**: The adapter is coupled to the Copilot CLI headless protocol and requires the user to be logged in with that CLI; CLI absence or protocol drift degrades through existing error states.
+- **Scope**: `CopilotAdapter`, GitHub Copilot provider identity, and the existing provider-colored icon/popover surfaces.
+- **Date**: 2026-08-25
+- **Status**: active
+
 ## Handoff
 
-- **Feature**: `.specs/features/provider-identity/` - fully implemented and validated on branch `feat/provider-identity`; `VERSION` bumped to 0.2.0; PR #1 open: https://github.com/williamfalcom/limit-bar/pull/1
-- **Phase / Task**: Session closed; independent Verifier + manual checks pass recorded in `validation.md`; release PR awaiting review
-- **Completed**: per-provider colors (ProviderTheme -> IconRenderer tints + popover WindowRow fills); GoAdapter reworked onto official `/zen/go/v1/usage` (live payload pinned as fixture; resetsAt parsed ISO8601-fractional; 401/403/429/network/parse mapping); "OpenCode" copy rename across en/pt-BR/es; version label `v<CFBundleShortVersionString>` in popover top-right (both states)
+- **Feature**: `.specs/features/provider-identity/` - provider identity plus GitHub Copilot Premium requests extension implemented on branch `feat/provider-identity`; `VERSION` bumped to 0.2.0; PR #1 open: https://github.com/williamfalcom/limit-bar/pull/1
+- **Phase / Task**: T9-T11 complete; T12 docs and full gate complete; independent Verifier for the Copilot extension is next
+- **Completed**: previous provider colors/Go endpoint/OpenCode copy/version work; GitHub Copilot identity with `#6A5ACD`; `CopilotAdapter` using `copilot --headless --no-auto-update --stdio` and `account.getQuota`; Premium requests mapped to consumed monthly percent; unlimited quotas ignored; actual CLI smoke test passed
 - **In-progress** (file:line): none
-- **Next step**: review and merge PR #1, then tag `v0.2.0`. Deferred (context.md): Zen balance display (#10448), Go usage history, dead Codex auth.json fallback decision, possible warning affordance re-addition if provider-only color hides high usage
+- **Next step**: run the independent Copilot-extension Verifier, confirm `validate_state.py`, review and merge PR #1, then tag `v0.2.0`. Deferred (context.md): Zen balance display (#10448), Go usage history, dead Codex auth.json fallback decision, possible warning affordance re-addition if provider-only color hides high usage
 - **Blockers**: none
 - **Uncommitted files**: none
 - **Branch**: feat/provider-identity
