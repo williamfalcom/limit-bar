@@ -52,11 +52,11 @@
 
 ## Handoff
 
-- **Feature**: `.specs/features/provider-identity/` - fully implemented and validated on branch `feat/provider-identity` (T1-T8 committed); v0.2.0 bump and PR remain
+- **Feature**: `.specs/features/provider-identity/` - fully implemented and validated on branch `feat/provider-identity`; `VERSION` bumped to 0.2.0, PR remains
 - **Phase / Task**: Execute closed; independent Verifier + manual checks pass recorded in `validation.md`
 - **Completed**: per-provider colors (ProviderTheme -> IconRenderer tints + popover WindowRow fills); GoAdapter reworked onto official `/zen/go/v1/usage` (live payload pinned as fixture; resetsAt parsed ISO8601-fractional; 401/403/429/network/parse mapping); "OpenCode" copy rename across en/pt-BR/es; version label `v<CFBundleShortVersionString>` in popover top-right (both states)
 - **In-progress** (file:line): none
-- **Next step**: bump `VERSION` to 0.2.0, run the release build gate, push the branch, open the PR, then merge and tag `v0.2.0`. Deferred (context.md): Zen balance display (#10448), Go usage history, dead Codex auth.json fallback decision, possible warning affordance re-addition if provider-only color hides high usage
+- **Next step**: run the release build gate, push the branch, open the PR, then merge and tag `v0.2.0`. Deferred (context.md): Zen balance display (#10448), Go usage history, dead Codex auth.json fallback decision, possible warning affordance re-addition if provider-only color hides high usage
 - **Blockers**: none
 - **Uncommitted files**: none
 - **Branch**: feat/provider-identity
