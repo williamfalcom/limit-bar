@@ -222,7 +222,7 @@ Decision log, traceability, final gate. T8 needs T7.
 - [x] Parser maps rolling/weekly/monthly with clamped percent; missing/blank key → `.missingCredentials` preserved
 - [x] Error mapping tests: 401, 403, 429 (with/without Retry-After), 500, transport error, malformed 200, empty usage object
 - [x] `GoAdapterTests` rewritten (spike URL tests removed with their behavior); quick gate passes
-- [ ] Manual: OpenCode tab shows real percentages within one poll cycle
+- [x] Manual: OpenCode tab shows real percentages within one poll cycle
 
 **Tests**: unit
 **Gate**: quick
