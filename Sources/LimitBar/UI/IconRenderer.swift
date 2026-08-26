@@ -4,7 +4,8 @@ import Foundation
 enum IconRenderer {
     struct Style: Equatable, Sendable {
         enum Tint: Equatable, Sendable {
-            case green, amber, red, neutral
+            case provider(ProviderKind)
+            case neutral
         }
 
         var tint: Tint
@@ -13,26 +14,23 @@ enum IconRenderer {
         var toolTip: String?
     }
 
-    static let amberThreshold = 70.0
-    static let redThreshold = 90.0
     static var noDataToolTip: String { NSLocalizedString("no data yet", comment: "no data tooltip") }
 
-    static func style(for snapshot: AccountSnapshot?, window: WindowKind, now: Date) -> Style {
+    static func style(for snapshot: AccountSnapshot?, window: WindowKind, provider: ProviderKind, now: Date) -> Style {
         guard let snapshot, snapshot.fetchedAt != nil, !snapshot.windows.isEmpty else {
             return Style(tint: .neutral, text: nil, fill: nil, toolTip: noDataToolTip)
         }
         if let full = snapshot.windows.first(where: { $0.usedPercent >= 100 }) {
             let countdown = full.resetsAt.map { formatCountdown(until: $0, now: now) }
-            return Style(tint: .red, text: countdown, fill: 1.0, toolTip: nil)
+            return Style(tint: .provider(provider), text: countdown, fill: 1.0, toolTip: nil)
         }
         let usage = snapshot.windows.first { $0.kind == window }?.usedPercent
             ?? snapshot.windows.map(\.usedPercent).max()
         guard let usage else {
             return Style(tint: .neutral, text: nil, fill: nil, toolTip: noDataToolTip)
         }
-        let tint: Style.Tint = usage < amberThreshold ? .green : (usage < redThreshold ? .amber : .red)
         return Style(
-            tint: tint,
+            tint: .provider(provider),
             text: "\(Int(usage.rounded()))%",
             fill: min(max(usage / 100, 0), 1),
             toolTip: nil
@@ -47,13 +45,18 @@ enum IconRenderer {
         return hours > 0 ? "\(hours)h \(minutes)m" : "\(minutes)m"
     }
 
-    static func image(for snapshot: AccountSnapshot?, window: WindowKind, now: Date = Date()) -> NSImage {
-        image(for: [(label: "account", snapshot: snapshot, window: window)], now: now)
+    static func image(
+        for snapshot: AccountSnapshot?,
+        window: WindowKind,
+        provider: ProviderKind,
+        now: Date = Date()
+    ) -> NSImage {
+        image(for: [(label: "account", snapshot: snapshot, window: window, provider: provider)], now: now)
     }
 
     /// One wide progress bar plus its own percentage per account.
     static func image(
-        for entries: [(label: String, snapshot: AccountSnapshot?, window: WindowKind)],
+        for entries: [(label: String, snapshot: AccountSnapshot?, window: WindowKind, provider: ProviderKind)],
         now: Date = Date()
     ) -> NSImage {
         let height = NSStatusBar.system.thickness
@@ -61,7 +64,7 @@ enum IconRenderer {
         let barHeight: CGFloat = 6
         let textGap: CGFloat = 3
         let entryGap: CGFloat = 8
-        let styles = entries.map { Self.style(for: $0.snapshot, window: $0.window, now: now) }
+        let styles = entries.map { Self.style(for: $0.snapshot, window: $0.window, provider: $0.provider, now: now) }
 
         var textSizes: [CGSize] = []
         var width: CGFloat = 0
@@ -107,9 +110,7 @@ enum IconRenderer {
 
     private static func color(for tint: Style.Tint) -> NSColor {
         switch tint {
-        case .green: .systemGreen
-        case .amber: .systemOrange
-        case .red: .systemRed
+        case .provider(let kind): kind.barNSColor
         case .neutral: .tertiaryLabelColor
         }
     }

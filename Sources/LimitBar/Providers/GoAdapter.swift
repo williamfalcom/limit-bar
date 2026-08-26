@@ -1,15 +1,10 @@
 import Foundation
 
 struct GoAdapter: ProviderAdapter, Sendable {
-    // Spike candidate list (design: "OpenCode Go | spike probes candidate endpoints"; upstream issues #10448/#18648).
-    // Probed in order; first 200-with-parseable-payload wins; exhaustion degrades to .unsupported.
-    static let candidateURLs: [URL] = [
-        URL(string: "https://opencode.ai/api/usage")!,
-        URL(string: "https://api.opencode.ai/v1/usage")!,
-    ]
-    static let dollarCaps: [WindowKind: Double] = [.fiveHour: 12, .weekly: 30, .monthly: 60]
+    // Official OpenCode Go quota endpoint (anomalyco/opencode#43983; envelope per cc-switch#6433).
+    static let usageURL = URL(string: "https://opencode.ai/zen/go/v1/usage")!
     static let periodKeys: [(key: String, kind: WindowKind)] = [
-        ("five_hour", .fiveHour),
+        ("rolling", .fiveHour),
         ("weekly", .weekly),
         ("monthly", .monthly),
     ]
@@ -30,41 +25,61 @@ struct GoAdapter: ProviderAdapter, Sendable {
             throw ProviderError.missingCredentials
         }
 
-        for url in Self.candidateURLs {
-            var request = URLRequest(url: url)
-            request.httpMethod = "GET"
-            request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-            if let windows = try? await probe(request) {
-                return windows
-            }
-        }
-        throw ProviderError.unsupported
-    }
+        var request = URLRequest(url: Self.usageURL)
+        request.httpMethod = "GET"
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
 
-    private func probe(_ request: URLRequest) async throws -> [LimitWindow]? {
-        let (data, response) = try await session.data(for: request)
-        guard let http = response as? HTTPURLResponse, http.statusCode == 200 else { return nil }
-        return try Self.parse(data)
+        let data: Data
+        let response: URLResponse
+        do {
+            (data, response) = try await session.data(for: request)
+        } catch {
+            throw ProviderError.network(error as? URLError ?? URLError(.badServerResponse))
+        }
+        guard let http = response as? HTTPURLResponse else {
+            throw ProviderError.network(URLError(.badServerResponse))
+        }
+        switch http.statusCode {
+        case 200:
+            return try Self.parse(data)
+        case 401, 403:
+            throw ProviderError.unauthorized
+        case 429:
+            throw ProviderError.rateLimited(
+                retryAfter: http.value(forHTTPHeaderField: "Retry-After").flatMap(TimeInterval.init)
+            )
+        default:
+            throw ProviderError.network(URLError(.badServerResponse))
+        }
     }
 
     static func parse(_ data: Data) throws -> [LimitWindow] {
-        guard let payload = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+        guard let payload = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let usage = payload["usage"] as? [String: Any] else {
             throw ProviderError.parseFailed
         }
         var windows: [LimitWindow] = []
         for (key, kind) in periodKeys {
-            guard let entry = payload[key] as? [String: Any],
-                  let used = (entry["used_usd"] as? Double) ?? ((entry["used_usd"] as? Int).map(Double.init)),
-                  let cap = dollarCaps[kind], cap > 0 else { continue }
+            guard let entry = usage[key] as? [String: Any],
+                  let rawPercent = (entry["percent"] as? Double) ?? ((entry["percent"] as? Int).map(Double.init)) else { continue }
             windows.append(LimitWindow(
                 kind: kind,
-                usedPercent: used / cap * 100,
-                usedAbsolute: String(format: "$%.2f", used),
-                resetsAt: nil
+                usedPercent: min(max(rawPercent, 0), 100),
+                usedAbsolute: nil,
+                resetsAt: resetDate(in: entry)
             ))
         }
         guard !windows.isEmpty else { throw ProviderError.parseFailed }
         return windows
+    }
+
+    private static func resetDate(in entry: [String: Any]) -> Date? {
+        guard let raw = entry["resetsAt"] as? String else { return nil }
+        let fractional = Date.ISO8601FormatStyle(includingFractionalSeconds: true)
+        if let date = try? Date(raw, strategy: fractional) {
+            return date
+        }
+        return try? Date(raw, strategy: Date.ISO8601FormatStyle())
     }
 
     static func apiKey(for account: Account) -> String {

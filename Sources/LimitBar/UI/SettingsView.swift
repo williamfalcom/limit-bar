@@ -178,6 +178,7 @@ private struct AccountRow: View {
         case .claudeCode: "c.circle.fill"
         case .codex: "x.square.fill"
         case .openCodeGo: "g.circle.fill"
+        case .githubCopilot: "chevron.left.forwardslash.chevron.right"
         }
     }
 
@@ -232,14 +233,15 @@ private struct AddAccountSheet: View {
                 Picker("Provider", selection: $provider) {
                     Text("Claude Code").tag(ProviderKind.claudeCode)
                     Text("Codex").tag(ProviderKind.codex)
-                    Text("OpenCode Go").tag(ProviderKind.openCodeGo)
+                    Text("OpenCode").tag(ProviderKind.openCodeGo)
+                    Text("GitHub Copilot").tag(ProviderKind.githubCopilot)
                 }
                 TextField("Label", text: $label, prompt: Text(promptForDefaultLabel))
                 if provider == .codex {
                     TextField("CODEX_HOME override (optional)", text: $codexHomeOverride)
                 }
                 if provider == .openCodeGo {
-                    SecureField("API key", text: $goAPIKey, prompt: Text("Paste your OpenCode Go API key"))
+                    SecureField("API key", text: $goAPIKey, prompt: Text("Paste your OpenCode API key"))
                 }
             }
             HStack {
@@ -268,7 +270,8 @@ private struct AddAccountSheet: View {
         switch provider {
         case .claudeCode: "Claude Code"
         case .codex: "Codex"
-        case .openCodeGo: "OpenCode Go"
+        case .openCodeGo: "OpenCode"
+        case .githubCopilot: "GitHub Copilot"
         }
     }
 

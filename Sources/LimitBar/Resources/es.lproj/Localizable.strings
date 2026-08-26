@@ -13,9 +13,9 @@
 "Sign-in required" = "Se requiere iniciar sesión";
 "The Claude Code credential was rejected, missing, or Keychain access was denied. Log in with the Claude Code CLI and allow limit-bar to read \"Claude Code-credentials\" when macOS asks." = "La credencial de Claude Code fue rechazada, falta o se denegó el acceso al llavero. Inicia sesión con la CLI de Claude Code y permite que limit-bar lea \"Claude Code-credentials\" cuando macOS lo pregunte.";
 "The Codex authentication failed or auth.json is missing. Log in again with the Codex CLI, then refresh." = "La autenticación de Codex falló o falta auth.json. Inicia sesión de nuevo con la CLI de Codex y actualiza.";
-"Your OpenCode Go API key was rejected. Paste a valid key in Settings." = "Tu clave de API de OpenCode Go fue rechazada. Pega una clave válida en Ajustes.";
+"Your OpenCode API key was rejected. Paste a valid key in Settings." = "Tu clave de API de OpenCode fue rechazada. Pega una clave válida en Ajustes.";
 
-"OpenCode Go usage API not available yet" = "La API de uso de OpenCode Go aún no está disponible";
+"OpenCode usage API not available yet" = "La API de uso de OpenCode aún no está disponible";
 "Limits will appear here once the provider exposes a usage endpoint." = "Los límites aparecerán aquí cuando el proveedor exponga un endpoint de uso.";
 
 "resets in %@" = "reinicia en %@";
@@ -39,7 +39,7 @@
 "Provider" = "Proveedor";
 "Label" = "Etiqueta";
 "API key" = "Clave de API";
-"Paste your OpenCode Go API key" = "Pega tu clave de API de OpenCode Go";
+"Paste your OpenCode API key" = "Pega tu clave de API de OpenCode";
 "Cancel" = "Cancelar";
 "Add" = "Agregar";
 "Open Settings" = "Abrir Ajustes";

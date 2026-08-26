@@ -22,6 +22,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let popover = NSPopover()
     private var statusItem: NSStatusItem?
     private var escMonitor: Any?
+    private let appVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
 
     override init() {
         let store = AccountStore(persistence: PersistenceController())
@@ -29,6 +30,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             .claudeCode: ClaudeAdapter(),
             .codex: CodexAdapter(),
             .openCodeGo: GoAdapter(credentials: KeychainStore()),
+            .githubCopilot: CopilotAdapter(),
         ]
         let engine = PollingEngine(store: store, adapters: adapters, notifications: NotificationService())
         self.store = store
@@ -54,6 +56,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         popover.contentViewController = NSHostingController(
             rootView: PanelHost(
                 store: store,
+                appVersion: appVersion,
                 onRefresh: { [weak self] in
                     guard let self else { return }
                     Task { await self.engine.refreshAllNow() }
@@ -78,7 +81,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func redrawIcon() {
         let entries = store.accounts.map { account in
-            (label: account.label, snapshot: store.snapshot(for: account.id), window: account.displayedWindow)
+            (
+                label: account.label,
+                snapshot: store.snapshot(for: account.id),
+                window: account.displayedWindow,
+                provider: account.provider
+            )
         }
         statusItem?.button?.image = IconRenderer.image(for: entries)
     }
@@ -175,6 +183,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
 private struct PanelHost: View {
     var store: AccountStore
+    var appVersion: String?
     var onRefresh: () -> Void
     var onOpenSettings: () -> Void
 
@@ -185,7 +194,8 @@ private struct PanelHost: View {
             onOpenSettings: {
                 NSApp.activate(ignoringOtherApps: true)
                 onOpenSettings()
-            }
+            },
+            appVersion: appVersion
         )
         .id(panelKey)
         .transition(.identity)

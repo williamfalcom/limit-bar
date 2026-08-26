@@ -4,6 +4,7 @@ struct PanelView: View {
     var store: AccountStore
     var onRefresh: () -> Void = {}
     var onOpenSettings: () -> Void = {}
+    var appVersion: String?
 
     var body: some View {
         Group {
@@ -20,15 +21,27 @@ struct PanelView: View {
 
     private var tabs: some View {
         VStack(spacing: 10) {
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 6) {
-                    ForEach(store.accounts) { account in
-                        tabButton(account)
+            HStack(spacing: 8) {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 6) {
+                        ForEach(store.accounts) { account in
+                            tabButton(account)
+                        }
                     }
+                    .padding(.horizontal, 2)
                 }
-                .padding(.horizontal, 2)
+                versionLabel
             }
             activeTabContent
+        }
+    }
+
+    @ViewBuilder
+    private var versionLabel: some View {
+        if let appVersion {
+            Text("v\(appVersion)")
+                .font(.system(size: 12).monospacedDigit())
+                .foregroundStyle(.secondary)
         }
     }
 
@@ -63,17 +76,19 @@ struct PanelView: View {
         let snapshot = activeSnapshot
         switch snapshot?.state {
         case .fresh, .stale, .error:
-            VStack(spacing: 8) {
-                if case .error(let message) = snapshot?.state {
-                    Label(message, systemImage: "exclamationmark.triangle")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(.red)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+            if let account = activeProvider {
+                VStack(spacing: 8) {
+                    if case .error(let message) = snapshot?.state {
+                        Label(message, systemImage: "exclamationmark.triangle")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(.red)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    ForEach(Array((snapshot?.windows ?? []).enumerated()), id: \.element.kind) { _, window in
+                        WindowRow(window: window, fetchedAt: snapshot?.fetchedAt, now: Date(), provider: account.provider)
+                    }
+                    footer(fetchedAt: snapshot?.fetchedAt, isStale: snapshot?.state == .stale)
                 }
-                ForEach(Array((snapshot?.windows ?? []).enumerated()), id: \.element.kind) { _, window in
-                    WindowRow(window: window, fetchedAt: snapshot?.fetchedAt, now: Date())
-                }
-                footer(fetchedAt: snapshot?.fetchedAt, isStale: snapshot?.state == .stale)
             }
         case .unauthorized:
             if let provider = activeProvider {
@@ -81,10 +96,10 @@ struct PanelView: View {
             }
         case .unsupported:
             VStack(spacing: 6) {
-                Label(NSLocalizedString(NSLocalizedString("OpenCode Go usage API not available yet", comment: ""), comment: ""), systemImage: "hourglass")
+                Label(NSLocalizedString("OpenCode usage API not available yet", comment: ""), systemImage: "hourglass")
                     .font(.callout)
                     .foregroundStyle(.secondary)
-                Text(NSLocalizedString(NSLocalizedString("Limits will appear here once the provider exposes a usage endpoint.", comment: ""), comment: ""))
+                Text(NSLocalizedString("Limits will appear here once the provider exposes a usage endpoint.", comment: ""))
                     .font(.caption)
                     .foregroundStyle(.tertiary)
             }
@@ -134,6 +149,9 @@ struct PanelView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 18)
+        .overlay(alignment: .topTrailing) {
+            versionLabel
+        }
     }
 
     static func updatedText(fetchedAt: Date?, now: Date, stale: Bool = false) -> String {
@@ -155,6 +173,7 @@ private struct WindowRow: View {
     let window: LimitWindow
     let fetchedAt: Date?
     let now: Date
+    let provider: ProviderKind
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -172,7 +191,7 @@ private struct WindowRow: View {
                     .font(.system(size: 17, weight: .bold).monospacedDigit())
                     .foregroundStyle(.primary)
             }
-            LimitProgressBar(percent: window.usedPercent, tint: tint)
+            LimitProgressBar(percent: window.usedPercent, tint: provider.barColor)
             if let resetsAt = window.resetsAt {
                 Text("resets in \(IconRenderer.formatCountdown(until: resetsAt, now: now))")
                     .font(.system(size: 15, weight: .medium).monospacedDigit())
@@ -191,12 +210,6 @@ private struct WindowRow: View {
         case .weeklyModel(let model):
             String(format: NSLocalizedString("Weekly · %@", comment: "per-model weekly window title"), model)
         }
-    }
-
-    private var tint: Color {
-        if window.usedPercent >= IconRenderer.redThreshold { return .red }
-        if window.usedPercent >= IconRenderer.amberThreshold { return .orange }
-        return .green
     }
 }
 
@@ -247,7 +260,9 @@ private struct ReauthInstructions: View {
         case .codex:
             NSLocalizedString("Codex authentication failed or auth.json is missing. Log in again with the Codex CLI, then refresh.", comment: "Codex reauth instructions")
         case .openCodeGo:
-            NSLocalizedString("Your OpenCode Go API key was rejected. Paste a valid key in Settings.", comment: "Go reauth instructions")
+            NSLocalizedString("Your OpenCode API key was rejected. Paste a valid key in Settings.", comment: "Go reauth instructions")
+        case .githubCopilot:
+            NSLocalizedString("Your GitHub Copilot authentication was rejected. Log in with the Copilot CLI and refresh.", comment: "Copilot reauth instructions")
         }
     }
 
@@ -256,6 +271,7 @@ private struct ReauthInstructions: View {
         case .claudeCode: "claude login"
         case .codex: "codex login"
         case .openCodeGo: "# Settings → Accounts → Go API key"
+        case .githubCopilot: "copilot login"
         }
     }
 }

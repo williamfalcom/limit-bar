@@ -42,13 +42,29 @@
 - **Date**: 2026-08-21
 - **Status**: active
 
+### AD-006
+- **Decision**: Bar surfaces use fixed per-provider accent colors - popover fills and menu bar icon both tint with Claude `#FF8C00`, Codex `#4169E1`, OpenCode `#C0C0C0` (ProviderTheme); usage-level green/amber/red tinting is retired from bars and icon. OpenCode Go usage comes from the official `https://opencode.ai/zen/go/v1/usage` endpoint behind `ProviderAdapter`; `.unsupported` is no longer thrown by GoAdapter but kept as a snapshot state for graceful degradation.
+- **Reason**: User decision ("sempre cor do provedor"); usage level remains conveyed by the % text and 80% threshold notifications; maintainer-confirmed official endpoint makes the candidate-URL spike obsolete.
+- **Trade-off**: High usage no longer changes bar color anywhere; live endpoint shape was pinned by one captured payload (2026-08-25), so parser treats unknown/missing fields defensively (`resetsAt: nil`, `usedAbsolute: nil`).
+- **Scope**: `IconRenderer`, `PanelView`/`WindowRow`, `GoAdapter`, provider naming copy across the three `.strings` tables.
+- **Date**: 2026-08-25
+- **Status**: active
+
+### AD-007
+- **Decision**: GitHub Copilot usage is collected through the installed CLI's headless stdio JSON-RPC interface (`connect` followed by `account.getQuota`). Only the finite `premium_interactions` quota is rendered; its `remainingPercentage` is inverted into consumed usage, and unlimited `chat`/`completions` quotas are ignored.
+- **Reason**: The Copilot CLI exposes the authenticated quota through a structured local RPC surface, while the user approved Premium requests as the useful quota to display.
+- **Trade-off**: The adapter is coupled to the Copilot CLI headless protocol and requires the user to be logged in with that CLI; CLI absence or protocol drift degrades through existing error states.
+- **Scope**: `CopilotAdapter`, GitHub Copilot provider identity, and the existing provider-colored icon/popover surfaces.
+- **Date**: 2026-08-25
+- **Status**: active
+
 ## Handoff
 
-- **Feature**: `.specs/features/menu-bar-limits/` - RELEASED as v0.1.2 (tag pushed to origin)
-- **Phase / Task**: Project closed for the session; all suites green incl. 2 new CodexAdapter locator tests
-- **Completed**: v0.1.0 pipeline; v0.1.1 status menu/settings window; **v0.1.2: fixed Codex tab error in GUI-launched apps** — `CodexAppServerClient.locateExecutable` resolves the CLI over `$PATH` + known prefixes with `/bin/zsh -l` fallback (GUI processes get minimal PATH, breaking `/usr/bin/env codex`); release notes drafted in chat for manual GitHub upload
+- **Feature**: `.specs/features/provider-identity/` - provider identity plus GitHub Copilot Premium requests extension implemented and validated on branch `feat/provider-identity`; `VERSION` bumped to 0.2.0; PR #1 open: https://github.com/williamfalcom/limit-bar/pull/1
+- **Phase / Task**: Session closed; T9-T12 complete; independent Verifier PASS and full gate evidence recorded in `validation.md`
+- **Completed**: previous provider colors/Go endpoint/OpenCode copy/version work; GitHub Copilot identity with `#6A5ACD`; `CopilotAdapter` using `copilot --headless --no-auto-update --stdio` and `account.getQuota`; Premium requests mapped to consumed monthly percent; unlimited quotas ignored; actual CLI smoke test passed
 - **In-progress** (file:line): none
-- **Next step**: If resuming — decide fate of the dead auth.json→chatgpt.com usage fallback (API key → 403, OAuth token → Cloudflare managed challenge 403; candidate AD-006 to remove or rework it). Prior follow-ups stand: OpenCode Go still .unsupported by design until upstream API (#10448/#18648); dashboard scraping/local estimation need a new spec decision
+- **Next step**: review and merge PR #1, then tag `v0.2.0`. Deferred (context.md): Zen balance display (#10448), Go usage history, dead Codex auth.json fallback decision, possible warning affordance re-addition if provider-only color hides high usage
 - **Blockers**: none
-- **Uncommitted files**: only this handoff edit + `.claude/napkin.md` (committed on close)
-- **Branch**: main
+- **Uncommitted files**: none
+- **Branch**: feat/provider-identity

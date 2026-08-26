@@ -13,9 +13,9 @@
 "Sign-in required" = "Sign-in required";
 "The Claude Code credential was rejected, missing, or Keychain access was denied. Log in with the Claude Code CLI and allow limit-bar to read \"Claude Code-credentials\" when macOS asks." = "The Claude Code credential was rejected, missing, or Keychain access was denied. Log in with the Claude Code CLI and allow limit-bar to read \"Claude Code-credentials\" when macOS asks.";
 "Codex authentication failed or auth.json is missing. Log in again with the Codex CLI, then refresh." = "Codex authentication failed or auth.json is missing. Log in again with the Codex CLI, then refresh.";
-"Your OpenCode Go API key was rejected. Paste a valid key in Settings." = "Your OpenCode Go API key was rejected. Paste a valid key in Settings.";
+"Your OpenCode API key was rejected. Paste a valid key in Settings." = "Your OpenCode API key was rejected. Paste a valid key in Settings.";
 
-"OpenCode Go usage API not available yet" = "OpenCode Go usage API not available yet";
+"OpenCode usage API not available yet" = "OpenCode usage API not available yet";
 "Limits will appear here once the provider exposes a usage endpoint." = "Limits will appear here once the provider exposes a usage endpoint.";
 
 "resets in %@" = "resets in %@";
@@ -39,7 +39,7 @@
 "Provider" = "Provider";
 "Label" = "Label";
 "API key" = "API key";
-"Paste your OpenCode Go API key" = "Paste your OpenCode Go API key";
+"Paste your OpenCode API key" = "Paste your OpenCode API key";
 "Cancel" = "Cancel";
 "Add" = "Add";
 "Open Settings" = "Open Settings";
