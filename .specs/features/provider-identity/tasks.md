@@ -396,7 +396,7 @@ Adds the fourth provider, its fixed color, real Premium requests quota, and UI w
 - [x] Copilot Premium requests decision is recorded with source, inversion, and failure-state scope
 - [x] All 27 requirement IDs are mapped to tasks with statuses updated
 - [x] Full gate passes: `xcodegen generate && xcodebuild build … && xcodebuild test …`
-- [ ] Independent Verifier reports PASS and `validate_state.py provider-identity` passes
+- [x] Independent Verifier reports PASS and `validate_state.py provider-identity` passes
 
 **Tests**: none
 **Gate**: full

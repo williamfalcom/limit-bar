@@ -60,11 +60,11 @@
 
 ## Handoff
 
-- **Feature**: `.specs/features/provider-identity/` - provider identity plus GitHub Copilot Premium requests extension implemented on branch `feat/provider-identity`; `VERSION` bumped to 0.2.0; PR #1 open: https://github.com/williamfalcom/limit-bar/pull/1
-- **Phase / Task**: T9-T11 complete; T12 docs and full gate complete; independent Verifier for the Copilot extension is next
+- **Feature**: `.specs/features/provider-identity/` - provider identity plus GitHub Copilot Premium requests extension implemented and validated on branch `feat/provider-identity`; `VERSION` bumped to 0.2.0; PR #1 open: https://github.com/williamfalcom/limit-bar/pull/1
+- **Phase / Task**: Session closed; T9-T12 complete; independent Verifier PASS and full gate evidence recorded in `validation.md`
 - **Completed**: previous provider colors/Go endpoint/OpenCode copy/version work; GitHub Copilot identity with `#6A5ACD`; `CopilotAdapter` using `copilot --headless --no-auto-update --stdio` and `account.getQuota`; Premium requests mapped to consumed monthly percent; unlimited quotas ignored; actual CLI smoke test passed
 - **In-progress** (file:line): none
-- **Next step**: run the independent Copilot-extension Verifier, confirm `validate_state.py`, review and merge PR #1, then tag `v0.2.0`. Deferred (context.md): Zen balance display (#10448), Go usage history, dead Codex auth.json fallback decision, possible warning affordance re-addition if provider-only color hides high usage
+- **Next step**: review and merge PR #1, then tag `v0.2.0`. Deferred (context.md): Zen balance display (#10448), Go usage history, dead Codex auth.json fallback decision, possible warning affordance re-addition if provider-only color hides high usage
 - **Blockers**: none
 - **Uncommitted files**: none
 - **Branch**: feat/provider-identity
