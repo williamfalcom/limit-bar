@@ -53,7 +53,7 @@
 ## Handoff
 
 - **Feature**: `.specs/features/provider-identity/` - fully implemented and validated on branch `feat/provider-identity`; `VERSION` bumped to 0.2.0; PR #1 open: https://github.com/williamfalcom/limit-bar/pull/1
-- **Phase / Task**: Execute closed; independent Verifier + manual checks pass recorded in `validation.md`; release PR awaiting review
+- **Phase / Task**: Session closed; independent Verifier + manual checks pass recorded in `validation.md`; release PR awaiting review
 - **Completed**: per-provider colors (ProviderTheme -> IconRenderer tints + popover WindowRow fills); GoAdapter reworked onto official `/zen/go/v1/usage` (live payload pinned as fixture; resetsAt parsed ISO8601-fractional; 401/403/429/network/parse mapping); "OpenCode" copy rename across en/pt-BR/es; version label `v<CFBundleShortVersionString>` in popover top-right (both states)
 - **In-progress** (file:line): none
 - **Next step**: review and merge PR #1, then tag `v0.2.0`. Deferred (context.md): Zen balance display (#10448), Go usage history, dead Codex auth.json fallback decision, possible warning affordance re-addition if provider-only color hides high usage
