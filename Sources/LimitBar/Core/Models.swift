@@ -1,6 +1,6 @@
 import Foundation
 
-enum ProviderKind: String, Codable, Sendable, Equatable { case claudeCode, codex, openCodeGo }
+enum ProviderKind: String, Codable, Sendable, Equatable { case claudeCode, codex, openCodeGo, githubCopilot }
 enum WindowKind: Sendable, Equatable, Hashable {
     case fiveHour
     case weekly

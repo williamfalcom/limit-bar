@@ -35,9 +35,17 @@ struct ProviderThemeTests {
         #expect(abs(b - 192 / 255) < 0.001)
     }
 
+    @Test("GitHub Copilot accent is #6A5ACD")
+    func githubCopilotIsSlateBlue() {
+        let (r, g, b) = srgbComponents(ProviderKind.githubCopilot.barNSColor)
+        #expect(abs(r - 106 / 255) < 0.001)
+        #expect(abs(g - 90 / 255) < 0.001)
+        #expect(abs(b - 205 / 255) < 0.001)
+    }
+
     @Test("SwiftUI barColor bridges from barNSColor")
     func barColorBridgesFromNSColor() {
-        for kind in [ProviderKind.claudeCode, .codex, .openCodeGo] {
+        for kind in [ProviderKind.claudeCode, .codex, .openCodeGo, .githubCopilot] {
             #expect(kind.barColor == Color(nsColor: kind.barNSColor))
         }
     }

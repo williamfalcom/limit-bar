@@ -261,6 +261,8 @@ private struct ReauthInstructions: View {
             NSLocalizedString("Codex authentication failed or auth.json is missing. Log in again with the Codex CLI, then refresh.", comment: "Codex reauth instructions")
         case .openCodeGo:
             NSLocalizedString("Your OpenCode API key was rejected. Paste a valid key in Settings.", comment: "Go reauth instructions")
+        case .githubCopilot:
+            NSLocalizedString("Your GitHub Copilot authentication was rejected. Log in with the Copilot CLI and refresh.", comment: "Copilot reauth instructions")
         }
     }
 
@@ -269,6 +271,7 @@ private struct ReauthInstructions: View {
         case .claudeCode: "claude login"
         case .codex: "codex login"
         case .openCodeGo: "# Settings → Accounts → Go API key"
+        case .githubCopilot: "copilot login"
         }
     }
 }

@@ -17,6 +17,7 @@ struct ModelsTests {
         #expect(ProviderKind.claudeCode.rawValue == "claudeCode")
         #expect(ProviderKind.codex.rawValue == "codex")
         #expect(ProviderKind.openCodeGo.rawValue == "openCodeGo")
+        #expect(ProviderKind.githubCopilot.rawValue == "githubCopilot")
         #expect(WindowKind.fiveHour.rawValue == "fiveHour")
         #expect(WindowKind.weekly.rawValue == "weekly")
         #expect(WindowKind.monthly.rawValue == "monthly")

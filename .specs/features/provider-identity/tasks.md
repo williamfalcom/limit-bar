@@ -309,11 +309,11 @@ Adds the fourth provider, its fixed color, real Premium requests quota, and UI w
 
 **Done when**:
 
-- [ ] `ProviderKind.githubCopilot.rawValue` is exactly `githubCopilot` and survives the existing model contract
-- [ ] `ProviderKind.barNSColor` returns sRGB `(106/255, 90/255, 205/255)` and `barColor` bridges it
-- [ ] Account picker and all provider labels include "GitHub Copilot"; no existing provider raw values change
-- [ ] Unit tests assert the raw value and exact color components
-- [ ] Quick gate passes
+- [x] `ProviderKind.githubCopilot.rawValue` is exactly `githubCopilot` and survives the existing model contract
+- [x] `ProviderKind.barNSColor` returns sRGB `(106/255, 90/255, 205/255)` and `barColor` bridges it
+- [x] Account picker and all provider labels include "GitHub Copilot"; no existing provider raw values change
+- [x] Unit tests assert the raw value and exact color components
+- [x] Quick gate passes
 
 **Tests**: unit
 **Gate**: quick
