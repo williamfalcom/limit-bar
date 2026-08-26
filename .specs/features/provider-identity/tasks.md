@@ -337,12 +337,12 @@ Adds the fourth provider, its fixed color, real Premium requests quota, and UI w
 
 **Done when**:
 
-- [ ] The live CLI transport sends framed `connect` then `account.getQuota` requests and returns the structured quota response
-- [ ] `premium_interactions.remainingPercentage` maps to one monthly window with `usedPercent = 100 - remainingPercentage`, clamp 0...100, and parseable `resetDate` mapped to `resetsAt`
-- [ ] Unlimited `chat`/`completions` are ignored; missing Premium data throws `.parseFailed`
-- [ ] CLI/transport errors map to `.network`; RPC error maps to `.unauthorized`; malformed response maps to `.parseFailed`
-- [ ] Unit tests cover framing/parser, 82.5% real-style inversion, boundaries, reset optionality, ignored quotas, and all failures
-- [ ] Quick gate passes
+- [x] The live CLI transport sends framed `connect` then `account.getQuota` requests and returns the structured quota response
+- [x] `premium_interactions.remainingPercentage` maps to one monthly window with `usedPercent = 100 - remainingPercentage`, clamp 0...100, and parseable `resetDate` mapped to `resetsAt`
+- [x] Unlimited `chat`/`completions` are ignored; missing Premium data throws `.parseFailed`
+- [x] CLI/transport errors map to `.network`; RPC error maps to `.unauthorized`; malformed response maps to `.parseFailed`
+- [x] Unit tests cover framing/parser, 82.5% real-style inversion, boundaries, reset optionality, ignored quotas, and all failures
+- [x] Quick gate passes
 
 **Tests**: unit
 **Gate**: quick
