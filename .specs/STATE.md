@@ -61,7 +61,7 @@
 ## Handoff
 
 - **Feature**: `.specs/features/provider-identity/` - released as `v0.2.0` from merged PR #1; release assets published: https://github.com/williamfalcom/limit-bar/releases/tag/v0.2.0
-- **Phase / Task**: Release closed; T1-T12 complete; independent Verifier PASS and full gate evidence recorded in `validation.md`
+- **Phase / Task**: Session closed; release closed; T1-T12 complete; independent Verifier PASS and full gate evidence recorded in `validation.md`
 - **Completed**: previous provider colors/Go endpoint/OpenCode copy/version work; GitHub Copilot identity with `#6A5ACD`; `CopilotAdapter` using `copilot --headless --no-auto-update --stdio` and `account.getQuota`; Premium requests mapped to consumed monthly percent; unlimited quotas ignored; actual CLI smoke test passed
 - **In-progress** (file:line): none
 - **Next step**: begin the next feature from `main`. Deferred (context.md): Zen balance display (#10448), Go usage history, dead Codex auth.json fallback decision, possible warning affordance re-addition if provider-only color hides high usage
