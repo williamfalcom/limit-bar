@@ -366,10 +366,10 @@ Adds the fourth provider, its fixed color, real Premium requests quota, and UI w
 
 **Done when**:
 
-- [ ] `AppDelegate` registers `.githubCopilot: CopilotAdapter()` and refreshes it through the normal polling path
-- [ ] Adding a GitHub Copilot account requires no API-key field and uses the CLI's existing login
-- [ ] The Copilot tab and icon use `#6A5ACD` through the existing provider theme path at any usage level
-- [ ] Build gate passes
+- [x] `AppDelegate` registers `.githubCopilot: CopilotAdapter()` and refreshes it through the normal polling path
+- [x] Adding a GitHub Copilot account requires no API-key field and uses the CLI's existing login
+- [x] The Copilot tab and icon use `#6A5ACD` through the existing provider theme path at any usage level
+- [x] Build gate passes
 
 **Tests**: none
 **Gate**: build

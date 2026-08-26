@@ -30,6 +30,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             .claudeCode: ClaudeAdapter(),
             .codex: CodexAdapter(),
             .openCodeGo: GoAdapter(credentials: KeychainStore()),
+            .githubCopilot: CopilotAdapter(),
         ]
         let engine = PollingEngine(store: store, adapters: adapters, notifications: NotificationService())
         self.store = store
