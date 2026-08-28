@@ -102,6 +102,10 @@ The project layout is generated from `project.yml`; run `xcodegen generate` afte
 
 Single source of truth: the [`VERSION`](VERSION) file (semver). Builds inject it as the bundle's marketing version; the git commit count becomes the build number. Releases are tagged `v<version>` — currently **[v0.2.0](https://github.com/williamfalcom/limit-bar/releases/tag/v0.2.0)**.
 
+## License
+
+limit-bar is licensed under the [GNU Affero General Public License v3.0](LICENSE).
+
 ---
 
 <div align="center">

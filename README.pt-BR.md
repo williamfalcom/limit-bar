@@ -102,6 +102,10 @@ A estrutura do projeto é gerada a partir do `project.yml`; rode `xcodegen gener
 
 Fonte única de verdade: o arquivo [`VERSION`](VERSION) (semver). Os builds injetam essa versão no bundle; a contagem de commits vira o número de build. Releases recebem tags `v<versão>` — atualmente **[v0.2.0](https://github.com/williamfalcom/limit-bar/releases/tag/v0.2.0)**.
 
+## Licença
+
+O limit-bar é licenciado sob a [GNU Affero General Public License v3.0](LICENSE).
+
 ---
 
 <div align="center">
