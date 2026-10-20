@@ -418,7 +418,7 @@ T7 → T8
 - [x] OAuth removal presents a localized warning that the Console session is not revoked remotely.
 - [x] New reauth/removal strings are present in all three locales; last-good data remains visible during repair.
 - [x] Build and full test gates pass (151 tests).
-- [ ] Manual UAT: user confirmed OAuth browser reconnection passed on v0.3.0; API-key replacement has not yet been tested.
+- [ ] Manual UAT: user confirmed OAuth browser reconnection and the local-only OAuth removal warning passed on v0.3.0; API-key replacement has not yet been tested.
 
 **Tests**: build/manual UAT (SwiftUI has no unit/UI test target)
 **Gate**: Build
