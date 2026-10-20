@@ -186,14 +186,46 @@ T7 → T8
 - Skills: `swift-language`, `swift-testing-pro`
 
 **Done when**:
-- [ ] Device-code request sends JSON with `client_id=limit-bar` and `supports_org_scope=true` to the official Console endpoint.
-- [ ] Only HTTPS `opencode.ai` verification URLs are emitted to the UI.
-- [ ] Polling honors `interval`, `authorization_pending`, `slow_down` (+5 s), expiry, and Task cancellation.
-- [ ] Tests cover request fields, trusted/untrusted URI, approval, pending/slow-down, expiry/cancel, and malformed/non-200 responses (at least 7 cases; no live network).
-- [ ] Quick gate passes.
+- [x] Device-code request sends JSON with `client_id=limit-bar` and `supports_org_scope=true` to the official Console endpoint.
+- [x] Only HTTPS `opencode.ai` verification URLs are emitted to the UI.
+- [x] Polling honors `interval`, `authorization_pending`, `slow_down` (+5 s), expiry, and Task cancellation.
+- [x] Nine tests cover request fields, trusted/untrusted URI, approval, pending/slow-down, expiry/cancel, malformed/non-200 responses, and refresh rotation (no live network).
+- [x] Quick gate passes.
 
 **Tests**: unit (`Tests/LimitBarTests/GoOAuthClientTests.swift`, at least 7 cases)
 **Gate**: Quick
+
+**T3 Post-Gate Review**:
+
+*Check A - Sufficient (coverage mapping):*
+
+| Done-when criterion / spec AC / edge case | `file:line` + assertion expression | Spec-defined outcome | Covered? |
+|---|---|---|---|
+| Device-code JSON request and challenge fields | `GoOAuthClientTests.swift:183-195` - asserted device/user code, URL, expiry, interval, endpoint, method, content type, `client_id`, and `supports_org_scope` | Request uses the official device endpoint and obtains all challenge values (OGA-01). | ✅ |
+| Only secure URLs on exact `opencode.ai` are accepted | `GoOAuthClientTests.swift:203-214` - four invalid URI shapes each throw `.untrustedVerificationURL`; `:185` asserts the accepted official URI | Refuse non-HTTPS, different host, non-default port, or user-info URL (OGA-02). | ✅ |
+| Polling honors interval and pending/slow-down behavior | `GoOAuthClientTests.swift:235-249` - returned credential fields, `recordedIntervals == [1, 1, 6]`, token endpoint body assertions | Pending continues; slow_down increases the next interval by five seconds (OGA-03). | ✅ |
+| Expiry and cancellation stop polling | `GoOAuthClientTests.swift:264-271` - exact expiration error, sleep duration, no request; `:280-284` - cancellation error and no request | Expired/cancelled flow does not poll or create credentials (OGA-03/06). | ✅ |
+| Malformed and non-200 device-code responses are rejected | `GoOAuthClientTests.swift:295-310` - exact `.invalidResponse` and `.httpStatus(503)` | Invalid Console responses fail rather than creating a challenge. | ✅ |
+| Refresh exchanges and maps the rotated token pair; unauthorized refresh requires reconnection | `GoOAuthClientTests.swift:329-340` - access/refresh/expiry/workspace values and JSON fields; `:354-360` - 401/403 map to `.invalidGrant` | Rotation and unauthorized response are represented without exposing token values in errors. | ✅ |
+| Quick gate includes new tests | log confirms nine `GoOAuthClient` cases and `Test run with 137 tests ... passed` | Required OAuth client tests run with no live network; all prior tests remain. | ✅ |
+
+*Check C - Necessary (reverse mapping):*
+
+| `file:line` + assertion expression | Maps to | Keep? |
+|---|---|---|
+| `GoOAuthClientTests.swift:183-195` | OGA-01 device request and challenge | ✅ |
+| `GoOAuthClientTests.swift:185`, `:203-214` | OGA-02 trusted verification URL | ✅ |
+| `GoOAuthClientTests.swift:235-249`, `:264-271` | OGA-03 poll timing, pending, slow_down, and expiry | ✅ |
+| `GoOAuthClientTests.swift:280-284` | OGA-06 local cancellation | ✅ |
+| `GoOAuthClientTests.swift:295-310` | T3 malformed/non-200 response handling | ✅ |
+| `GoOAuthClientTests.swift:329-340`, `:354-360` | T3 token refresh protocol and OGA-17 invalid-grant pathway foundation | ✅ |
+
+- [x] Check A: task criteria and applicable spec cases have exact test evidence and matching values.
+- [x] Check B: tests assert returned challenge/token data and emitted request fields; no call-count-only coverage.
+- [x] Check C: every test maps to T3 or the listed requirement; no speculative test was added.
+- [x] Check D: follows `AGENTS.md` and Swift Testing conventions with injected HTTP, clock, and sleep dependencies.
+
+**Verdict**: T3 coverage is sufficient and necessary; no spec-precision gap or deviation.
 
 ### Phase 2: OAuth refresh and quota integration
 

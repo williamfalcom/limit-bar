@@ -142,12 +142,12 @@ limit-bar currently requires an OpenCode API key, while the user is on OpenCode 
 
 | Requirement ID | Story | Phase | Status |
 |---|---|---|---|
-| OGA-01 | P1: Browser connection | Design | In Design |
-| OGA-02 | P1: Browser connection | Design | In Design |
-| OGA-03 | P1: Browser connection | Design | In Design |
+| OGA-01 | P1: Browser connection | Design | Implementing |
+| OGA-02 | P1: Browser connection | Design | Implementing |
+| OGA-03 | P1: Browser connection | Design | Implementing |
 | OGA-04 | P1: Browser connection | Design | In Design |
 | OGA-05 | P1: Browser connection | Design | In Design |
-| OGA-06 | P1: Browser connection | Design | In Design |
+| OGA-06 | P1: Browser connection | Design | Implementing |
 | OGA-07 | P1: Browser connection | Design | In Design |
 | OGA-08 | P1: Browser connection | Design | Implementing |
 | OGA-09 | P1: API-key compatibility | Design | Verified |
