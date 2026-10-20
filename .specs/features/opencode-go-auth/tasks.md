@@ -469,9 +469,9 @@ T7 → T8
 **Done when**:
 - [x] English, Brazilian Portuguese, and Spanish instructions explain browser login, API-key alternative, and local-only disconnect accurately.
 - [ ] Spec traceability and task status match test/build evidence; `.specs/STATE.md` Handoff points to the next unfinished or completed state without altering unrelated decisions.
-- [ ] Full build and test gates pass; new Swift Testing cases are visible in test output.
+- [x] Full build and test gates pass; feature Swift Testing cases are visible in the result (151 passed, 0 failed).
 - [ ] Manual UAT confirms V2 CLI login remains active, OAuth and API-key accounts both fetch the expected quota, and removal/reconnect behave as specified.
-- [ ] No tokens, device codes, authorization headers, user identifiers, or live-account quota data are present in the repository diff.
+- [x] No live tokens, device codes, authorization headers, user identifiers, or live-account quota data are present in the repository diff; test-only credentials/codes are synthetic fixtures.
 
 **Tests**: full suite + localization/security audit + manual UAT
 **Gate**: Full

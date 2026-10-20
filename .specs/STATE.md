@@ -69,10 +69,10 @@
 ## Handoff
 
 - **Feature**: OpenCode Go dual authentication (`.specs/features/opencode-go-auth/`)
-- **Phase / Task**: Phase 3 / T7 — method-specific OpenCode reauthentication and safe local removal; implementation committed, awaiting manual UAT
-- **Completed**: T1–T6 committed through `e6d5022`; user confirmed v0.2.3 OAuth setup, API-key setup, cancellation safety, and unclipped Add Account layout. T7 implementation is committed as `08a4e3d`; build/test gates pass (151 tests).
-- **In-progress** (file:line): `Sources/LimitBar/UI/PanelView.swift:100-113,258-302` retains cached quota and offers method-matched repair; `Sources/LimitBar/UI/GoAccountReauthenticationSheet.swift` reconnects using the existing account ID; `Sources/LimitBar/UI/SettingsView.swift:141-162,199-220` handles safe removal and the OAuth local-only warning.
-- **Next step**: rebuild the committed T7 source as v0.2.3, then manually verify reauthentication and the OAuth removal warning using `.build/dd/Build/Products/Debug/limit-bar.app`; do not revoke a live Console session just to force the OAuth unauthorized state. Then close T7 and proceed with T8 docs/version bump to 0.3.0.
-- **Blockers**: T7 UAT is pending; no UI-test target exists.
-- **Uncommitted files**: `.specs/STATE.md`
-- **Branch**: `feat/opencode-go-auth-v0.3` (T6 based on local `HEAD`, T7 in progress)
+- **Phase / Task**: Phase 4 / T8 — docs/version, automated gates, localization, and source/docs security audit are complete; manual account-lifecycle UAT remains
+- **Completed**: T1–T6 implementation committed through `e6d5022`, with T6 UAT confirmed by the user. T7 implementation is committed as `08a4e3d`. Trilingual docs and `VERSION=0.3.0` are committed as `c28f19a`. Final test result: 151 passed, 0 failed; task/spec validators and `.strings` lint pass.
+- **In-progress** (file:line): `README.md`, `README.pt-BR.md`, and `README.es.md` explain browser-first OAuth, API-key alternative, Keychain storage, independent CLI V2 session, and local-only OAuth removal. `PanelView.swift` retains cached quota and offers method-matched repair; Settings confirms local-only OAuth removal.
+- **Next step**: user UAT on `.build/dd/Build/Products/Debug/limit-bar.app` (v0.3.0, build 90): confirm V2 CLI login remains active, OAuth and API-key quota fetches, and repair/removal UI. Do not revoke an active Console session just to force an OAuth unauthorized state. Then complete traceability, commit final handoff, push the feature branch, and create the PR.
+- **Blockers**: T7/T8 manual UAT remains pending; no UI-test target exists.
+- **Uncommitted files**: `.specs/STATE.md`, `.specs/features/opencode-go-auth/tasks.md`
+- **Branch**: `feat/opencode-go-auth-v0.3` (T6–T7 implementation and T8 docs/version committed; awaiting manual UAT)
