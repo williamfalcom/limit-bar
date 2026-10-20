@@ -242,15 +242,46 @@ T7 → T8
 - Skills: `swift-language`, `swift-testing-pro`
 
 **Done when**:
-- [ ] Authorization stores tokens before returning success; Keychain failure produces no usable account credential.
-- [ ] Refresh occurs when expiry is within 60 seconds and persists the rotated pair before returning the new access token.
-- [ ] Concurrent requests for one account cause exactly one refresh exchange; separate accounts do not share credentials.
-- [ ] Invalid grant/401 never replays the consumed token; write failure leaves the prior Keychain envelope intact.
-- [ ] At least 6 unit cases cover expiry, refresh, rotation, concurrency, invalid grant, and persistence failure.
-- [ ] Quick gate passes.
+- [x] Authorization stores tokens before returning success; Keychain failure produces no usable account credential.
+- [x] Refresh occurs when expiry is within 60 seconds and persists the rotated pair before returning the new access token.
+- [x] Concurrent requests for one account cause exactly one refresh exchange; separate accounts do not share credentials.
+- [x] Invalid grant/transient failures never replay the consumed token; write failure leaves the prior Keychain envelope intact.
+- [x] Ten unit cases cover API-key selection, expiry, authorization persistence, rotation, concurrency, account isolation, invalid grant, transient failure, and persistence failure.
+- [x] Quick gate passes.
 
 **Tests**: unit (`Tests/LimitBarTests/GoAuthManagerTests.swift`, at least 6 cases)
 **Gate**: Quick
+
+**T4 Post-Gate Review**:
+
+*Check A - Sufficient (coverage mapping):*
+
+| Done-when criterion / spec AC / edge case | `file:line` + assertion expression | Spec-defined outcome | Covered? |
+|---|---|---|---|
+| Authorization persists tokens before success; Keychain failure leaves no new credential | `GoAuthManager.swift:41-45`; `GoAuthManagerTests.swift:215-235` - stored credential equals expected and polling called once; `:238-260` - exact write error and missing item | Persist tokens before account setup can succeed; do not create an OAuth account without a saved credential (OGA-04/05). | ✅ |
+| OAuth stays fresh outside the margin and refreshes at ≤60 seconds; rotation is persisted before Bearer return | `GoAuthManager.swift:60-65,96-109`; `GoAuthManagerTests.swift:278-324` - >60s returns current access token with zero refreshes; exactly 60s returns rotated token and vault equals rotated pair | Refresh before usage when expiry is within 60 seconds; use only persisted rotation (OGA-17; edge cases). | ✅ |
+| One account's concurrent requests coalesce, and account credentials remain isolated | `GoAuthManagerTests.swift:327-362` - two tokens equal new access, refresh count is one, persisted pair is rotated; `:364-413` - each account returns and stores its own pair, refresh total is two | At most one refresh exchange per account, with independent credentials (OGA-18). | ✅ |
+| Invalid-grant and transient failures never replay a consumed refresh token | `GoAuthManager.swift:81-94,110-114`; `GoAuthManagerTests.swift:415-469` - two calls surface the same error, one refresh call, original pair remains | Do not replay a possibly consumed refresh token; surface recoverable failure (OGA-17; edge case). | ✅ |
+| Failed Keychain persistence does not use or overwrite the rotated credential | `GoAuthManager.swift:96-109`; `GoAuthManagerTests.swift:471-503` - both calls throw access denied, old envelope remains, exchange count stays one | Failed rotation write preserves the prior credential and never uses the unpersisted token (edge case). | ✅ |
+| Quick gate includes manager coverage and existing tests | `GoAuthManagerTests.swift:215-503`; test log shows all ten manager cases passed and `Test run with 147 tests in 16 suites passed` | At least six manager cases and the full test target pass. | ✅ |
+
+*Check C - Necessary (reverse mapping):*
+
+| `file:line` + assertion expression | Maps to | Keep? |
+|---|---|---|
+| `GoAuthManagerTests.swift:215-260` - successful and failed authorization persistence | OGA-04/05 / T4 authorization persistence | ✅ |
+| `GoAuthManagerTests.swift:278-324` - expiry boundary and token rotation | OGA-17 / refresh-before-use and persistence | ✅ |
+| `GoAuthManagerTests.swift:327-413` - same-account coalescing and cross-account isolation | OGA-18 / per-account serialization | ✅ |
+| `GoAuthManagerTests.swift:415-469` - invalid grant and transient failure no-replay | OGA-17 / single-use refresh safety | ✅ |
+| `GoAuthManagerTests.swift:471-503` - Keychain failure preserves old credential | T4 edge-case acceptance criterion | ✅ |
+| `GoAuthManagerTests.swift:263-276` - API key resolves without OAuth refresh | OGA-07 / API-key flow unaffected | ✅ |
+
+- [x] Check A: every T4 criterion maps to assertion or gate evidence with outcomes matching the spec.
+- [x] Check B: tests inspect credentials, errors, refresh counts, and persisted rotation, not only method calls.
+- [x] Check C: every assertion maps to T4 or a named requirement/edge case; no speculative coverage was added.
+- [x] Check D: follows `AGENTS.md` Swift Testing conventions with injected storage/client/clock dependencies.
+
+**Verdict**: T4 coverage is sufficient and necessary; no spec-precision gap or deviation.
 
 #### T5: Integrate both credential methods into GoAdapter
 
