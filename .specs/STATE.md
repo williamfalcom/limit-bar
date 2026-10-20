@@ -69,10 +69,10 @@
 ## Handoff
 
 - **Feature**: OpenCode Go dual authentication (`.specs/features/opencode-go-auth/`)
-- **Phase / Task**: Phase 4 / T8 — docs/version, automated gates, localization, and source/docs security audit are complete; manual account-lifecycle UAT remains
+- **Phase / Task**: Phase 4 / T8 — docs/version, automated gates, localization, and source/docs security audit are complete; one API-key reauthentication UAT remains
 - **Completed**: T1–T6 implementation committed through `e6d5022`, with T6 UAT confirmed by the user. T7 implementation is committed as `08a4e3d`. Trilingual docs and `VERSION=0.3.0` are committed as `c28f19a`. Final test result: 151 passed, 0 failed; task/spec validators and `.strings` lint pass.
 - **In-progress** (file:line): `README.md`, `README.pt-BR.md`, and `README.es.md` explain browser-first OAuth, API-key alternative, Keychain storage, independent CLI V2 session, and local-only OAuth removal. `PanelView.swift` retains cached quota and offers method-matched repair; Settings confirms local-only OAuth removal.
-- **Next step**: user UAT on `.build/dd/Build/Products/Debug/limit-bar.app` (v0.3.0, build 90): confirm V2 CLI login remains active, OAuth and API-key quota fetches, and repair/removal UI. Do not revoke an active Console session just to force an OAuth unauthorized state. Then complete traceability, commit final handoff, push the feature branch, and create the PR.
-- **Blockers**: T7/T8 manual UAT remains pending; no UI-test target exists.
+- **Next step**: user confirmed v0.3.0 checks passed for V2 CLI continuity, both quota paths, OAuth removal warning, and OAuth browser reconnection. The API-key replacement action remains untested. If a valid API key is available, test safely with a temporary OpenCode API-key account using an intentionally invalid placeholder, then repair it locally and remove the temporary account; do not share the valid key or revoke a live Console session.
+- **Blockers**: T7/T8 manual UAT is pending only for API-key replacement; no UI-test target exists.
 - **Uncommitted files**: `.specs/STATE.md`, `.specs/features/opencode-go-auth/tasks.md`
 - **Branch**: `feat/opencode-go-auth-v0.3` (T6–T7 implementation and T8 docs/version committed; awaiting manual UAT)

@@ -418,7 +418,7 @@ T7 → T8
 - [x] OAuth removal presents a localized warning that the Console session is not revoked remotely.
 - [x] New reauth/removal strings are present in all three locales; last-good data remains visible during repair.
 - [x] Build and full test gates pass (151 tests).
-- [ ] Manual UAT: verify OAuth reconnect, API-key replacement, cached quota visibility during repair, and the OAuth removal warning in the running app.
+- [ ] Manual UAT: user confirmed OAuth browser reconnection passed on v0.3.0; API-key replacement has not yet been tested.
 
 **Tests**: build/manual UAT (SwiftUI has no unit/UI test target)
 **Gate**: Build
@@ -434,7 +434,7 @@ T7 → T8
 | OAuth removal warns that only local credentials are deleted | `SettingsView.swift:199-220`; warning key exists in `en`, `pt-BR`, and `es` tables | No implication of remote Console logout/revocation (OGA-24). | ✅ |
 | Reauthentication and cleanup messages are localized; last-good quota remains visible | All 14 new T7 strings are present in all locales; `PanelView.swift:100-108` renders cached windows for unauthorized state | Repair is actionable and prior data remains available (OGA-25/26). | ✅ |
 | Build and test gate pass | `scripts/build.sh test` passed; xcresult summary reports 151 passed, 0 failed; signed v0.2.3 dev app builds | Code compiles and existing tests remain green. | ✅ |
-| Manual UAT of reauthentication/removal | Pending user verification on the v0.2.3 development build | Verify actual browser reconnect, API-key replacement, cached quota display, and local-only warning. | ⏳ |
+| Manual UAT of reauthentication/removal | On v0.3.0, user confirmed OAuth reconnect passed and reported all other testable lifecycle checks passed; API-key replacement remains untested | Verify the matching repair action for both auth methods; do not revoke a live Console session just to force an error. | ⏳ |
 
 *Check C - Necessary (reverse mapping):*
 
@@ -470,7 +470,7 @@ T7 → T8
 - [x] English, Brazilian Portuguese, and Spanish instructions explain browser login, API-key alternative, and local-only disconnect accurately.
 - [ ] Spec traceability and task status match test/build evidence; `.specs/STATE.md` Handoff points to the next unfinished or completed state without altering unrelated decisions.
 - [x] Full build and test gates pass; feature Swift Testing cases are visible in the result (151 passed, 0 failed).
-- [ ] Manual UAT confirms V2 CLI login remains active, OAuth and API-key accounts both fetch the expected quota, and removal/reconnect behave as specified.
+- [ ] Manual UAT: user reports V2 CLI login remains active, both auth methods fetch expected quotas, and the OAuth removal warning and browser reconnect pass; API-key replacement remains untested.
 - [x] No live tokens, device codes, authorization headers, user identifiers, or live-account quota data are present in the repository diff; test-only credentials/codes are synthetic fixtures.
 
 **Tests**: full suite + localization/security audit + manual UAT
