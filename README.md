@@ -40,14 +40,14 @@ limit-bar sits quietly in your menu bar and shows how much of your AI plan's tim
 | --- | --- | --- |
 | **Claude Code** (Pro/Max/Team) | 5-hour session · Weekly · per-model weekly buckets (Fable, Opus, …) | Anthropic OAuth usage endpoint, token read locally from your Keychain |
 | **Codex** (Plus/Pro) | ~5-hour primary · weekly secondary | `codex app-server` JSON-RPC, falling back to `$CODEX_HOME/auth.json` |
-| **OpenCode** | 5-hour rolling · weekly · monthly | Official OpenCode Go usage endpoint, authenticated with the API key stored in your Keychain |
+| **OpenCode** | 5-hour rolling · weekly · monthly | Official OpenCode Go usage endpoint; sign in through the Console browser flow or use an API key, with credentials stored in your Keychain |
 | **GitHub Copilot** | Monthly Premium requests | Authenticated Copilot CLI (`account.getQuota` over headless JSON-RPC); unlimited chat and completions quotas are omitted |
 
 ## Installation
 
 **Requirements:** macOS 14 (Sonoma) or later.
 
-1. Download `limit-bar-v0.2.0.dmg` (or the `.zip`) from the [latest release](https://github.com/williamfalcom/limit-bar/releases/latest).
+1. Download `limit-bar-v0.3.0.dmg` (or the `.zip`) from the [latest release](https://github.com/williamfalcom/limit-bar/releases/latest).
 2. Open it and drag **limit-bar.app** into **Applications**.
 3. Launch limit-bar — its icon appears in the menu bar (the app has no Dock icon by design).
 
@@ -65,7 +65,7 @@ limit-bar sits quietly in your menu bar and shows how much of your AI plan's tim
 3. Add accounts:
    - **Claude Code** — nothing to type. limit-bar reads the OAuth token your Claude Code CLI already stored in the Keychain (`Claude Code-credentials`). When macOS asks, choose **Always Allow**.
    - **Codex** — also automatic: rate limits come from `codex app-server`, using whatever login your CLI already has.
-   - **OpenCode** — paste your API key once; it is stored in the Keychain and used with the official usage endpoint.
+   - **OpenCode** — choose **Browser login (recommended)** to authorize a separate limit-bar Console session, or choose **API key**. Both OAuth tokens and API keys are stored in your Keychain; limit-bar never reads or reuses the OpenCode CLI V2 session.
    - **GitHub Copilot** — automatic when the `copilot` CLI is installed and authenticated (`copilot login`). limit-bar shows the finite Premium requests quota.
 4. New accounts are polled immediately; afterwards every account refreshes on a conservative cadence (default **300 s**, configurable 60–3600 s) with exponential backoff whenever a provider answers `429`.
 
@@ -80,11 +80,12 @@ limit-bar sits quietly in your menu bar and shows how much of your AI plan's tim
 - **Esc** or clicking outside closes the panel; the ⟳ button forces an immediate refresh of all accounts.
 - Right-click the menu bar icon to refresh, open Settings or quit limit-bar.
 - Enable **Start at Login** in Settings so monitoring survives reboots.
+- If OpenCode authentication is rejected, use the account's browser reconnect or API-key replacement action. Removing an OAuth account deletes its credentials from this Mac but does **not** revoke the Console session remotely.
 - The interface follows your macOS language (**English**, **Português**, **Español** today). Per-app override works too: System Settings → limit-bar → Language.
 
 ## Privacy
 
-Everything stays on your machine. There is no telemetry, no account service and no analytics. limit-bar uses the existing local CLI sessions for Claude Code, Codex and GitHub Copilot, keeps your OpenCode API key in the Keychain, and polls read-only usage endpoints at a deliberately slow cadence so monitoring never disturbs your quotas.
+Everything stays on your machine. There is no telemetry, no account service and no analytics. limit-bar uses the existing local CLI sessions for Claude Code, Codex and GitHub Copilot; OpenCode API keys and limit-bar's own browser OAuth tokens are kept in the Keychain, and that OAuth session is separate from the OpenCode CLI V2 credentials. It polls read-only usage endpoints at a deliberately slow cadence so monitoring never disturbs your quotas.
 
 ## Build from source
 
@@ -100,7 +101,7 @@ The project layout is generated from `project.yml`; run `xcodegen generate` afte
 
 ## Versioning
 
-Single source of truth: the [`VERSION`](VERSION) file (semver). Builds inject it as the bundle's marketing version; the git commit count becomes the build number. Releases are tagged `v<version>` — currently **[v0.2.0](https://github.com/williamfalcom/limit-bar/releases/tag/v0.2.0)**.
+Single source of truth: the [`VERSION`](VERSION) file (semver). Builds inject it as the bundle's marketing version; the git commit count becomes the build number. Releases are tagged `v<version>` — currently **v0.3.0**.
 
 ## License
 
