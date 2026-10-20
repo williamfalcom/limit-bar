@@ -149,10 +149,10 @@ limit-bar currently requires an OpenCode API key, while the user is on OpenCode 
 | OGA-05 | P1: Browser connection | Design | In Design |
 | OGA-06 | P1: Browser connection | Design | In Design |
 | OGA-07 | P1: Browser connection | Design | In Design |
-| OGA-08 | P1: Browser connection | Design | In Design |
+| OGA-08 | P1: Browser connection | Design | Implementing |
 | OGA-09 | P1: API-key compatibility | Design | Verified |
-| OGA-10 | P1: API-key compatibility | Design | In Design |
-| OGA-11 | P1: API-key compatibility | Design | In Design |
+| OGA-10 | P1: API-key compatibility | Design | Implementing |
+| OGA-11 | P1: API-key compatibility | Design | Implementing |
 | OGA-12 | P1: API-key compatibility | Design | In Design |
 | OGA-13 | P1: Quota reading | Design | In Design |
 | OGA-14 | P1: Quota reading | Design | In Design |
@@ -164,8 +164,8 @@ limit-bar currently requires an OpenCode API key, while the user is on OpenCode 
 | OGA-20 | P1: Reauthentication | Design | In Design |
 | OGA-21 | P1: Reauthentication | Design | In Design |
 | OGA-22 | P1: Reauthentication | Design | In Design |
-| OGA-23 | P1: Reauthentication | Design | In Design |
-| OGA-24 | P1: Reauthentication | Design | In Design |
+| OGA-23 | P1: Reauthentication | Design | Implementing |
+| OGA-24 | P1: Reauthentication | Design | Implementing |
 | OGA-25 | P1: Reauthentication | Design | In Design |
 | OGA-26 | P1: Reauthentication | Design | In Design |
 

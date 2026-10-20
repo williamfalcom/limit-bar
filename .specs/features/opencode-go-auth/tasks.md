@@ -136,14 +136,42 @@ T7 → T8
 - Skills: `swift-language`, `swift-testing-pro`
 
 **Done when**:
-- [ ] API keys remain under `go.api-key.<uuid>` and can fall back to `<uuid>` for reads.
-- [ ] OAuth token envelope is versioned and stored under `go.oauth.<uuid>`; secrets never enter `AppState` serialization.
-- [ ] Removal attempts canonical API, legacy API, and OAuth items; missing items are idempotent and Keychain failures are surfaced.
-- [ ] At least 5 unit cases cover canonical/legacy reads, OAuth round-trip, deletion, missing items, and injected storage failure.
-- [ ] Quick gate passes; existing `KeychainStoreTests` remain intact.
+- [x] API keys remain under `go.api-key.<uuid>` and can fall back to `<uuid>` for reads.
+- [x] OAuth token envelope is versioned and stored under `go.oauth.<uuid>`; secrets never enter `AppState` serialization.
+- [x] Removal attempts canonical API, legacy API, and OAuth items; missing items are idempotent and Keychain failures are surfaced.
+- [x] Eight unit cases cover canonical/legacy reads, OAuth round-trip, deletion, missing items, AppState secrecy, and injected storage failure.
+- [x] Quick gate passes with all pre-existing Keychain tests intact.
 
 **Tests**: unit (`Tests/LimitBarTests/GoCredentialVaultTests.swift`, at least 5 cases)
 **Gate**: Quick
+
+**T2 Post-Gate Review**:
+
+*Check A - Sufficient (coverage mapping):*
+
+| Done-when criterion / spec AC | `file:line` + assertion expression | Spec-defined outcome | Covered? |
+|---|---|---|---|
+| API key uses the canonical key and legacy fallback | `GoCredentialVaultTests.swift:86-88` - stored value, loaded key, and `readKeys == [key]`; `:99-100` - legacy value and canonical-then-UUID lookup | Store at `go.api-key.<uuid>` and fall back to bare UUID (OGA-10). | ✅ |
+| OAuth tokens use a versioned Keychain envelope and stay out of AppState | `GoCredentialVaultTests.swift:121-122` - `loaded == oauth`, `envelope["version"] as? Int == 1`; `:152-154` - auth method present, access/refresh strings absent | Versioned OAuth secret is stored in Keychain and not serialized in app state (OGA-08). | ✅ |
+| Removal attempts canonical, legacy, and OAuth items; missing entries are idempotent; errors surface | `GoCredentialVaultTests.swift:167-168`, `:178-182`, `:196-200` - exact deletion keys, empty store, thrown failure, all attempts, surviving failed item | Delete all local credential names, tolerate absent items, and report cleanup failure (OGA-23/24). | ✅ |
+| Credential-store write failure is surfaced without overwriting the existing value | `GoCredentialVaultTests.swift:216-219` - exact Keychain error and prior envelope equality | Failed Keychain writes do not replace usable stored data (OGA-11 foundation). | ✅ |
+| Required tests and Quick gate pass | `GoCredentialVaultTests.swift:77-219`; log contains eight named passes and `TEST SUCCEEDED` (129 Swift Testing passes total) | At least five focused tests pass; existing Keychain tests remain. | ✅ |
+
+*Check C - Necessary (reverse mapping):*
+
+| `file:line` + assertion expression | Maps to | Keep? |
+|---|---|---|
+| `GoCredentialVaultTests.swift:86-88`, `:99-100` - canonical and legacy key state | OGA-10 / T2 key compatibility | ✅ |
+| `GoCredentialVaultTests.swift:121-122`, `:152-154` - envelope version and state secrecy | OGA-08 / T2 secure storage | ✅ |
+| `GoCredentialVaultTests.swift:167-168`, `:178-182`, `:196-200` - deletion coverage | OGA-23/24 / T2 local cleanup | ✅ |
+| `GoCredentialVaultTests.swift:216-219` - write failure and preserved envelope | OGA-11 / T2 credential write failure | ✅ |
+
+- [x] Check A: all T2 criteria map to concrete assertion/output evidence with matching outcomes.
+- [x] Check B: assertions inspect stored/loaded values and failure state, not only spy call counts.
+- [x] Check C: all tests map to T2 requirements; no speculative tests were added.
+- [x] Check D: follows `AGENTS.md` Swift Testing conventions and existing Keychain/model test patterns.
+
+**Verdict**: T2 coverage is sufficient and necessary; no spec-precision gap or deviation.
 
 #### T3: Implement the Console device-authorization client
 
