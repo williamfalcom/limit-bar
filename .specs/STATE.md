@@ -69,10 +69,10 @@
 ## Handoff
 
 - **Feature**: OpenCode Go dual authentication (`.specs/features/opencode-go-auth/`)
-- **Phase / Task**: Phase 3 / T6 — browser-first and API-key account setup; complete-URL path resolution fixed, awaiting manual UAT
-- **Completed**: T1–T5 committed (`46722a1`, `a00c493`, `1c9d613`, `a286662`, `8055db9`); all 151 tests pass and dev v0.2.2 (84) builds with valid signature
-- **In-progress** (file:line): `Sources/LimitBar/Providers/GoOAuthClient.swift:63-67,253-267` resolves relative `verification_uri_complete` paths against the fixed HTTPS origin; `Sources/LimitBar/UI/SettingsView.swift:238-460` provides browser/API-key setup and cancellation
-- **Next step**: install `.build/dd/Build/Products/Debug/limit-bar.app` (v0.2.2) and retry browser authorization; report whether the Console page opens and approval completes, then finish cancellation/API-key UAT and close T6
-- **Blockers**: awaiting user UAT; no live device-code request was made during diagnosis or this fix
+- **Phase / Task**: Phase 3 / T6 — browser-first and API-key account setup; OAuth works, Add Account layout fix awaits visual UAT
+- **Completed**: T1–T5 committed (`46722a1`, `a00c493`, `1c9d613`, `a286662`, `8055db9`); user confirmed OAuth login on v0.2.2; v0.2.3 (85) builds with valid signature and all 151 tests pass
+- **In-progress** (file:line): `Sources/LimitBar/UI/SettingsView.swift:238-302` stacks auth choices vertically and sets a 500 pt minimum/ideal sheet width to prevent localized text clipping
+- **Next step**: install `.build/dd/Build/Products/Debug/limit-bar.app` (v0.2.3), confirm the Add Account sheet and method labels are fully visible, then finish API-key/cancellation UAT and close T6
+- **Blockers**: waiting on user visual confirmation; no UI-test target is configured
 - **Uncommitted files**: `.specs/features/opencode-go-auth/tasks.md`, `Sources/LimitBar/App/LimitBarApp.swift`, `Sources/LimitBar/Core/GoAuthManager.swift`, `Sources/LimitBar/Providers/GoAdapter.swift`, `Sources/LimitBar/Providers/GoOAuthClient.swift`, `Sources/LimitBar/Resources/en.lproj/Localizable.strings`, `Sources/LimitBar/Resources/es.lproj/Localizable.strings`, `Sources/LimitBar/Resources/pt-BR.lproj/Localizable.strings`, `Sources/LimitBar/UI/SettingsView.swift`, `Tests/LimitBarTests/GoAdapterTests.swift`, `Tests/LimitBarTests/GoAuthManagerTests.swift`, `Tests/LimitBarTests/GoOAuthClientTests.swift`, `VERSION`
 - **Branch**: main
