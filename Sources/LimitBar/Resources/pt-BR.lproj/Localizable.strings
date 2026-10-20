@@ -44,3 +44,16 @@
 "Add" = "Adicionar";
 "Open Settings" = "Abrir Ajustes";
 "Refresh all accounts now" = "Atualizar todas as contas agora";
+"OpenCode sign-in method" = "Método de login do OpenCode";
+"Browser login (recommended)" = "Login pelo navegador (recomendado)";
+"Connect with browser" = "Conectar pelo navegador";
+"Enter this code in the browser to authorize limit-bar." = "Digite este código no navegador para autorizar o limit-bar.";
+"Waiting for approval…" = "Aguardando aprovação…";
+"Connecting to OpenCode…" = "Conectando ao OpenCode…";
+"OpenCode authorization expired. Start again." = "A autorização do OpenCode expirou. Inicie novamente.";
+"OpenCode authorization was denied." = "A autorização do OpenCode foi negada.";
+"Could not connect to OpenCode. Check your network and try again." = "Não foi possível conectar ao OpenCode. Verifique a rede e tente novamente.";
+"The OpenCode response was invalid. Try again." = "A resposta do OpenCode é inválida. Tente novamente.";
+"Could not save OpenCode credentials to Keychain." = "Não foi possível salvar as credenciais do OpenCode no Chaves.";
+"Could not clear OpenCode credentials after cancellation." = "Não foi possível remover as credenciais locais do OpenCode após o cancelamento.";
+"Could not complete OpenCode authorization. Try again." = "Não foi possível concluir a autorização do OpenCode. Tente novamente.";

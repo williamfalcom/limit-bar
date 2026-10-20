@@ -44,3 +44,16 @@
 "Add" = "Add";
 "Open Settings" = "Open Settings";
 "Refresh all accounts now" = "Refresh all accounts now";
+"OpenCode sign-in method" = "OpenCode sign-in method";
+"Browser login (recommended)" = "Browser login (recommended)";
+"Connect with browser" = "Connect with browser";
+"Enter this code in the browser to authorize limit-bar." = "Enter this code in the browser to authorize limit-bar.";
+"Waiting for approval…" = "Waiting for approval…";
+"Connecting to OpenCode…" = "Connecting to OpenCode…";
+"OpenCode authorization expired. Start again." = "OpenCode authorization expired. Start again.";
+"OpenCode authorization was denied." = "OpenCode authorization was denied.";
+"Could not connect to OpenCode. Check your network and try again." = "Could not connect to OpenCode. Check your network and try again.";
+"The OpenCode response was invalid. Try again." = "The OpenCode response was invalid. Try again.";
+"Could not save OpenCode credentials to Keychain." = "Could not save OpenCode credentials to Keychain.";
+"Could not clear OpenCode credentials after cancellation." = "Could not clear OpenCode credentials after cancellation.";
+"Could not complete OpenCode authorization. Try again." = "Could not complete OpenCode authorization. Try again.";

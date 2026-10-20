@@ -27,10 +27,18 @@ struct GoAdapter: ProviderAdapter, Sendable {
         let bearerToken: String
         switch account.effectiveGoAuthMethod {
         case .apiKey:
-            do {
-                bearerToken = try Self.readKey(credentials: credentials, account: account)
-            } catch {
-                throw ProviderError.missingCredentials
+            if let authManager {
+                do {
+                    bearerToken = try await authManager.bearerToken(for: account)
+                } catch {
+                    throw ProviderError.missingCredentials
+                }
+            } else {
+                do {
+                    bearerToken = try Self.readKey(credentials: credentials, account: account)
+                } catch {
+                    throw ProviderError.missingCredentials
+                }
             }
         case .consoleOAuth:
             guard let authManager else { throw ProviderError.missingCredentials }

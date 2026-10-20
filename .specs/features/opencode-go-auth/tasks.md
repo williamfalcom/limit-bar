@@ -258,23 +258,23 @@ T7 → T8
 
 | Done-when criterion / spec AC / edge case | `file:line` + assertion expression | Spec-defined outcome | Covered? |
 |---|---|---|---|
-| Authorization persists tokens before success; Keychain failure leaves no new credential | `GoAuthManager.swift:41-45`; `GoAuthManagerTests.swift:215-235` - stored credential equals expected and polling called once; `:238-260` - exact write error and missing item | Persist tokens before account setup can succeed; do not create an OAuth account without a saved credential (OGA-04/05). | ✅ |
-| OAuth stays fresh outside the margin and refreshes at ≤60 seconds; rotation is persisted before Bearer return | `GoAuthManager.swift:60-65,96-109`; `GoAuthManagerTests.swift:278-324` - >60s returns current access token with zero refreshes; exactly 60s returns rotated token and vault equals rotated pair | Refresh before usage when expiry is within 60 seconds; use only persisted rotation (OGA-17; edge cases). | ✅ |
-| One account's concurrent requests coalesce, and account credentials remain isolated | `GoAuthManagerTests.swift:327-362` - two tokens equal new access, refresh count is one, persisted pair is rotated; `:364-413` - each account returns and stores its own pair, refresh total is two | At most one refresh exchange per account, with independent credentials (OGA-18). | ✅ |
-| Invalid-grant and transient failures never replay a consumed refresh token | `GoAuthManager.swift:81-94,110-114`; `GoAuthManagerTests.swift:415-469` - two calls surface the same error, one refresh call, original pair remains | Do not replay a possibly consumed refresh token; surface recoverable failure (OGA-17; edge case). | ✅ |
-| Failed Keychain persistence does not use or overwrite the rotated credential | `GoAuthManager.swift:96-109`; `GoAuthManagerTests.swift:471-503` - both calls throw access denied, old envelope remains, exchange count stays one | Failed rotation write preserves the prior credential and never uses the unpersisted token (edge case). | ✅ |
-| Quick gate includes manager coverage and existing tests | `GoAuthManagerTests.swift:215-503`; test log shows all ten manager cases passed and `Test run with 147 tests in 16 suites passed` | At least six manager cases and the full test target pass. | ✅ |
+| Authorization persists tokens before success; Keychain failure leaves no new credential | `GoAuthManager.swift:41-45`; `GoAuthManagerTests.swift:251-272` - stored credential equals expected and polling called once; `:274-297` - exact write error and missing item | Persist tokens before account setup can succeed; do not create an OAuth account without a saved credential (OGA-04/05). | ✅ |
+| OAuth stays fresh outside the margin and refreshes at ≤60 seconds; rotation is persisted before Bearer return | `GoAuthManager.swift:58-71,102-115`; `GoAuthManagerTests.swift:343-390` - >60s returns current access token with zero refreshes; exactly 60s returns rotated token and vault equals rotated pair | Refresh before usage when expiry is within 60 seconds; use only persisted rotation (OGA-17; edge cases). | ✅ |
+| One account's concurrent requests coalesce, and account credentials remain isolated | `GoAuthManagerTests.swift:392-427` - two tokens equal new access, refresh count is one, persisted pair is rotated; `:429-478` - each account returns and stores its own pair, refresh total is two | At most one refresh exchange per account, with independent credentials (OGA-18). | ✅ |
+| Invalid-grant and transient failures never replay a consumed refresh token | `GoAuthManager.swift:87-100,116-119`; `GoAuthManagerTests.swift:480-534` - repeated calls surface the same error, one refresh call, original pair remains | Do not replay a possibly consumed refresh token; surface recoverable failure (OGA-17; edge case). | ✅ |
+| Failed Keychain persistence does not use or overwrite the rotated credential | `GoAuthManager.swift:102-115`; `GoAuthManagerTests.swift:536-568` - both calls throw access denied, old envelope remains, exchange count stays one | Failed rotation write preserves the prior credential and never uses the unpersisted token (edge case). | ✅ |
+| Quick gate includes manager coverage and existing tests | The ten T4 manager tests (current source: `GoAuthManagerTests.swift:251-297,328-568`) passed; T4 log reports `Test run with 147 tests in 16 suites passed` | At least six manager cases and the full test target pass. | ✅ |
 
 *Check C - Necessary (reverse mapping):*
 
 | `file:line` + assertion expression | Maps to | Keep? |
 |---|---|---|
-| `GoAuthManagerTests.swift:215-260` - successful and failed authorization persistence | OGA-04/05 / T4 authorization persistence | ✅ |
-| `GoAuthManagerTests.swift:278-324` - expiry boundary and token rotation | OGA-17 / refresh-before-use and persistence | ✅ |
-| `GoAuthManagerTests.swift:327-413` - same-account coalescing and cross-account isolation | OGA-18 / per-account serialization | ✅ |
-| `GoAuthManagerTests.swift:415-469` - invalid grant and transient failure no-replay | OGA-17 / single-use refresh safety | ✅ |
-| `GoAuthManagerTests.swift:471-503` - Keychain failure preserves old credential | T4 edge-case acceptance criterion | ✅ |
-| `GoAuthManagerTests.swift:263-276` - API key resolves without OAuth refresh | OGA-07 / API-key flow unaffected | ✅ |
+| `GoAuthManagerTests.swift:251-297` - successful and failed authorization persistence | OGA-04/05 / T4 authorization persistence | ✅ |
+| `GoAuthManagerTests.swift:343-390` - expiry boundary and token rotation | OGA-17 / refresh-before-use and persistence | ✅ |
+| `GoAuthManagerTests.swift:392-478` - same-account coalescing and cross-account isolation | OGA-18 / per-account serialization | ✅ |
+| `GoAuthManagerTests.swift:480-534` - invalid grant and transient failure no-replay | OGA-17 / single-use refresh safety | ✅ |
+| `GoAuthManagerTests.swift:536-568` - Keychain failure preserves old credential | T4 edge-case acceptance criterion | ✅ |
+| `GoAuthManagerTests.swift:328-341` - API key resolves without OAuth refresh | OGA-07 / API-key flow unaffected | ✅ |
 
 - [x] Check A: every T4 criterion maps to assertion or gate evidence with outcomes matching the spec.
 - [x] Check B: tests inspect credentials, errors, refresh counts, and persisted rotation, not only method calls.
@@ -342,7 +342,7 @@ T7 → T8
 
 **What**: Add method selection and async browser authorization to Settings, save the account only after credential persistence, and inject one shared manager into Settings and `GoAdapter`.
 **Where**: `Sources/LimitBar/UI/SettingsView.swift`
-**Supporting files**: `Sources/LimitBar/App/LimitBarApp.swift` and the three `Localizable.strings` tables.
+**Supporting files**: `Sources/LimitBar/App/LimitBarApp.swift`, `Sources/LimitBar/Providers/GoOAuthClient.swift`, corresponding OAuth client tests, and the three `Localizable.strings` tables.
 **Depends on**: T1, T2, T3, T5
 **Reuses**: Existing Add Account sheet, `SecureField`, Settings presentation, and `AppDelegate` adapter wiring.
 **Requirement**: OGA-01, OGA-02, OGA-03, OGA-04, OGA-05, OGA-06, OGA-08, OGA-10, OGA-11
@@ -352,15 +352,51 @@ T7 → T8
 - Skills: `swiftui-pro`, `swift-language`
 
 **Done when**:
-- [ ] Browser login is primary; API key remains selectable; auth method is assigned to the new account.
-- [ ] Settings opens only the validated official verification URL, displays the user code/progress, and allows cancellation.
-- [ ] Account appears only after credential storage succeeds; cancellation, network failure, malformed response, and Keychain failure leave no account behind.
-- [ ] `AppDelegate` injects the same manager instance into Settings and `GoAdapter`.
-- [ ] All new Add Account strings exist in `en`, `pt-BR`, and `es`.
-- [ ] Build gate passes; manually verify both setup paths and cancellation (no UI-test target exists).
+- [x] Browser login is primary; API key remains selectable; auth method is assigned to the new account.
+- [x] The device response's confirmed `verification_uri_complete` field decodes, including origin-relative paths resolved against `https://opencode.ai`; Settings opens only the validated official URL, displays the user code/progress, and allows cancellation.
+- [x] Account appears only after credential storage succeeds; cancellation, network failure, malformed response, and Keychain failure leave no account behind.
+- [x] `AppDelegate` injects the same manager instance into Settings and `GoAdapter`.
+- [x] All new Add Account strings exist in `en`, `pt-BR`, and `es`.
+- [x] Sign-in choices use a vertical radio group and the Add Account sheet has sufficient minimum width for localized labels.
+- [x] Build gate passes.
+- [x] Manual UAT on v0.2.3: OAuth browser setup succeeds, API-key setup succeeds, cancellation adds no account, and the Add Account interface shows all text without clipping (user-confirmed; no UI-test target exists).
 
 **Tests**: build/manual UAT (SwiftUI has no unit/UI test target)
 **Gate**: Build
+
+**T6 Post-Gate Review**:
+
+*Check A - Sufficient (coverage mapping):*
+
+| Done-when criterion / spec AC | `file:line` + assertion/source evidence | Spec-defined outcome | Covered? |
+|---|---|---|---|
+| Browser is default; API key remains selectable; method is assigned to the new account | `SettingsView.swift:228-265` - `consoleOAuth` initial selection and vertical radio choices; `:326-338` - selected method assigned to OpenCode account | Browser-first setup with explicit API-key alternative (OGA-01/10). | ✅ |
+| The verified `verification_uri_complete` response field decodes, including its documented origin-relative path, and the UI opens only the validated official URL | `GoOAuthClient.swift:25-38,92-107,253-267`; `GoOAuthClientTests.swift:130-138,173-195` asserts `/console/device?...` resolves to `https://opencode.ai/console/device?...`; `:198-216` rejects untrusted hosts | Resolve relative verification paths only against the fixed HTTPS origin and retain exact-host validation (OGA-01/02). | ✅ |
+| Settings shows code/progress and permits cancellation | `SettingsView.swift:269-283,427-435`; cancellation test `GoOAuthClientTests.swift:274-285` verifies polling stops before a token request | User sees the code and can stop local polling (OGA-03/06). | ✅ |
+| Account appears only after credentials persist; cancellation and failures do not add an account | `SettingsView.swift:354-375,378-408`; `GoAuthManager.swift:41-46`; `GoAuthManagerTests.swift:274-326` - injected storage failure and cancellation leave no credential | Credential persistence precedes account creation; failed/canceled attempts add no account (OGA-04/05/06/11). | ✅ |
+| The app injects the same manager into Settings and `GoAdapter` | `LimitBarApp.swift:27-46` creates and injects one instance into `GoAdapter`; `:161-162` injects that instance into Settings | Setup and quota polling share the app-owned manager (T6 wiring). | ✅ |
+| All new Add Account strings exist in all three locales | Localization key check found all 13 new keys in `en`, `pt-BR`, and `es` | Newly added user-facing strings are localized (OGA-26). | ✅ |
+| Long localized method labels are not clipped in the Add Account sheet | `SettingsView.swift:257-262` selects `.radioGroup`; `:301-302` sets a 500 pt minimum/ideal width. User confirmed all text is visible on v0.2.3. | Browser/API key labels and surrounding fields remain fully visible. | ✅ |
+| Build and full test gate pass | `xcodebuild build` reports `BUILD SUCCEEDED`; test output reports `Test run with 151 tests in 16 suites passed` | SwiftUI compiles and existing core/auth tests pass. | ✅ |
+| Manual visual and lifecycle verification | User confirmed on v0.2.3 that OAuth and API-key setup work, cancellation adds no account, and the complete Add Account layout is visible | All prescribed T6 manual UAT outcomes pass. | ✅ |
+
+*Check C - Necessary (reverse mapping):*
+
+| `file:line` + assertion/source evidence | Maps to | Keep? |
+|---|---|---|
+| `SettingsView.swift:228-265,326-338` | OGA-01/10 browser-first auth selection and account metadata | ✅ |
+| `SettingsView.swift:257-262,301-302` | T6 layout adjustment for complete localized labels | ✅; visual UAT confirmed by user on v0.2.3 |
+| `GoOAuthClient.swift:25-38,92-107,253-267`; `GoOAuthClientTests.swift:130-138,173-216`; `SettingsView.swift:269-283,389,427-435` | OGA-01/02/03/06 complete URL parsing, relative resolution, trusted opening, code/progress, cancellation | ✅ |
+| `SettingsView.swift:354-375,378-408`; `GoAuthManagerTests.swift:274-326` | OGA-04/05/06/11 credential-before-account and failure/cancel safety | ✅ |
+| `LimitBarApp.swift:27-46,161-162` | T6 shared manager injection | ✅ |
+| Localization check for 13 new keys | OGA-26 localized Add Account text | ✅ |
+
+- [x] Check A: code, automated evidence, and user-confirmed UAT cover the implementation criteria.
+- [x] Check B: account creation follows successful credential persistence; displayed errors are localized and do not expose token values.
+- [x] Check C: all changes map to T6; no unrelated account/settings behavior was changed.
+- [x] Check D: follows SwiftUI data-flow and Swift Testing conventions; no UI-test target exists.
+
+**Verdict**: T6 implementation, build, all 151 tests, and manual UAT pass; task complete.
 
 #### T7: Add method-specific reauthentication and safe local removal
 

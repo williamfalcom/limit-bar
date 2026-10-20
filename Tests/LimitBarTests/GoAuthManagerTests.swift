@@ -124,6 +124,42 @@ private actor GoOAuthClientStub: GoOAuthClientProtocol {
     func pollCallCount() -> Int { pollCalls }
 }
 
+private actor GoOAuthAuthorizationGate: GoOAuthClientProtocol {
+    private let challenge: GoDeviceAuthorization
+    private let credential: GoOAuthCredential
+    private var pollingStarted = false
+    private var pollingWaiter: CheckedContinuation<Void, Never>?
+    private var approval: CheckedContinuation<GoOAuthCredential, Error>?
+
+    init(challenge: GoDeviceAuthorization, credential: GoOAuthCredential) {
+        self.challenge = challenge
+        self.credential = credential
+    }
+
+    func requestDeviceAuthorization() async throws -> GoDeviceAuthorization { challenge }
+
+    func pollForAuthorization(_ authorization: GoDeviceAuthorization) async throws -> GoOAuthCredential {
+        pollingStarted = true
+        pollingWaiter?.resume()
+        pollingWaiter = nil
+        return try await withCheckedThrowingContinuation { approval = $0 }
+    }
+
+    func refresh(_ credential: GoOAuthCredential) async throws -> GoOAuthCredential {
+        throw GoOAuthClientError.invalidGrant
+    }
+
+    func waitForPollingToStart() async {
+        guard pollingStarted == false else { return }
+        await withCheckedContinuation { pollingWaiter = $0 }
+    }
+
+    func approve() {
+        approval?.resume(returning: credential)
+        approval = nil
+    }
+}
+
 private final class GoAuthManagerClock: @unchecked Sendable {
     private let lock = NSLock()
     private let date: Date
@@ -254,6 +290,35 @@ struct GoAuthManagerTests {
 
         await #expect(throws: KeychainStore.KeychainError.accessDenied) {
             try await manager.authorize(makeChallenge(), for: account.id)
+        }
+        #expect(throws: KeychainStore.KeychainError.itemNotFound) {
+            try vault.oauthCredential(for: account.id)
+        }
+    }
+
+    @Test("Cancelled authorization does not persist credentials when polling completes")
+    func cancelledAuthorizationDoesNotPersistCredential() async throws {
+        let account = makeAccount()
+        let credential = makeCredential(
+            accessToken: "authorized-access",
+            refreshToken: "authorized-refresh",
+            expiresAt: now.addingTimeInterval(3600)
+        )
+        let store = GoAuthCredentialStoreSpy()
+        let vault = GoCredentialVault(credentials: store)
+        let challenge = makeChallenge()
+        let client = GoOAuthAuthorizationGate(challenge: challenge, credential: credential)
+        let manager = GoAuthManager(vault: vault, oauthClient: client, now: { self.now })
+
+        let authorization = Task {
+            try await manager.authorize(challenge, for: account.id)
+        }
+        await client.waitForPollingToStart()
+        authorization.cancel()
+        await client.approve()
+
+        await #expect(throws: CancellationError.self) {
+            try await authorization.value
         }
         #expect(throws: KeychainStore.KeychainError.itemNotFound) {
             try vault.oauthCredential(for: account.id)

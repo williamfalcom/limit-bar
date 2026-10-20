@@ -128,12 +128,12 @@ struct GoOAuthClientTests {
     }
 
     private func deviceResponse(
-        verificationURI: String = "https://opencode.ai/console/device?user_code=ABCD-EFGH",
+        verificationURI: String = "/console/device?user_code=ABCD-EFGH",
         expiresIn: Int = 600,
         interval: Int = 5
     ) -> String {
         """
-        {"device_code":"device-secret","user_code":"ABCD-EFGH","verification_uri":"\(verificationURI)","expires_in":\(expiresIn),"interval":\(interval)}
+        {"device_code":"device-secret","user_code":"ABCD-EFGH","verification_uri_complete":"\(verificationURI)","expires_in":\(expiresIn),"interval":\(interval)}
         """
     }
 
@@ -205,6 +205,7 @@ struct GoOAuthClientTests {
             "https://opencode.ai.attacker.invalid/device",
             "https://opencode.ai:444/console/device",
             "https://user@opencode.ai/console/device",
+            "//attacker.invalid/console/device",
         ] {
             OAuthStubURLProtocol.router.install([
                 .init(status: 200, json: deviceResponse(verificationURI: uri)),

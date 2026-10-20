@@ -308,11 +308,13 @@ struct GoAdapterTests {
             )
         )
         let manager = GoAuthManager(
-            vault: GoCredentialVault(credentials: CredentialFake(.notFound)),
+            vault: GoCredentialVault(credentials: CredentialFake(.keys([
+                GoCredentialVault.apiKeyKey(for: account.id): "stub-\(testID)",
+            ]))),
             oauthClient: client
         )
         let adapter = GoAdapter(
-            credentials: CredentialFake(.keys([GoAdapter.apiKey(for: account): "stub-\(testID)"])),
+            credentials: CredentialFake(.notFound),
             authManager: manager,
             session: stubbedSession()
         )

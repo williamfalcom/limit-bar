@@ -25,14 +25,14 @@ struct GoOAuthClient: Sendable {
     private struct DeviceCodePayload: Decodable {
         var deviceCode: String
         var userCode: String
-        var verificationURI: String
+        var verificationURIComplete: String
         var expiresIn: TimeInterval
         var interval: TimeInterval
 
         enum CodingKeys: String, CodingKey {
             case deviceCode = "device_code"
             case userCode = "user_code"
-            case verificationURI = "verification_uri"
+            case verificationURIComplete = "verification_uri_complete"
             case expiresIn = "expires_in"
             case interval
         }
@@ -62,6 +62,7 @@ struct GoOAuthClient: Sendable {
 
     static let deviceCodeURL = URL(string: "https://opencode.ai/console/auth/device/code")!
     static let tokenURL = URL(string: "https://opencode.ai/console/auth/device/token")!
+    private static let verificationBaseURL = URL(string: "https://opencode.ai/")!
 
     private let session: URLSession
     private let now: Clock
@@ -102,7 +103,7 @@ struct GoOAuthClient: Sendable {
             }
             throw GoOAuthClientError.invalidResponse
         }
-        guard let verificationURL = Self.trustedVerificationURL(payload.verificationURI) else {
+        guard let verificationURL = Self.trustedVerificationURL(payload.verificationURIComplete) else {
             throw GoOAuthClientError.untrustedVerificationURL
         }
 
@@ -250,7 +251,8 @@ struct GoOAuthClient: Sendable {
     }
 
     private static func trustedVerificationURL(_ rawValue: String) -> URL? {
-        guard let components = URLComponents(string: rawValue),
+        guard let url = URL(string: rawValue, relativeTo: verificationBaseURL)?.absoluteURL,
+              let components = URLComponents(url: url, resolvingAgainstBaseURL: true),
               components.scheme?.lowercased() == "https",
               components.host?.lowercased() == "opencode.ai",
               components.user == nil,
@@ -258,6 +260,6 @@ struct GoOAuthClient: Sendable {
               components.port == nil || components.port == 443 else {
             return nil
         }
-        return components.url
+        return url
     }
 }

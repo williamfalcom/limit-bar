@@ -40,12 +40,18 @@ actor GoAuthManager {
 
     func authorize(_ authorization: GoDeviceAuthorization, for accountID: UUID) async throws {
         let credential = try await oauthClient.pollForAuthorization(authorization)
+        try Task.checkCancellation()
         try vault.storeOAuthCredential(credential, for: accountID)
         refreshWorkByAccount[accountID] = nil
     }
 
     func storeAPIKey(_ apiKey: String, for accountID: UUID) throws {
         try vault.storeAPIKey(apiKey, for: accountID)
+        refreshWorkByAccount[accountID] = nil
+    }
+
+    func deleteCredentials(for accountID: UUID) throws {
+        try vault.deleteCredentials(for: accountID)
         refreshWorkByAccount[accountID] = nil
     }
 
