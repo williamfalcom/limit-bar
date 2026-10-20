@@ -1,6 +1,7 @@
 import Foundation
 
 enum ProviderKind: String, Codable, Sendable, Equatable { case claudeCode, codex, openCodeGo, githubCopilot }
+enum GoAuthMethod: String, Codable, Sendable, Equatable { case apiKey, consoleOAuth }
 enum WindowKind: Sendable, Equatable, Hashable {
     case fiveHour
     case weekly
@@ -50,6 +51,9 @@ struct Account: Identifiable, Codable, Sendable, Equatable {
     var label: String                  // tab title; unique per user editing
     var displayedWindow: WindowKind    // drives menu bar icon (default .fiveHour)
     var codexHomeOverride: String?     // multi-account Codex via separate CODEX_HOME
+    var goAuthMethod: GoAuthMethod? = nil // nil means an existing OpenCode API-key account
+
+    var effectiveGoAuthMethod: GoAuthMethod { goAuthMethod ?? .apiKey }
 }
 
 struct LimitWindow: Codable, Equatable, Sendable {

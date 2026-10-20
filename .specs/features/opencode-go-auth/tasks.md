@@ -89,13 +89,39 @@ T7 → T8
 - Skills: `swift-language`, `swift-testing-pro`
 
 **Done when**:
-- [ ] Old account JSON with no auth-method field decodes with API-key behavior.
-- [ ] API-key and OAuth method values round-trip through JSON without changing provider raw values.
-- [ ] Two focused Swift Testing cases pass; no existing model test is removed.
-- [ ] Quick gate passes.
+- [x] Old account JSON with no auth-method field decodes with API-key behavior.
+- [x] API-key and OAuth method values round-trip through JSON without changing provider raw values.
+- [x] Two focused Swift Testing cases pass; no existing model test is removed.
+- [x] Quick gate passes.
 
 **Tests**: unit (`Tests/LimitBarTests/ModelsTests.swift`, at least 2 focused assertions/cases)
 **Gate**: Quick
+
+**T1 Post-Gate Review**:
+
+*Check A - Sufficient (coverage mapping):*
+
+| Done-when criterion / spec AC | `file:line` + assertion expression | Spec-defined outcome | Covered? |
+|---|---|---|---|
+| Legacy account without method retains API-key behavior | `Tests/LimitBarTests/ModelsTests.swift:79-81` - `#expect(decoded.goAuthMethod == nil)` and `#expect(decoded.effectiveGoAuthMethod == .apiKey)` | Missing field is treated as API-key auth (OGA-09). | ✅ |
+| API-key and OAuth method values round-trip | `Tests/LimitBarTests/ModelsTests.swift:98-99` - `#expect(decoded == account)` and `#expect(decoded.effectiveGoAuthMethod == method)` | Both methods survive account JSON encoding/decoding (OGA-09). | ✅ |
+| OpenCode provider raw value remains stable | `Tests/LimitBarTests/ModelsTests.swift:19` - `#expect(ProviderKind.openCodeGo.rawValue == "openCodeGo")` | Persisted provider identifier remains unchanged. | ✅ |
+| Focused tests and full quick gate pass | `ModelsTests.swift:65-100`; test output confirms both names; full run has 121 Swift Testing passes and `TEST SUCCEEDED` | At least two focused tests pass without removing existing coverage. | ✅ |
+
+*Check C - Necessary (reverse mapping):*
+
+| `file:line` + assertion expression | Maps to | Keep? |
+|---|---|---|
+| `ModelsTests.swift:79-81` - legacy provider/method/default assertions | OGA-09, old persisted account compatibility | ✅ |
+| `ModelsTests.swift:98-99` - account and effective-method equality for each enum case | OGA-09, method round-trip | ✅ |
+| `ModelsTests.swift:19` - OpenCode raw value assertion | T1 Done-when: provider raw value unchanged | ✅ |
+
+- [x] Check A: all task criteria have test-output or assertion evidence; asserted outcomes match OGA-09.
+- [x] Check B: assertions inspect decoded account state, not only calls or execution.
+- [x] Check C: each assertion maps to T1 or OGA-09; no speculative test was added.
+- [x] Check D: follows `AGENTS.md` Swift Testing conventions and the existing `ModelsTests.swift` style.
+
+**Verdict**: T1 coverage is sufficient and necessary; no spec-precision gap or deviation.
 
 #### T2: Add the OpenCode Keychain credential vault
 

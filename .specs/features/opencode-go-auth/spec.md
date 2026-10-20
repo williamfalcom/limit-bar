@@ -150,7 +150,7 @@ limit-bar currently requires an OpenCode API key, while the user is on OpenCode 
 | OGA-06 | P1: Browser connection | Design | In Design |
 | OGA-07 | P1: Browser connection | Design | In Design |
 | OGA-08 | P1: Browser connection | Design | In Design |
-| OGA-09 | P1: API-key compatibility | Design | In Design |
+| OGA-09 | P1: API-key compatibility | Design | Verified |
 | OGA-10 | P1: API-key compatibility | Design | In Design |
 | OGA-11 | P1: API-key compatibility | Design | In Design |
 | OGA-12 | P1: API-key compatibility | Design | In Design |
