@@ -412,15 +412,44 @@ T7 → T8
 - Skills: `swiftui-pro`, `swift-language`
 
 **Done when**:
-- [ ] OAuth unauthorized state offers browser reconnection for the same account; API-key unauthorized state offers key replacement.
-- [ ] Reauthentication preserves account UUID, label, displayed window, and selected method until success.
-- [ ] Account removal attempts all local credential names; on cleanup failure the account remains visible and the UI does not claim success.
-- [ ] OAuth removal presents a localized warning that the Console session is not revoked remotely.
-- [ ] New reauth/removal strings are present in all three locales; last-good data remains visible during repair.
-- [ ] Build gate passes; manually verify both reauth paths and removal warning.
+- [x] OAuth unauthorized state offers browser reconnection for the same account; API-key unauthorized state offers key replacement.
+- [x] Reauthentication preserves account UUID, label, displayed window, and selected method until success.
+- [x] Account removal attempts all local credential names; on cleanup failure the account remains visible and the UI does not claim success.
+- [x] OAuth removal presents a localized warning that the Console session is not revoked remotely.
+- [x] New reauth/removal strings are present in all three locales; last-good data remains visible during repair.
+- [x] Build and full test gates pass (151 tests).
+- [ ] Manual UAT: verify OAuth reconnect, API-key replacement, cached quota visibility during repair, and the OAuth removal warning in the running app.
 
 **Tests**: build/manual UAT (SwiftUI has no unit/UI test target)
 **Gate**: Build
+
+**T7 Post-Gate Review**:
+
+*Check A - Sufficient (coverage mapping):*
+
+| Done-when criterion / spec AC | `file:line` + assertion/source evidence | Spec-defined outcome | Covered? |
+|---|---|---|---|
+| Unauthorized OpenCode accounts offer method-matched repair while retaining the cached quota | `PanelView.swift:100-113,258-302` displays the previous snapshot and selects the browser/key action from the same account's auth method; `GoAccountReauthenticationSheet.swift:3-159` writes using the existing account UUID and never updates account metadata | OAuth reconnect and API-key replacement preserve account ID, label, displayed window, and selected method (OGA-21/22/25). | ✅ |
+| Local removal attempts all OpenCode credential names and does not remove an account after partial Keychain failure | `SettingsView.swift:141-162`; `GoAuthManager.swift:53-56`; `GoCredentialVault.swift:68-89`; `GoCredentialVaultTests.swift:157-201` verifies all names are attempted and failures surfaced | The account remains visible after incomplete local cleanup (OGA-23/24). | ✅ |
+| OAuth removal warns that only local credentials are deleted | `SettingsView.swift:199-220`; warning key exists in `en`, `pt-BR`, and `es` tables | No implication of remote Console logout/revocation (OGA-24). | ✅ |
+| Reauthentication and cleanup messages are localized; last-good quota remains visible | All 14 new T7 strings are present in all locales; `PanelView.swift:100-108` renders cached windows for unauthorized state | Repair is actionable and prior data remains available (OGA-25/26). | ✅ |
+| Build and test gate pass | `scripts/build.sh test` passed; xcresult summary reports 151 passed, 0 failed; signed v0.2.3 dev app builds | Code compiles and existing tests remain green. | ✅ |
+| Manual UAT of reauthentication/removal | Pending user verification on the v0.2.3 development build | Verify actual browser reconnect, API-key replacement, cached quota display, and local-only warning. | ⏳ |
+
+*Check C - Necessary (reverse mapping):*
+
+| `file:line` + assertion/source evidence | Maps to | Keep? |
+|---|---|---|
+| `PanelView.swift:100-113,258-302`; `GoAccountReauthenticationSheet.swift:3-159` | OGA-21/22/25 method-specific account repair and cache visibility | ✅ |
+| `SettingsView.swift:141-162`; `GoAuthManager.swift:53-56`; `GoCredentialVault.swift:68-89`; `GoCredentialVaultTests.swift:157-201` | OGA-23/24 cleanup failure safety | ✅ |
+| `SettingsView.swift:199-220`; localized strings tables | OGA-24 local-only OAuth disconnect warning; OGA-26 localization | ✅ |
+
+- [x] Check A: implementation, existing automated credential cleanup coverage, and build/test evidence cover code criteria.
+- [x] Check B: credential writes/deletes use Keychain and errors do not reveal credential values.
+- [x] Check C: all changes map to OGA-21–26 and preserve the account's metadata/cache.
+- [x] Check D: uses SwiftUI state/presentation conventions; no UI-test target exists.
+
+**Verdict**: T7 implementation and automated build/test gates pass; task remains open until manual UAT.
 
 ### Phase 4: Documentation and closure
 

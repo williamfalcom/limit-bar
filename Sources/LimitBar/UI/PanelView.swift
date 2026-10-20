@@ -2,9 +2,11 @@ import SwiftUI
 
 struct PanelView: View {
     var store: AccountStore
+    var authManager: GoAuthManager
     var onRefresh: () -> Void = {}
     var onOpenSettings: () -> Void = {}
     var appVersion: String?
+    @State private var accountToReauthenticate: Account?
 
     var body: some View {
         Group {
@@ -17,6 +19,11 @@ struct PanelView: View {
         .frame(width: 420)
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
+        .sheet(item: $accountToReauthenticate) { account in
+            GoAccountReauthenticationSheet(account: account, authManager: authManager) {
+                onRefresh()
+            }
+        }
     }
 
     private var tabs: some View {
@@ -92,7 +99,18 @@ struct PanelView: View {
             }
         case .unauthorized:
             if let provider = activeProvider {
-                ReauthInstructions(providerID: provider.provider)
+                VStack(spacing: 8) {
+                    if let snapshot, !snapshot.windows.isEmpty {
+                        ForEach(snapshot.windows, id: \.kind) { window in
+                            WindowRow(window: window, fetchedAt: snapshot.fetchedAt, now: Date(), provider: provider.provider)
+                        }
+                        footer(fetchedAt: snapshot.fetchedAt, isStale: true)
+                    }
+                    ReauthInstructions(account: provider) {
+                        guard provider.provider == .openCodeGo else { return }
+                        accountToReauthenticate = provider
+                    }
+                }
             }
         case .unsupported:
             VStack(spacing: 6) {
@@ -233,7 +251,8 @@ private struct LimitProgressBar: View {
 }
 
 private struct ReauthInstructions: View {
-    let providerID: ProviderKind
+    let account: Account
+    let onReauthenticate: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -242,36 +261,49 @@ private struct ReauthInstructions: View {
             Text(instructionText)
                 .font(.callout)
                 .foregroundStyle(.secondary)
-            Text(command)
-                .font(.system(.callout, design: .monospaced))
-                .textSelection(.enabled)
-                .padding(6)
-                .background(Color.secondary.opacity(0.15))
-                .clipShape(RoundedRectangle(cornerRadius: 5))
+            if account.provider == .openCodeGo {
+                Button(reauthenticationTitle, action: onReauthenticate)
+                    .buttonStyle(.borderedProminent)
+            } else {
+                Text(command)
+                    .font(.system(.callout, design: .monospaced))
+                    .textSelection(.enabled)
+                    .padding(6)
+                    .background(Color.secondary.opacity(0.15))
+                    .clipShape(RoundedRectangle(cornerRadius: 5))
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.vertical, 4)
     }
 
     private var instructionText: String {
-        switch providerID {
+        switch account.provider {
         case .claudeCode:
             NSLocalizedString("The Claude Code credential was rejected, missing, or Keychain access was denied. Log in with the Claude Code CLI and allow limit-bar to read \"Claude Code-credentials\" when macOS asks.", comment: "Claude reauth instructions")
         case .codex:
             NSLocalizedString("Codex authentication failed or auth.json is missing. Log in again with the Codex CLI, then refresh.", comment: "Codex reauth instructions")
         case .openCodeGo:
-            NSLocalizedString("Your OpenCode API key was rejected. Paste a valid key in Settings.", comment: "Go reauth instructions")
+            account.effectiveGoAuthMethod == .consoleOAuth
+                ? NSLocalizedString("Your OpenCode OAuth session was rejected or expired. Reconnect to restore quota updates.", comment: "OpenCode OAuth reauth instructions")
+                : NSLocalizedString("Your OpenCode API key was rejected. Replace it to restore quota updates.", comment: "OpenCode API key reauth instructions")
         case .githubCopilot:
             NSLocalizedString("Your GitHub Copilot authentication was rejected. Log in with the Copilot CLI and refresh.", comment: "Copilot reauth instructions")
         }
     }
 
     private var command: String {
-        switch providerID {
+        switch account.provider {
         case .claudeCode: "claude login"
         case .codex: "codex login"
         case .openCodeGo: "# Settings → Accounts → Go API key"
         case .githubCopilot: "copilot login"
         }
+    }
+
+    private var reauthenticationTitle: String {
+        account.effectiveGoAuthMethod == .consoleOAuth
+            ? NSLocalizedString("Reconnect with browser", comment: "OpenCode OAuth reauthentication action")
+            : NSLocalizedString("Replace API key", comment: "OpenCode API-key reauthentication action")
     }
 }

@@ -57,3 +57,17 @@
 "Could not save OpenCode credentials to Keychain." = "Não foi possível salvar as credenciais do OpenCode no Chaves.";
 "Could not clear OpenCode credentials after cancellation." = "Não foi possível remover as credenciais locais do OpenCode após o cancelamento.";
 "Could not complete OpenCode authorization. Try again." = "Não foi possível concluir a autorização do OpenCode. Tente novamente.";
+"Reconnect with browser" = "Reconectar pelo navegador";
+"Replace API key" = "Trocar chave da API";
+"Save API key" = "Salvar chave da API";
+"Reconnect OpenCode account" = "Reconectar conta do OpenCode";
+"Replace OpenCode API key" = "Trocar chave de API do OpenCode";
+"Paste a replacement OpenCode API key" = "Cole a nova chave de API do OpenCode";
+"Your OpenCode OAuth session was rejected or expired. Reconnect to restore quota updates." = "Sua sessão OAuth do OpenCode foi rejeitada ou expirou. Reconecte para voltar a atualizar as cotas.";
+"Your OpenCode API key was rejected. Replace it to restore quota updates." = "Sua chave de API do OpenCode foi rejeitada. Troque-a para voltar a atualizar as cotas.";
+"Remove OpenCode account?" = "Remover conta do OpenCode?";
+"Remove account?" = "Remover conta?";
+"Removing this account deletes its credentials from this Mac, but does not revoke the OpenCode Console session." = "A remoção apaga as credenciais deste Mac, mas não revoga a sessão do OpenCode Console.";
+"Remove this account and its locally stored credentials?" = "Remover esta conta e as credenciais armazenadas localmente?";
+"Could not remove account" = "Não foi possível remover a conta";
+"Local credential cleanup did not complete. The account is still configured. Try again; some credentials may already have been removed." = "A limpeza das credenciais locais não foi concluída. A conta continua configurada. Tente novamente; algumas credenciais podem já ter sido removidas.";

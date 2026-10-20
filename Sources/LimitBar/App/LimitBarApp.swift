@@ -65,6 +65,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         popover.contentViewController = NSHostingController(
             rootView: PanelHost(
                 store: store,
+                authManager: authManager,
                 appVersion: appVersion,
                 onRefresh: { [weak self] in
                     guard let self else { return }
@@ -192,6 +193,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
 private struct PanelHost: View {
     var store: AccountStore
+    var authManager: GoAuthManager
     var appVersion: String?
     var onRefresh: () -> Void
     var onOpenSettings: () -> Void
@@ -199,6 +201,7 @@ private struct PanelHost: View {
     var body: some View {
         PanelView(
             store: store,
+            authManager: authManager,
             onRefresh: onRefresh,
             onOpenSettings: {
                 NSApp.activate(ignoringOtherApps: true)

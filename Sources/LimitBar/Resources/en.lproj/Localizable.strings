@@ -57,3 +57,17 @@
 "Could not save OpenCode credentials to Keychain." = "Could not save OpenCode credentials to Keychain.";
 "Could not clear OpenCode credentials after cancellation." = "Could not clear OpenCode credentials after cancellation.";
 "Could not complete OpenCode authorization. Try again." = "Could not complete OpenCode authorization. Try again.";
+"Reconnect with browser" = "Reconnect with browser";
+"Replace API key" = "Replace API key";
+"Save API key" = "Save API key";
+"Reconnect OpenCode account" = "Reconnect OpenCode account";
+"Replace OpenCode API key" = "Replace OpenCode API key";
+"Paste a replacement OpenCode API key" = "Paste a replacement OpenCode API key";
+"Your OpenCode OAuth session was rejected or expired. Reconnect to restore quota updates." = "Your OpenCode OAuth session was rejected or expired. Reconnect to restore quota updates.";
+"Your OpenCode API key was rejected. Replace it to restore quota updates." = "Your OpenCode API key was rejected. Replace it to restore quota updates.";
+"Remove OpenCode account?" = "Remove OpenCode account?";
+"Remove account?" = "Remove account?";
+"Removing this account deletes its credentials from this Mac, but does not revoke the OpenCode Console session." = "Removing this account deletes its credentials from this Mac, but does not revoke the OpenCode Console session.";
+"Remove this account and its locally stored credentials?" = "Remove this account and its locally stored credentials?";
+"Could not remove account" = "Could not remove account";
+"Local credential cleanup did not complete. The account is still configured. Try again; some credentials may already have been removed." = "Local credential cleanup did not complete. The account is still configured. Try again; some credentials may already have been removed.";

@@ -31,6 +31,8 @@ struct SettingsView: View {
     var keychain: any CredentialStore = KeychainStore()
 
     @State private var showingAddSheet = false
+    @State private var showingRemovalError = false
+    @State private var removalError: String?
     @State private var intervalText: String
     @State private var intervalError: String?
     @State private var launchAtLoginEnabled = false
@@ -62,6 +64,11 @@ struct SettingsView: View {
             AddAccountSheet(authManager: authManager) { account in
                 add(account: account)
             }
+        }
+        .alert("Could not remove account", isPresented: $showingRemovalError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(removalError ?? "Local credential cleanup did not complete. The account is still configured.")
         }
     }
 
@@ -132,8 +139,26 @@ struct SettingsView: View {
     }
 
     private func remove(account: Account) {
-        try? keychain.deleteSecret(forKey: account.id.uuidString)
-        store.remove(account: account)
+        Task {
+            do {
+                if account.provider == .openCodeGo {
+                    try await authManager.deleteCredentials(for: account.id)
+                } else {
+                    do {
+                        try keychain.deleteSecret(forKey: account.id.uuidString)
+                    } catch KeychainStore.KeychainError.itemNotFound {
+                        // Removing an account with no local credential is still safe.
+                    }
+                }
+                store.remove(account: account)
+            } catch {
+                removalError = NSLocalizedString(
+                    "Local credential cleanup did not complete. The account is still configured. Try again; some credentials may already have been removed.",
+                    comment: "local account removal failure"
+                )
+                showingRemovalError = true
+            }
+        }
     }
 }
 
@@ -142,6 +167,7 @@ private struct AccountRow: View {
     let onRename: (Account) -> Void
     let onUpdate: (Account) -> Void
     let onDelete: () -> Void
+    @State private var showingRemovalConfirmation = false
 
     var body: some View {
         HStack(spacing: 8) {
@@ -167,13 +193,30 @@ private struct AccountRow: View {
                 }
             }
             Spacer()
-            Button(role: .destructive, action: onDelete) {
-                Image(systemName: "minus.circle")
+            Button(role: .destructive) {
+                showingRemovalConfirmation = true
+            } label: {
+                Label("Remove account", systemImage: "minus.circle")
             }
+            .labelStyle(.iconOnly)
             .buttonStyle(.borderless)
             .help("Remove account")
         }
         .padding(.vertical, 2)
+        .confirmationDialog(
+            isOAuthAccount ? "Remove OpenCode account?" : "Remove account?",
+            isPresented: $showingRemovalConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Remove", role: .destructive, action: onDelete)
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            if isOAuthAccount {
+                Text("Removing this account deletes its credentials from this Mac, but does not revoke the OpenCode Console session.")
+            } else {
+                Text("Remove this account and its locally stored credentials?")
+            }
+        }
     }
 
     private var iconName: String {
@@ -183,6 +226,10 @@ private struct AccountRow: View {
         case .openCodeGo: "g.circle.fill"
         case .githubCopilot: "chevron.left.forwardslash.chevron.right"
         }
+    }
+
+    private var isOAuthAccount: Bool {
+        account.provider == .openCodeGo && account.effectiveGoAuthMethod == .consoleOAuth
     }
 
     private var labelBinding: Binding<String> {
@@ -435,26 +482,6 @@ private struct AddAccountSheet: View {
     }
 
     private func localizedConnectionError(for error: Error) -> String {
-        if error is KeychainStore.KeychainError {
-            return NSLocalizedString(
-                "Could not save OpenCode credentials to Keychain.",
-                comment: "OpenCode credential storage error"
-            )
-        }
-        if let error = error as? GoOAuthClientError {
-            switch error {
-            case .authorizationExpired:
-                return NSLocalizedString("OpenCode authorization expired. Start again.", comment: "device authorization expiry")
-            case .authorizationDenied:
-                return NSLocalizedString("OpenCode authorization was denied.", comment: "device authorization denial")
-            case .network:
-                return NSLocalizedString("Could not connect to OpenCode. Check your network and try again.", comment: "OAuth network error")
-            case .untrustedVerificationURL, .invalidResponse:
-                return NSLocalizedString("The OpenCode response was invalid. Try again.", comment: "OAuth response error")
-            case .httpStatus, .invalidGrant:
-                return NSLocalizedString("Could not complete OpenCode authorization. Try again.", comment: "OAuth authorization error")
-            }
-        }
-        return NSLocalizedString("Could not complete OpenCode authorization. Try again.", comment: "OAuth authorization error")
+        GoAuthErrorMessage.localized(for: error)
     }
 }
