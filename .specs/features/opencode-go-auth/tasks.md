@@ -296,15 +296,45 @@ T7 → T8
 - Skills: `swift-language`, `swift-testing-pro`
 
 **Done when**:
-- [ ] Legacy nil method and explicit API-key accounts send the existing API key without OAuth refresh.
-- [ ] OAuth accounts send the manager's current access token as Bearer to `https://opencode.ai/zen/go/v1/usage`.
-- [ ] `rolling`/`weekly`/`monthly`, numeric clamp, fractional reset parsing, and missing/invalid windows match the spec.
-- [ ] 401/403, 429/Retry-After, other status, transport, and empty/malformed payload retain their specified error mapping.
-- [ ] All 13 pre-existing `GoAdapterTests` remain; add at least 2 cases for OAuth selection/refresh integration (15 or more total).
-- [ ] Quick gate passes.
+- [x] Legacy nil method and explicit API-key accounts send the existing API key without OAuth refresh.
+- [x] OAuth accounts send the manager's current access token as Bearer to `https://opencode.ai/zen/go/v1/usage`.
+- [x] `rolling`/`weekly`/`monthly`, numeric clamp, fractional reset parsing, and missing/invalid windows match the spec.
+- [x] 401/403, 429/Retry-After, other status, transport, and empty/malformed payload retain their specified error mapping; refresh `invalid_grant` maps to unauthorized before usage fetch.
+- [x] All 13 pre-existing `GoAdapterTests` remain; add three cases for explicit API-key selection, OAuth refresh/Bearer integration, and invalid-grant mapping (16 total).
+- [x] Quick gate passes.
 
 **Tests**: unit (`Tests/LimitBarTests/GoAdapterTests.swift`, 15+ total cases)
 **Gate**: Quick
+
+**T5 Post-Gate Review**:
+
+*Check A - Sufficient (coverage mapping):*
+
+| Done-when criterion / spec AC / edge case | `file:line` + assertion expression | Spec-defined outcome | Covered? |
+|---|---|---|---|
+| Legacy nil and explicit API-key methods use the stored API key, without OAuth refresh | `GoAdapterTests.swift:106-118` - URL and Bearer assertion for legacy nil; `:276-291` - bare-UUID fallback; `:293-321` - explicit key Bearer plus refresh count zero | Existing and explicit API-key accounts retain the compatible key path (OGA-09/10/12). | ✅ |
+| OAuth method refreshes and sends the newly persisted access token to the official quota URL | `GoAdapter.swift:35-54`; `GoAdapterTests.swift:327-359` - endpoint, rotated Bearer, parsed windows, stored rotated pair, and one refresh | OAuth usage uses the manager's valid token and persists rotation before request (OGA-13/17/18). | ✅ |
+| Refresh `invalid_grant` becomes unauthorized and does not issue a quota request | `GoAdapter.swift:35-49`; `GoAdapterTests.swift:362-386` - exact unauthorized error, no recorded usage request, one refresh | Refresh authorization failure feeds the account's unauthorized/reconnect state (OGA-17/19). | ✅ |
+| Quota windows, numeric clamp, fractional reset dates, and omitted invalid windows retain existing behavior | `GoAdapterTests.swift:120-166` - period kinds, percentages, nil dollar values, fractional resets, and invalid reset handling | Preserve official `rolling`/`weekly`/`monthly` mapping and parser behavior (OGA-13/14/15). | ✅ |
+| Endpoint status, retry, transport, and payload errors retain their mappings | `GoAdapterTests.swift:168-274` - 401/403, 429 with/without Retry-After, other statuses, transport failure, malformed/empty payload | Unauthorized, rate-limited, network, and parse failures remain distinct (OGA-16). | ✅ |
+| Existing tests remain and the expanded Quick gate passes | `GoAdapterTests.swift` has 16 `@Test` cases; log confirms all three new cases and `Test run with 150 tests in 16 suites passed` | Preserve 13 prior cases and run at least 15 adapter tests. | ✅ |
+
+*Check C - Necessary (reverse mapping):*
+
+| `file:line` + assertion expression | Maps to | Keep? |
+|---|---|---|
+| `GoAdapterTests.swift:106-118`, `:276-321` | OGA-09/10/12 and T5 API-key compatibility | ✅ |
+| `GoAdapterTests.swift:327-359` | OGA-13/17/18 and T5 OAuth token selection/refresh | ✅ |
+| `GoAdapterTests.swift:362-386` | OGA-17/19 and unauthorized reauth pathway | ✅ |
+| `GoAdapterTests.swift:120-166` | OGA-13/14/15 and quota parsing | ✅ |
+| `GoAdapterTests.swift:168-274` | OGA-16 and error mapping | ✅ |
+
+- [x] Check A: each T5 criterion and applicable spec behavior has exact assertions or full-gate evidence.
+- [x] Check B: tests assert Bearer selection, persisted rotated credentials, returned windows, and precise provider errors.
+- [x] Check C: every assertion maps to T5 or named requirements; no existing test was removed.
+- [x] Check D: follows `AGENTS.md` Swift Testing and URLProtocol patterns.
+
+**Verdict**: T5 coverage is sufficient and necessary; no spec-precision gap or deviation.
 
 ### Phase 3: User-facing flows
 

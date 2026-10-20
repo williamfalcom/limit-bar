@@ -153,14 +153,14 @@ limit-bar currently requires an OpenCode API key, while the user is on OpenCode 
 | OGA-09 | P1: API-key compatibility | Design | Verified |
 | OGA-10 | P1: API-key compatibility | Design | Implementing |
 | OGA-11 | P1: API-key compatibility | Design | Implementing |
-| OGA-12 | P1: API-key compatibility | Design | In Design |
-| OGA-13 | P1: Quota reading | Design | In Design |
-| OGA-14 | P1: Quota reading | Design | In Design |
-| OGA-15 | P1: Quota reading | Design | In Design |
-| OGA-16 | P1: Quota reading | Design | In Design |
+| OGA-12 | P1: API-key compatibility | Design | Implementing |
+| OGA-13 | P1: Quota reading | Design | Implementing |
+| OGA-14 | P1: Quota reading | Design | Implementing |
+| OGA-15 | P1: Quota reading | Design | Implementing |
+| OGA-16 | P1: Quota reading | Design | Implementing |
 | OGA-17 | P1: Quota reading | Design | Implementing |
 | OGA-18 | P1: Quota reading | Design | Implementing |
-| OGA-19 | P1: Reauthentication | Design | In Design |
+| OGA-19 | P1: Reauthentication | Design | Implementing |
 | OGA-20 | P1: Reauthentication | Design | In Design |
 | OGA-21 | P1: Reauthentication | Design | In Design |
 | OGA-22 | P1: Reauthentication | Design | In Design |
