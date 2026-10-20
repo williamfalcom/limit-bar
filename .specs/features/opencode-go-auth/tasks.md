@@ -9,6 +9,12 @@ Implement these tasks with the `tlc-spec-driven` skill: activate it by name and 
 **Design**: `.specs/features/opencode-go-auth/design.md`  
 **Status**: In Progress
 
+## v0.3.0 release disposition
+
+On 2026-10-20, the user explicitly authorized administrative merge of PR #4 and publication of v0.3.0 without an external approving review, accepting the pending manual API-key replacement check. The GitHub account performing the release is also the PR author and cannot approve its own PR. Release notes disclose the UAT gap in `docs/releases/v0.3.0.md`.
+
+This release authorization does not mark the missing manual test as passed or complete T7/T8. Their unchecked UAT criteria remain open for a later verification with a temporary account; automated build/test and package checks remain mandatory before publication.
+
 ---
 
 ## Test Coverage Matrix
