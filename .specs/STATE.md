@@ -69,10 +69,11 @@
 ## Handoff
 
 - **Feature**: OpenCode Go dual authentication (`.specs/features/opencode-go-auth/`)
-- **Phase / Task**: Phase 4 / T8 — docs/version, automated gates, localization, and source/docs security audit are complete; one API-key reauthentication UAT remains
-- **Completed**: T1–T6 implementation committed through `e6d5022`, with T6 UAT confirmed by the user. T7 implementation is committed as `08a4e3d`. Trilingual docs and `VERSION=0.3.0` are committed as `c28f19a`. Final test result: 151 passed, 0 failed; task/spec validators and `.strings` lint pass.
-- **In-progress** (file:line): `README.md`, `README.pt-BR.md`, and `README.es.md` explain browser-first OAuth, API-key alternative, Keychain storage, independent CLI V2 session, and local-only OAuth removal. `PanelView.swift` retains cached quota and offers method-matched repair; Settings confirms local-only OAuth removal.
-- **Next step**: user confirmed v0.3.0 checks passed for V2 CLI continuity, both quota paths, OAuth removal warning, and OAuth browser reconnection. The API-key replacement action remains untested. If a valid API key is available, test safely with a temporary OpenCode API-key account using an intentionally invalid placeholder, then repair it locally and remove the temporary account; do not share the valid key or revoke a live Console session.
-- **Blockers**: T7/T8 manual UAT is pending only for API-key replacement; no UI-test target exists.
-- **Uncommitted files**: `.specs/STATE.md`, `.specs/features/opencode-go-auth/tasks.md`
-- **Branch**: `feat/opencode-go-auth-v0.3` (T6–T7 implementation and T8 docs/version committed; awaiting manual UAT)
+- **Phase / Task**: v0.3.0 release preparation; T7/T8 retain the untested API-key replacement UAT
+- **Completed**: T1–T6 implementation and user-confirmed UAT; T7 implementation; trilingual docs and `VERSION=0.3.0`. Previous automated gate: 151 passed, 0 failed. AGPLv3 licensing from PR #2 and its session closure from PR #3 are preserved; the only merge conflict was this handoff.
+- **In-progress** (file:line): release notes, fresh build/test gates, administrative merge of PR #4, and ZIP/DMG packaging from merged `main`.
+- **Next step**: rerun validation, merge PR #4, rebuild production artifacts from merged `main`, validate their signature/version/archive integrity, then publish annotated tag `v0.3.0` and GitHub release assets.
+- **Release authorization**: on 2026-10-20, the user explicitly authorized administrative merge without external approval and publication with the known API-key replacement UAT gap disclosed. The authenticated account is the PR author and cannot approve its own PR. This exception is not evidence that the manual test passed.
+- **Blockers**: no release blocker if fresh automated gates and package checks pass. API-key replacement manual UAT remains pending; no UI-test target exists. Test later with a temporary invalid-key account, repair locally, and remove it without sharing secrets or revoking a live Console session.
+- **Uncommitted files**: none
+- **Branch**: `feat/opencode-go-auth-v0.3`
