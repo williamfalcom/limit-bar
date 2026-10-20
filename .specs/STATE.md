@@ -69,10 +69,10 @@
 ## Handoff
 
 - **Feature**: OpenCode Go dual authentication (`.specs/features/opencode-go-auth/`)
-- **Phase / Task**: Phase 3 / T6 — browser-first and API-key account setup; response-field bug fixed, awaiting manual UAT
-- **Completed**: T1–T5 committed (`46722a1`, `a00c493`, `1c9d613`, `a286662`, `8055db9`); latest code passes all 151 tests and builds as dev v0.2.0 (83)
-- **In-progress** (file:line): `Sources/LimitBar/Providers/GoOAuthClient.swift:25-38,92-107` now decodes the verified `verification_uri_complete`; `Sources/LimitBar/UI/SettingsView.swift:238-460` provides browser/API-key setup and cancellation
-- **Next step**: install `.build/dd/Build/Products/Debug/limit-bar.app` and manually verify browser authorization, cancellation, and API-key setup; then close T6 and continue to T7
-- **Blockers**: awaiting user UAT; no real device-code request was made during this fix
-- **Uncommitted files**: `.specs/features/opencode-go-auth/tasks.md`, `Sources/LimitBar/App/LimitBarApp.swift`, `Sources/LimitBar/Core/GoAuthManager.swift`, `Sources/LimitBar/Providers/GoAdapter.swift`, `Sources/LimitBar/Providers/GoOAuthClient.swift`, `Sources/LimitBar/Resources/en.lproj/Localizable.strings`, `Sources/LimitBar/Resources/es.lproj/Localizable.strings`, `Sources/LimitBar/Resources/pt-BR.lproj/Localizable.strings`, `Sources/LimitBar/UI/SettingsView.swift`, `Tests/LimitBarTests/GoAdapterTests.swift`, `Tests/LimitBarTests/GoAuthManagerTests.swift`, `Tests/LimitBarTests/GoOAuthClientTests.swift`
+- **Phase / Task**: Phase 3 / T6 — browser-first and API-key account setup; complete-URL path resolution fixed, awaiting manual UAT
+- **Completed**: T1–T5 committed (`46722a1`, `a00c493`, `1c9d613`, `a286662`, `8055db9`); all 151 tests pass and dev v0.2.2 (84) builds with valid signature
+- **In-progress** (file:line): `Sources/LimitBar/Providers/GoOAuthClient.swift:63-67,253-267` resolves relative `verification_uri_complete` paths against the fixed HTTPS origin; `Sources/LimitBar/UI/SettingsView.swift:238-460` provides browser/API-key setup and cancellation
+- **Next step**: install `.build/dd/Build/Products/Debug/limit-bar.app` (v0.2.2) and retry browser authorization; report whether the Console page opens and approval completes, then finish cancellation/API-key UAT and close T6
+- **Blockers**: awaiting user UAT; no live device-code request was made during diagnosis or this fix
+- **Uncommitted files**: `.specs/features/opencode-go-auth/tasks.md`, `Sources/LimitBar/App/LimitBarApp.swift`, `Sources/LimitBar/Core/GoAuthManager.swift`, `Sources/LimitBar/Providers/GoAdapter.swift`, `Sources/LimitBar/Providers/GoOAuthClient.swift`, `Sources/LimitBar/Resources/en.lproj/Localizable.strings`, `Sources/LimitBar/Resources/es.lproj/Localizable.strings`, `Sources/LimitBar/Resources/pt-BR.lproj/Localizable.strings`, `Sources/LimitBar/UI/SettingsView.swift`, `Tests/LimitBarTests/GoAdapterTests.swift`, `Tests/LimitBarTests/GoAuthManagerTests.swift`, `Tests/LimitBarTests/GoOAuthClientTests.swift`, `VERSION`
 - **Branch**: main
