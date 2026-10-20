@@ -69,10 +69,10 @@
 ## Handoff
 
 - **Feature**: OpenCode Go dual authentication (`.specs/features/opencode-go-auth/`)
-- **Phase / Task**: Phase 3 / T6 — browser-first and API-key account setup; OAuth works, Add Account layout fix awaits visual UAT
-- **Completed**: T1–T5 committed (`46722a1`, `a00c493`, `1c9d613`, `a286662`, `8055db9`); user confirmed OAuth login on v0.2.2; v0.2.3 (85) builds with valid signature and all 151 tests pass
-- **In-progress** (file:line): `Sources/LimitBar/UI/SettingsView.swift:238-302` stacks auth choices vertically and sets a 500 pt minimum/ideal sheet width to prevent localized text clipping
-- **Next step**: install `.build/dd/Build/Products/Debug/limit-bar.app` (v0.2.3), confirm the Add Account sheet and method labels are fully visible, then finish API-key/cancellation UAT and close T6
-- **Blockers**: waiting on user visual confirmation; no UI-test target is configured
-- **Uncommitted files**: `.specs/features/opencode-go-auth/tasks.md`, `Sources/LimitBar/App/LimitBarApp.swift`, `Sources/LimitBar/Core/GoAuthManager.swift`, `Sources/LimitBar/Providers/GoAdapter.swift`, `Sources/LimitBar/Providers/GoOAuthClient.swift`, `Sources/LimitBar/Resources/en.lproj/Localizable.strings`, `Sources/LimitBar/Resources/es.lproj/Localizable.strings`, `Sources/LimitBar/Resources/pt-BR.lproj/Localizable.strings`, `Sources/LimitBar/UI/SettingsView.swift`, `Tests/LimitBarTests/GoAdapterTests.swift`, `Tests/LimitBarTests/GoAuthManagerTests.swift`, `Tests/LimitBarTests/GoOAuthClientTests.swift`, `VERSION`
-- **Branch**: main
+- **Phase / Task**: Phase 3 / T7 — method-specific OpenCode reauthentication and safe local removal; implementation committed, awaiting manual UAT
+- **Completed**: T1–T6 committed through `e6d5022`; user confirmed v0.2.3 OAuth setup, API-key setup, cancellation safety, and unclipped Add Account layout. T7 implementation is committed as `08a4e3d`; build/test gates pass (151 tests).
+- **In-progress** (file:line): `Sources/LimitBar/UI/PanelView.swift:100-113,258-302` retains cached quota and offers method-matched repair; `Sources/LimitBar/UI/GoAccountReauthenticationSheet.swift` reconnects using the existing account ID; `Sources/LimitBar/UI/SettingsView.swift:141-162,199-220` handles safe removal and the OAuth local-only warning.
+- **Next step**: rebuild the committed T7 source as v0.2.3, then manually verify reauthentication and the OAuth removal warning using `.build/dd/Build/Products/Debug/limit-bar.app`; do not revoke a live Console session just to force the OAuth unauthorized state. Then close T7 and proceed with T8 docs/version bump to 0.3.0.
+- **Blockers**: T7 UAT is pending; no UI-test target exists.
+- **Uncommitted files**: `.specs/STATE.md`
+- **Branch**: `feat/opencode-go-auth-v0.3` (T6 based on local `HEAD`, T7 in progress)
