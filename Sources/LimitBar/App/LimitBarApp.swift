@@ -18,6 +18,8 @@ struct LimitBarApp: App {
 final class AppDelegate: NSObject, NSApplicationDelegate {
     let store: AccountStore
     let engine: PollingEngine
+    let authManager: GoAuthManager
+    private let credentials: any CredentialStore
 
     private let popover = NSPopover()
     private var statusItem: NSStatusItem?
@@ -26,15 +28,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     override init() {
         let store = AccountStore(persistence: PersistenceController())
+        let credentials = KeychainStore()
+        let authManager = GoAuthManager(
+            vault: GoCredentialVault(credentials: credentials),
+            oauthClient: GoOAuthClient()
+        )
         let adapters: [ProviderKind: any ProviderAdapter] = [
             .claudeCode: ClaudeAdapter(),
             .codex: CodexAdapter(),
-            .openCodeGo: GoAdapter(credentials: KeychainStore()),
+            .openCodeGo: GoAdapter(credentials: credentials, authManager: authManager),
             .githubCopilot: CopilotAdapter(),
         ]
         let engine = PollingEngine(store: store, adapters: adapters, notifications: NotificationService())
         self.store = store
         self.engine = engine
+        self.authManager = authManager
+        self.credentials = credentials
         super.init()
         store.onAccountsChanged = { [weak self] in
             Task { await self?.engine.interruptSleep() }
@@ -56,6 +65,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         popover.contentViewController = NSHostingController(
             rootView: PanelHost(
                 store: store,
+                authManager: authManager,
                 appVersion: appVersion,
                 onRefresh: { [weak self] in
                     guard let self else { return }
@@ -150,7 +160,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             settingsWindow.makeKeyAndOrderFront(nil)
             return
         }
-        let root = SettingsView(store: store, keychain: KeychainStore())
+        let root = SettingsView(store: store, authManager: authManager, keychain: credentials)
         let window = NSWindow(contentViewController: NSHostingController(rootView: root))
         window.title = NSLocalizedString("Settings…", comment: "settings window title")
         window.styleMask = [.titled, .closable, .miniaturizable]
@@ -183,6 +193,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
 private struct PanelHost: View {
     var store: AccountStore
+    var authManager: GoAuthManager
     var appVersion: String?
     var onRefresh: () -> Void
     var onOpenSettings: () -> Void
@@ -190,6 +201,7 @@ private struct PanelHost: View {
     var body: some View {
         PanelView(
             store: store,
+            authManager: authManager,
             onRefresh: onRefresh,
             onOpenSettings: {
                 NSApp.activate(ignoringOtherApps: true)

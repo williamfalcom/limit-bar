@@ -32,7 +32,7 @@
 - **Trade-off**: Token refresh remains the CLIs' job - expired tokens surface as re-login instructions instead of self-healing.
 - **Scope**: All credential handling in limit-bar.
 - **Date**: 2026-08-21
-- **Status**: active
+- **Status**: superseded by AD-008 for OpenCode Go
 
 ### AD-005
 - **Decision**: Usage polling defaults to 300 s per account, user-configurable with a hard 60 s floor; HTTP 429 triggers exponential backoff doubling the delay, capped at 30 min.
@@ -58,13 +58,22 @@
 - **Date**: 2026-08-25
 - **Status**: active
 
+### AD-008
+- **Decision**: OpenCode Go supports both API-key authentication and a separate limit-bar-owned Console device OAuth session. OAuth access/refresh tokens are stored only in the limit-bar Keychain; refresh is serialized per account. Existing accounts without an auth-method field remain API-key accounts. Removing an OAuth account deletes local credentials and clearly states that it does not revoke the remote Console session. The CLI V2 credential database and session are never read or modified.
+- **Reason**: The user cannot create the key required by the current limit-bar setup. Live authorization confirmed that a separate device-flow token and its rotated replacement can read the official Go usage endpoint. The refresh token is single-use.
+- **Trade-off**: The browser flow depends on Console availability. Local removal does not revoke the server-side session because no official device-session revocation route is documented.
+- **Scope**: OpenCode Go account setup, Keychain credentials, `GoAdapter`, and OpenCode authentication UI only. AD-004 remains active for all other providers.
+- **Date**: 2026-10-19
+- **Status**: active
+
 ## Handoff
 
-- **Feature**: Repository licensing migration to GNU AGPLv3
-- **Phase / Task**: Session closed; PR #2 merged into `main` as `e2cc173`
-- **Completed**: added the canonical GNU AGPLv3 text as root `LICENSE`; documented the license in the English, Brazilian Portuguese, and Spanish READMEs; validated the legal text byte-for-byte against GNU's published copy
-- **In-progress** (file:line): none
-- **Next step**: begin the next feature from `main`. Deferred (context.md): Zen balance display (#10448), Go usage history, dead Codex auth.json fallback decision, possible warning affordance re-addition if provider-only color hides high usage
-- **Blockers**: none
+- **Feature**: OpenCode Go dual authentication (`.specs/features/opencode-go-auth/`)
+- **Phase / Task**: v0.3.0 release preparation; T7/T8 retain the untested API-key replacement UAT
+- **Completed**: T1–T6 implementation and user-confirmed UAT; T7 implementation; trilingual docs and `VERSION=0.3.0`; release notes in `docs/releases/v0.3.0.md`. Fresh `scripts/build.sh test` on 2026-10-20: 151 passed, 0 failed, 0 skipped (xcresult summary). Strict spec/task validators, all `.strings` syntax checks, all 27 new auth keys in three locales, and high-confidence secret-pattern scan passed. One unrelated Codex localization-key mismatch in pt-BR/es predates this feature and remains unchanged. AGPLv3 licensing from PR #2 and its session closure from PR #3 are preserved; the only merge conflict was this handoff.
+- **In-progress** (file:line): release notes, fresh build/test gates, administrative merge of PR #4, and ZIP/DMG packaging from merged `main`.
+- **Next step**: rerun validation, merge PR #4, rebuild production artifacts from merged `main`, validate their signature/version/archive integrity, then publish annotated tag `v0.3.0` and GitHub release assets.
+- **Release authorization**: on 2026-10-20, the user explicitly authorized administrative merge without external approval and publication with the known API-key replacement UAT gap disclosed. The authenticated account is the PR author and cannot approve its own PR. This exception is not evidence that the manual test passed.
+- **Blockers**: no release blocker if fresh automated gates and package checks pass. API-key replacement manual UAT remains pending; no UI-test target exists. Test later with a temporary invalid-key account, repair locally, and remove it without sharing secrets or revoking a live Console session.
 - **Uncommitted files**: none
-- **Branch**: main
+- **Branch**: `feat/opencode-go-auth-v0.3`

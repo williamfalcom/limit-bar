@@ -40,14 +40,14 @@ limit-bar permanece en silencio en tu barra de menús mostrando cuánto has cons
 | --- | --- | --- |
 | **Claude Code** (Pro/Max/Team) | Sesión de 5 horas · Semanal · cubos semanales por modelo (Fable, Opus, …) | Endpoint OAuth de uso de Anthropic; el token se lee localmente del llavero |
 | **Codex** (Plus/Pro) | Primaria ~5 horas · secundaria semanal | `codex app-server` JSON-RPC, con respaldo en `$CODEX_HOME/auth.json` |
-| **OpenCode** | Ventana móvil de 5 horas · semanal · mensual | Endpoint oficial de uso de OpenCode Go, autenticado con la clave de API guardada en tu llavero |
+| **OpenCode** | Ventana móvil de 5 horas · semanal · mensual | Endpoint oficial de uso de OpenCode Go; inicia sesión desde el navegador de Console o usa una clave de API, con las credenciales guardadas en tu llavero |
 | **GitHub Copilot** | Premium requests mensuales | CLI autenticada de Copilot (`account.getQuota` mediante JSON-RPC headless); se omiten las cuotas ilimitadas de chat y completions |
 
 ## Instalación
 
 **Requisitos:** macOS 14 (Sonoma) o superior.
 
-1. Descarga `limit-bar-v0.2.0.dmg` (o el `.zip`) de la [última versión](https://github.com/williamfalcom/limit-bar/releases/latest).
+1. Descarga `limit-bar-v0.3.0.dmg` (o el `.zip`) de la [última versión](https://github.com/williamfalcom/limit-bar/releases/latest).
 2. Ábrelo y arrastra **limit-bar.app** a **Aplicaciones**.
 3. Inicia limit-bar — su icono aparece en la barra de menús (sin icono en el Dock a propósito).
 
@@ -65,7 +65,7 @@ limit-bar permanece en silencio en tu barra de menús mostrando cuánto has cons
 3. Agrega cuentas:
    - **Claude Code** — nada que escribir. limit-bar lee el token OAuth que tu CLI de Claude Code ya guardó en el llavero (`Claude Code-credentials`). Cuando macOS pregunte, elige **Permitir siempre**.
    - **Codex** — también automático: los límites vienen de `codex app-server`, usando el inicio de sesión que tu CLI ya tiene.
-   - **OpenCode** — pega tu clave de API una vez; queda guardada en el llavero y se usa con el endpoint oficial de uso.
+   - **OpenCode** — elige **Iniciar sesión con el navegador (recomendado)** para autorizar una sesión de Console independiente para limit-bar, o elige **Clave de API**. Los tokens OAuth y las claves de API se guardan en el llavero; limit-bar nunca lee ni reutiliza la sesión de OpenCode CLI V2.
    - **GitHub Copilot** — automático cuando la CLI `copilot` está instalada y autenticada (`copilot login`). limit-bar muestra la cuota finita de Premium requests.
 4. Las cuentas nuevas se consultan de inmediato; después cada cuenta se actualiza con una cadencia conservadora (por defecto **300 s**, configurable 60–3600 s) con backoff exponencial cuando un proveedor responde `429`.
 
@@ -80,11 +80,12 @@ limit-bar permanece en silencio en tu barra de menús mostrando cuánto has cons
 - **Esc** o hacer clic fuera cierra el panel; el botón ⟳ fuerza una actualización inmediata de todas las cuentas.
 - Haz clic derecho en el icono de la barra de menús para actualizar, abrir Ajustes o salir de limit-bar.
 - Activa **Iniciar al iniciar sesión** en Ajustes para que el monitoreo sobreviva a los reinicios.
+- Si se rechaza la autenticación de OpenCode, usa la acción de reconexión con el navegador o de reemplazo de clave de API de esa cuenta. Al eliminar una cuenta OAuth se borran sus credenciales de este Mac, pero **no** se revoca la sesión de Console de forma remota.
 - La interfaz sigue el idioma de macOS (**English**, **Português**, **Español** hoy). También puedes sobrescribirlo por app: Ajustes del Sistema → limit-bar → Idioma.
 
 ## Privacidad
 
-Todo permanece en tu máquina. Sin telemetría, sin servicio de cuentas y sin analítica. limit-bar usa las sesiones locales existentes de las CLIs de Claude Code, Codex y GitHub Copilot, guarda tu clave de API de OpenCode en el llavero y consulta endpoints de uso de solo lectura con una cadencia deliberadamente lenta para no perturbar tus cuotas.
+Todo permanece en tu máquina. Sin telemetría, sin servicio de cuentas y sin analítica. limit-bar usa las sesiones locales existentes de las CLIs de Claude Code, Codex y GitHub Copilot; las claves de API de OpenCode y los tokens OAuth propios de limit-bar se guardan en el llavero, y esa sesión OAuth es independiente de las credenciales de OpenCode CLI V2. Consulta endpoints de uso de solo lectura con una cadencia deliberadamente lenta para no perturbar tus cuotas.
 
 ## Compilar desde el código fuente
 
@@ -100,7 +101,7 @@ La estructura del proyecto se genera desde `project.yml`; ejecuta `xcodegen gene
 
 ## Versionado
 
-Fuente única de verdad: el archivo [`VERSION`](VERSION) (semver). Los builds lo inyectan como versión del bundle; el conteo de commits es el número de build. Las versiones se etiquetan `v<versión>` — actualmente **[v0.2.0](https://github.com/williamfalcom/limit-bar/releases/tag/v0.2.0)**.
+Fuente única de verdad: el archivo [`VERSION`](VERSION) (semver). Los builds lo inyectan como versión del bundle; el conteo de commits es el número de build. Las versiones se etiquetan `v<versión>` — actualmente **v0.3.0**.
 
 ## Licencia
 

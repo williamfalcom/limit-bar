@@ -62,6 +62,44 @@ struct ModelsTests {
         #expect(decoded.codexHomeOverride == nil)
     }
 
+    @Test("Legacy OpenCode account without an auth method defaults to API-key behavior")
+    func legacyOpenCodeAccountDefaultsToAPIKey() throws {
+        let data = Data("""
+        {
+          "id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+          "provider": "openCodeGo",
+          "label": "Go",
+          "displayedWindow": "fiveHour",
+          "codexHomeOverride": null
+        }
+        """.utf8)
+
+        let decoded = try JSONDecoder().decode(Account.self, from: data)
+
+        #expect(decoded.provider == .openCodeGo)
+        #expect(decoded.goAuthMethod == nil)
+        #expect(decoded.effectiveGoAuthMethod == .apiKey)
+    }
+
+    @Test("OpenCode auth methods survive Account JSON round-trip")
+    func goAuthMethodsRoundTrip() throws {
+        for method in [GoAuthMethod.apiKey, .consoleOAuth] {
+            let account = Account(
+                id: UUID(),
+                provider: .openCodeGo,
+                label: "Go",
+                displayedWindow: .weekly,
+                codexHomeOverride: nil,
+                goAuthMethod: method
+            )
+
+            let decoded = try roundTrip(account)
+
+            #expect(decoded == account)
+            #expect(decoded.effectiveGoAuthMethod == method)
+        }
+    }
+
     @Test("LimitWindow round-trip preserves percent, absolute value, reset date, kind")
     func limitWindowRoundTripPreservesAllFields() throws {
         let full = LimitWindow(kind: .fiveHour, usedPercent: 42.5, usedAbsolute: "$8.40", resetsAt: fixtureDate)

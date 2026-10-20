@@ -27,16 +27,24 @@ enum IntervalValidator {
 
 struct SettingsView: View {
     var store: AccountStore
+    var authManager: GoAuthManager
     var keychain: any CredentialStore = KeychainStore()
 
     @State private var showingAddSheet = false
+    @State private var showingRemovalError = false
+    @State private var removalError: String?
     @State private var intervalText: String
     @State private var intervalError: String?
     @State private var launchAtLoginEnabled = false
     @State private var launchAtLogin = LaunchAtLoginController()
 
-    init(store: AccountStore, keychain: any CredentialStore = KeychainStore()) {
+    init(
+        store: AccountStore,
+        authManager: GoAuthManager,
+        keychain: any CredentialStore = KeychainStore()
+    ) {
         self.store = store
+        self.authManager = authManager
         self.keychain = keychain
         _intervalText = State(initialValue: String(Int(store.pollInterval)))
     }
@@ -53,9 +61,14 @@ struct SettingsView: View {
             launchAtLoginEnabled = launchAtLogin.isEnabled
         }
         .sheet(isPresented: $showingAddSheet) {
-            AddAccountSheet { account, apiKey in
-                add(account:account, goAPIKey: apiKey)
+            AddAccountSheet(authManager: authManager) { account in
+                add(account: account)
             }
+        }
+        .alert("Could not remove account", isPresented: $showingRemovalError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(removalError ?? "Local credential cleanup did not complete. The account is still configured.")
         }
     }
 
@@ -118,10 +131,7 @@ struct SettingsView: View {
         }
     }
 
-    private func add(account: Account, goAPIKey apiKey: String?) {
-        if account.provider == .openCodeGo, let apiKey, !apiKey.isEmpty {
-            try? keychain.set(apiKey, forKey: GoAdapter.apiKey(for: account))
-        }
+    private func add(account: Account) {
         store.add(account: account)
         if store.activeAccountID == nil {
             store.selectActive(account.id)
@@ -129,8 +139,26 @@ struct SettingsView: View {
     }
 
     private func remove(account: Account) {
-        try? keychain.deleteSecret(forKey: account.id.uuidString)
-        store.remove(account: account)
+        Task {
+            do {
+                if account.provider == .openCodeGo {
+                    try await authManager.deleteCredentials(for: account.id)
+                } else {
+                    do {
+                        try keychain.deleteSecret(forKey: account.id.uuidString)
+                    } catch KeychainStore.KeychainError.itemNotFound {
+                        // Removing an account with no local credential is still safe.
+                    }
+                }
+                store.remove(account: account)
+            } catch {
+                removalError = NSLocalizedString(
+                    "Local credential cleanup did not complete. The account is still configured. Try again; some credentials may already have been removed.",
+                    comment: "local account removal failure"
+                )
+                showingRemovalError = true
+            }
+        }
     }
 }
 
@@ -139,6 +167,7 @@ private struct AccountRow: View {
     let onRename: (Account) -> Void
     let onUpdate: (Account) -> Void
     let onDelete: () -> Void
+    @State private var showingRemovalConfirmation = false
 
     var body: some View {
         HStack(spacing: 8) {
@@ -164,13 +193,30 @@ private struct AccountRow: View {
                 }
             }
             Spacer()
-            Button(role: .destructive, action: onDelete) {
-                Image(systemName: "minus.circle")
+            Button(role: .destructive) {
+                showingRemovalConfirmation = true
+            } label: {
+                Label("Remove account", systemImage: "minus.circle")
             }
+            .labelStyle(.iconOnly)
             .buttonStyle(.borderless)
             .help("Remove account")
         }
         .padding(.vertical, 2)
+        .confirmationDialog(
+            isOAuthAccount ? "Remove OpenCode account?" : "Remove account?",
+            isPresented: $showingRemovalConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Remove", role: .destructive, action: onDelete)
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            if isOAuthAccount {
+                Text("Removing this account deletes its credentials from this Mac, but does not revoke the OpenCode Console session.")
+            } else {
+                Text("Remove this account and its locally stored credentials?")
+            }
+        }
     }
 
     private var iconName: String {
@@ -180,6 +226,10 @@ private struct AccountRow: View {
         case .openCodeGo: "g.circle.fill"
         case .githubCopilot: "chevron.left.forwardslash.chevron.right"
         }
+    }
+
+    private var isOAuthAccount: Bool {
+        account.provider == .openCodeGo && account.effectiveGoAuthMethod == .consoleOAuth
     }
 
     private var labelBinding: Binding<String> {
@@ -217,13 +267,20 @@ private struct AccountRow: View {
 }
 
 private struct AddAccountSheet: View {
-    let onAdd: (Account, _ goAPIKey: String?) -> Void
+    let authManager: GoAuthManager
+    let onAdd: (Account) -> Void
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
 
     @State private var label = ""
     @State private var provider: ProviderKind = .claudeCode
     @State private var codexHomeOverride = ""
     @State private var goAPIKey = ""
+    @State private var goAuthMethodRawValue = GoAuthMethod.consoleOAuth.rawValue
+    @State private var userCode: String?
+    @State private var connectionError: String?
+    @State private var isConnecting = false
+    @State private var connectionTask: Task<Void, Never>?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -236,34 +293,74 @@ private struct AddAccountSheet: View {
                     Text("OpenCode").tag(ProviderKind.openCodeGo)
                     Text("GitHub Copilot").tag(ProviderKind.githubCopilot)
                 }
+                .disabled(isConnecting)
                 TextField("Label", text: $label, prompt: Text(promptForDefaultLabel))
+                    .disabled(isConnecting)
                 if provider == .codex {
                     TextField("CODEX_HOME override (optional)", text: $codexHomeOverride)
+                        .disabled(isConnecting)
                 }
                 if provider == .openCodeGo {
-                    SecureField("API key", text: $goAPIKey, prompt: Text("Paste your OpenCode API key"))
+                    Picker("OpenCode sign-in method", selection: $goAuthMethodRawValue) {
+                        Text("Browser login (recommended)").tag(GoAuthMethod.consoleOAuth.rawValue)
+                        Text("API key").tag(GoAuthMethod.apiKey.rawValue)
+                    }
+                    .pickerStyle(.radioGroup)
+                    .disabled(isConnecting)
+                    if selectedGoAuthMethod == .apiKey {
+                        SecureField("API key", text: $goAPIKey, prompt: Text("Paste your OpenCode API key"))
+                            .disabled(isConnecting)
+                    }
                 }
+            }
+            if let userCode {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Enter this code in the browser to authorize limit-bar.")
+                        .font(.callout)
+                    Text(userCode)
+                        .font(.title3.monospaced().weight(.semibold))
+                        .textSelection(.enabled)
+                    if isConnecting {
+                        ProgressView("Waiting for approval…")
+                    }
+                }
+                .padding(.vertical, 4)
+            } else if isConnecting {
+                ProgressView("Connecting to OpenCode…")
+                    .padding(.vertical, 4)
+            }
+            if let connectionError {
+                Text(connectionError)
+                    .font(.callout)
+                    .foregroundStyle(.red)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             HStack {
                 Spacer()
-                Button("Cancel", role: .cancel) {
-                    dismiss()
-                }
-                .keyboardShortcut(.cancelAction)
-                Button("Add") {
-                    commit()
-                }
-                .keyboardShortcut(.defaultAction)
-                .disabled(!canAdd)
+                Button("Cancel", role: .cancel, action: cancelOrDismiss)
+                    .keyboardShortcut(.cancelAction)
+                Button(primaryActionTitle, action: submit)
+                    .keyboardShortcut(.defaultAction)
+                    .disabled(!canSubmit || isConnecting)
             }
         }
         .padding()
-        .frame(width: 340)
+        .frame(minWidth: 500, idealWidth: 500)
     }
 
-    private var canAdd: Bool {
+    private var selectedGoAuthMethod: GoAuthMethod {
+        GoAuthMethod(rawValue: goAuthMethodRawValue) ?? .consoleOAuth
+    }
+
+    private var canSubmit: Bool {
         !label.trimmingCharacters(in: .whitespaces).isEmpty
-            && (provider != .openCodeGo || !goAPIKey.isEmpty)
+            && (provider != .openCodeGo || selectedGoAuthMethod == .consoleOAuth || !goAPIKey.isEmpty)
+    }
+
+    private var primaryActionTitle: String {
+        provider == .openCodeGo && selectedGoAuthMethod == .consoleOAuth
+            ? NSLocalizedString("Connect with browser", comment: "OpenCode browser sign-in action")
+            : NSLocalizedString("Add", comment: "add account action")
     }
 
     private var promptForDefaultLabel: String {
@@ -275,7 +372,7 @@ private struct AddAccountSheet: View {
         }
     }
 
-    private func commit() {
+    private func submit() {
         var trimmedHome = codexHomeOverride.trimmingCharacters(in: .whitespaces)
         if trimmedHome == "~" || trimmedHome == "~/" {
             trimmedHome = ""
@@ -285,9 +382,106 @@ private struct AddAccountSheet: View {
             provider: provider,
             label: label.trimmingCharacters(in: .whitespaces),
             displayedWindow: .fiveHour,
-            codexHomeOverride: provider == .codex && !trimmedHome.isEmpty ? trimmedHome : nil
+            codexHomeOverride: provider == .codex && !trimmedHome.isEmpty ? trimmedHome : nil,
+            goAuthMethod: provider == .openCodeGo ? selectedGoAuthMethod : nil
         )
-        onAdd(account, provider == .openCodeGo ? goAPIKey : nil)
-        dismiss()
+
+        guard provider == .openCodeGo else {
+            onAdd(account)
+            dismiss()
+            return
+        }
+
+        switch selectedGoAuthMethod {
+        case .apiKey:
+            saveAPIKey(for: account)
+        case .consoleOAuth:
+            beginBrowserAuthorization(for: account)
+        }
+    }
+
+    private func saveAPIKey(for account: Account) {
+        let apiKey = goAPIKey
+        isConnecting = true
+        connectionError = nil
+        connectionTask = Task {
+            do {
+                try await authManager.storeAPIKey(apiKey, for: account.id)
+                guard Task.isCancelled == false else {
+                    await clearCancelledCredentials(for: account)
+                    return
+                }
+                onAdd(account)
+                dismiss()
+            } catch is CancellationError {
+                isConnecting = false
+                connectionTask = nil
+            } catch {
+                connectionError = localizedConnectionError(for: error)
+                isConnecting = false
+                connectionTask = nil
+            }
+        }
+    }
+
+    private func beginBrowserAuthorization(for account: Account) {
+        isConnecting = true
+        userCode = nil
+        connectionError = nil
+        connectionTask = Task {
+            do {
+                let authorization = try await authManager.requestDeviceAuthorization()
+                try Task.checkCancellation()
+                userCode = authorization.userCode
+                openURL(authorization.verificationURL)
+                try await authManager.authorize(authorization, for: account.id)
+                guard Task.isCancelled == false else {
+                    await clearCancelledCredentials(for: account)
+                    return
+                }
+                onAdd(account)
+                dismiss()
+            } catch is CancellationError {
+                userCode = nil
+                isConnecting = false
+                connectionTask = nil
+            } catch {
+                if Task.isCancelled {
+                    userCode = nil
+                } else {
+                    connectionError = localizedConnectionError(for: error)
+                }
+                isConnecting = false
+                connectionTask = nil
+            }
+        }
+    }
+
+    private func clearCancelledCredentials(for account: Account) async {
+        do {
+            try await authManager.deleteCredentials(for: account.id)
+        } catch {
+            connectionError = NSLocalizedString(
+                "Could not clear OpenCode credentials after cancellation.",
+                comment: "OpenCode local credential cleanup error"
+            )
+        }
+        userCode = nil
+        isConnecting = false
+        connectionTask = nil
+    }
+
+    private func cancelOrDismiss() {
+        guard isConnecting else {
+            dismiss()
+            return
+        }
+        connectionTask?.cancel()
+        userCode = nil
+        connectionError = nil
+    }
+
+    private func localizedConnectionError(for error: Error) -> String {
+        GoAuthErrorMessage.localized(for: error)
     }
 }

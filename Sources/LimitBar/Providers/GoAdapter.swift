@@ -10,24 +10,56 @@ struct GoAdapter: ProviderAdapter, Sendable {
     ]
 
     private let credentials: any CredentialStore
+    private let authManager: GoAuthManager?
     private let session: URLSession
 
-    init(credentials: any CredentialStore, session: URLSession = .shared) {
+    init(
+        credentials: any CredentialStore,
+        authManager: GoAuthManager? = nil,
+        session: URLSession = .shared
+    ) {
         self.credentials = credentials
+        self.authManager = authManager
         self.session = session
     }
 
     func fetchUsage(for account: Account) async throws -> [LimitWindow] {
-        let apiKey: String
-        do {
-            apiKey = try Self.readKey(credentials: credentials, account: account)
-        } catch {
-            throw ProviderError.missingCredentials
+        let bearerToken: String
+        switch account.effectiveGoAuthMethod {
+        case .apiKey:
+            if let authManager {
+                do {
+                    bearerToken = try await authManager.bearerToken(for: account)
+                } catch {
+                    throw ProviderError.missingCredentials
+                }
+            } else {
+                do {
+                    bearerToken = try Self.readKey(credentials: credentials, account: account)
+                } catch {
+                    throw ProviderError.missingCredentials
+                }
+            }
+        case .consoleOAuth:
+            guard let authManager else { throw ProviderError.missingCredentials }
+            do {
+                bearerToken = try await authManager.bearerToken(for: account)
+            } catch GoAuthManagerError.missingCredentials {
+                throw ProviderError.missingCredentials
+            } catch GoOAuthClientError.invalidGrant {
+                throw ProviderError.unauthorized
+            } catch GoOAuthClientError.network(let error) {
+                throw ProviderError.network(error)
+            } catch is GoOAuthClientError {
+                throw ProviderError.network(URLError(.badServerResponse))
+            } catch {
+                throw ProviderError.missingCredentials
+            }
         }
 
         var request = URLRequest(url: Self.usageURL)
         request.httpMethod = "GET"
-        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("Bearer \(bearerToken)", forHTTPHeaderField: "Authorization")
 
         let data: Data
         let response: URLResponse
