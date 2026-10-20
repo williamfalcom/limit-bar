@@ -32,7 +32,7 @@
 - **Trade-off**: Token refresh remains the CLIs' job - expired tokens surface as re-login instructions instead of self-healing.
 - **Scope**: All credential handling in limit-bar.
 - **Date**: 2026-08-21
-- **Status**: active
+- **Status**: superseded by AD-008 for OpenCode Go
 
 ### AD-005
 - **Decision**: Usage polling defaults to 300 s per account, user-configurable with a hard 60 s floor; HTTP 429 triggers exponential backoff doubling the delay, capped at 30 min.
@@ -56,6 +56,14 @@
 - **Trade-off**: The adapter is coupled to the Copilot CLI headless protocol and requires the user to be logged in with that CLI; CLI absence or protocol drift degrades through existing error states.
 - **Scope**: `CopilotAdapter`, GitHub Copilot provider identity, and the existing provider-colored icon/popover surfaces.
 - **Date**: 2026-08-25
+- **Status**: active
+
+### AD-008
+- **Decision**: OpenCode Go supports both API-key authentication and a separate limit-bar-owned Console device OAuth session. OAuth access/refresh tokens are stored only in the limit-bar Keychain; refresh is serialized per account. Existing accounts without an auth-method field remain API-key accounts. Removing an OAuth account deletes local credentials and clearly states that it does not revoke the remote Console session. The CLI V2 credential database and session are never read or modified.
+- **Reason**: The user cannot create the key required by the current limit-bar setup. Live authorization confirmed that a separate device-flow token and its rotated replacement can read the official Go usage endpoint. The refresh token is single-use.
+- **Trade-off**: The browser flow depends on Console availability. Local removal does not revoke the server-side session because no official device-session revocation route is documented.
+- **Scope**: OpenCode Go account setup, Keychain credentials, `GoAdapter`, and OpenCode authentication UI only. AD-004 remains active for all other providers.
+- **Date**: 2026-10-19
 - **Status**: active
 
 ## Handoff
