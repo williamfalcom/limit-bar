@@ -68,11 +68,11 @@
 
 ## Handoff
 
-- **Feature**: v0.2.0 documentation refresh after the completed `.specs/features/provider-identity/` release
-- **Phase / Task**: Session closed; documentation synchronized and committed as `6e06cdc`
-- **Completed**: updated English, Brazilian Portuguese, and Spanish READMEs for v0.2.0; documented OpenCode live usage and GitHub Copilot Premium requests; replaced menu bar, panel, and installation captures; added the Settings capture showing one account per provider
-- **In-progress** (file:line): none
-- **Next step**: begin the next feature from `main`. Deferred (context.md): Zen balance display (#10448), Go usage history, dead Codex auth.json fallback decision, possible warning affordance re-addition if provider-only color hides high usage
-- **Blockers**: none
-- **Uncommitted files**: none
+- **Feature**: OpenCode Go dual authentication (`.specs/features/opencode-go-auth/`)
+- **Phase / Task**: Phase 3 / T6 — browser-first and API-key account setup; implementation and build/test gates pass, manual UAT is pending
+- **Completed**: T1–T5 committed (`46722a1`, `a00c493`, `1c9d613`, `a286662`, `8055db9`); T6 implementation compiles, localization keys are present in all three locales, and all 151 tests pass
+- **In-progress** (file:line): `Sources/LimitBar/UI/SettingsView.swift:238-460` — Add Account OAuth/API-key flow and cancellation; `Sources/LimitBar/App/LimitBarApp.swift:27-46,161-162` — shared auth manager wiring
+- **Next step**: manually verify OAuth browser setup, API-key setup, and cancellation in the running app; then mark/commit T6 and proceed to T7
+- **Blockers**: manual UI interaction is unavailable to this agent; requires user UAT before T6 can be closed
+- **Uncommitted files**: `.specs/features/opencode-go-auth/tasks.md`, `Sources/LimitBar/App/LimitBarApp.swift`, `Sources/LimitBar/Core/GoAuthManager.swift`, `Sources/LimitBar/Providers/GoAdapter.swift`, `Sources/LimitBar/Resources/en.lproj/Localizable.strings`, `Sources/LimitBar/Resources/es.lproj/Localizable.strings`, `Sources/LimitBar/Resources/pt-BR.lproj/Localizable.strings`, `Sources/LimitBar/UI/SettingsView.swift`, `Tests/LimitBarTests/GoAdapterTests.swift`, `Tests/LimitBarTests/GoAuthManagerTests.swift`
 - **Branch**: main
