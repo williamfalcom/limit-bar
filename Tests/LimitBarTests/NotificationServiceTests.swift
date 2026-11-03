@@ -7,9 +7,14 @@ private final class FakeNotificationCenter: NotificationCentering, @unchecked Se
     private let lock = NSLock()
     private var _status: UNAuthorizationStatus
     private var _requests: [UNNotificationRequest] = []
+    private var _authorizationRequests: [UNAuthorizationOptions] = []
+    private let grantOnRequest: Bool
+    private let failOnRequest: Bool
 
-    init(status: UNAuthorizationStatus) {
+    init(status: UNAuthorizationStatus, grantOnRequest: Bool = true, failOnRequest: Bool = false) {
         _status = status
+        self.grantOnRequest = grantOnRequest
+        self.failOnRequest = failOnRequest
     }
 
     var requests: [UNNotificationRequest] {
@@ -18,8 +23,29 @@ private final class FakeNotificationCenter: NotificationCentering, @unchecked Se
         return _requests
     }
 
+    var authorizationRequests: [UNAuthorizationOptions] {
+        lock.lock()
+        defer { lock.unlock() }
+        return _authorizationRequests
+    }
+
     func authorizationStatus() async -> UNAuthorizationStatus {
         status()
+    }
+
+    struct RequestFailure: Error {}
+
+    func requestAuthorization(options: UNAuthorizationOptions) async throws -> Bool {
+        try recordAuthorizationRequest(options)
+    }
+
+    private func recordAuthorizationRequest(_ options: UNAuthorizationOptions) throws -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        _authorizationRequests.append(options)
+        if failOnRequest { throw RequestFailure() }
+        _status = grantOnRequest ? .authorized : .denied
+        return grantOnRequest
     }
 
     func add(_ request: UNNotificationRequest) async throws {
@@ -109,6 +135,47 @@ struct NotificationServiceTests {
 
         await service.process(success: [window(85, resetsAt: periodEnd)], accountID: accountID)
         #expect(center.requests.isEmpty)
+    }
+
+    @Test("Launch requests alert and sound authorization once while status is not determined")
+    func notDeterminedRequestsAuthorizationOnce() async {
+        let (service, center) = makeService(status: .notDetermined)
+
+        await service.requestAuthorizationIfNeeded()
+
+        #expect(center.authorizationRequests == [[.alert, .sound]])
+    }
+
+    @Test("Launch does not request authorization once the user has decided", arguments: [
+        UNAuthorizationStatus.authorized, .denied, .provisional,
+    ])
+    func decidedStatusSkipsAuthorizationRequest(status: UNAuthorizationStatus) async {
+        let (service, center) = makeService(status: status)
+
+        await service.requestAuthorizationIfNeeded()
+
+        #expect(center.authorizationRequests.isEmpty)
+    }
+
+    @Test("A failing authorization request is absorbed and later notifications are skipped")
+    func failingAuthorizationRequestIsAbsorbed() async {
+        let center = FakeNotificationCenter(status: .notDetermined, failOnRequest: true)
+        let service = NotificationService(center: center)
+
+        await service.requestAuthorizationIfNeeded()
+        await service.process(success: [window(85, resetsAt: fixedNow.addingTimeInterval(3600))], accountID: accountID)
+
+        #expect(center.authorizationRequests.count == 1)
+        #expect(center.requests.isEmpty)
+    }
+
+    @Test("Provisional authorization posts one notification for a crossing")
+    func provisionalAuthorizationPosts() async {
+        let (service, center) = makeService(status: .provisional)
+
+        await service.process(success: [window(85, resetsAt: fixedNow.addingTimeInterval(3600))], accountID: accountID)
+
+        #expect(center.requests.count == 1)
     }
 
     @Test("Windows below threshold or without a reset time never notify")

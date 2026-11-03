@@ -3,6 +3,7 @@ import UserNotifications
 
 protocol NotificationCentering: Sendable {
     func authorizationStatus() async -> UNAuthorizationStatus
+    func requestAuthorization(options: UNAuthorizationOptions) async throws -> Bool
     func add(_ request: UNNotificationRequest) async throws
 }
 
@@ -15,6 +16,10 @@ struct SystemNotificationCenter: NotificationCentering, @unchecked Sendable {
                 continuation.resume(returning: settings.authorizationStatus)
             }
         }
+    }
+
+    func requestAuthorization(options: UNAuthorizationOptions) async throws -> Bool {
+        try await center.requestAuthorization(options: options)
     }
 
     func add(_ request: UNNotificationRequest) async throws {
@@ -49,6 +54,13 @@ actor NotificationService {
         self.center = center
     }
 
+    /// Asks for permission only while the user has not decided yet; failures leave
+    /// notifications disabled without affecting the app.
+    func requestAuthorizationIfNeeded() async {
+        guard await center.authorizationStatus() == .notDetermined else { return }
+        _ = try? await center.requestAuthorization(options: [.alert, .sound])
+    }
+
     func process(success windows: [LimitWindow], accountID: UUID) async {
         for window in windows {
             let last = markers[accountID]?[window.kind]
@@ -61,7 +73,7 @@ actor NotificationService {
             markers[accountID, default: [:]][window.kind] = resetsAt
 
             let status = await center.authorizationStatus()
-            guard status == .authorized else { continue }
+            guard status == .authorized || status == .provisional else { continue }
 
             let request = Self.request(accountID: accountID, window: window, now: Date())
             try? await center.add(request)

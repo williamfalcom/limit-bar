@@ -19,6 +19,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let store: AccountStore
     let engine: PollingEngine
     let authManager: GoAuthManager
+    private let notifications: NotificationService
     private let credentials: any CredentialStore
 
     private let popover = NSPopover()
@@ -39,8 +40,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             .openCodeGo: GoAdapter(credentials: credentials, authManager: authManager),
             .githubCopilot: CopilotAdapter(),
         ]
-        let engine = PollingEngine(store: store, adapters: adapters, notifications: NotificationService())
+        let notifications = NotificationService()
+        let engine = PollingEngine(store: store, adapters: adapters, notifications: notifications)
         self.store = store
+        self.notifications = notifications
         self.engine = engine
         self.authManager = authManager
         self.credentials = credentials
@@ -51,6 +54,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // The app hosts the unit tests; never prompt for permission during a test run.
+        if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil {
+            Task { await notifications.requestAuthorizationIfNeeded() }
+        }
         Task { await engine.start() }
 
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)

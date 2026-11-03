@@ -68,14 +68,27 @@ T6
 **Requirement**: REL-01
 
 **Done when**:
-- [ ] `.notDetermined` triggers exactly one request with `.alert` and `.sound`.
-- [ ] `.authorized`, `.denied`, `.provisional` trigger no request.
-- [ ] A crossing under `.provisional` posts one notification.
-- [ ] A throwing request does not crash or propagate.
-- [ ] Quick gate passes.
+- [x] `.notDetermined` triggers exactly one request with `.alert` and `.sound`.
+- [x] `.authorized`, `.denied`, `.provisional` trigger no request.
+- [x] A crossing under `.provisional` posts one notification.
+- [x] A throwing request does not crash or propagate.
+- [x] Quick gate passes.
 
 **Tests**: unit (`Tests/LimitBarTests/NotificationServiceTests.swift`)
 **Gate**: Quick
+
+**T1 Post-Gate Review**:
+
+| Criterion | `file:line` + assertion | Spec outcome | Covered? |
+|---|---|---|---|
+| REL-01 AC1 | `NotificationServiceTests.swift:146` - `#expect(center.authorizationRequests == [[.alert, .sound]])` | One request, `.alert` + `.sound` | ✅ |
+| REL-01 AC2 | `NotificationServiceTests.swift:157` - `#expect(center.authorizationRequests.isEmpty)` (parameterized over `.authorized`, `.denied`, `.provisional`) | No request | ✅ |
+| REL-01 AC3 | `NotificationServiceTests.swift:178` - `#expect(center.requests.count == 1)` | One notification under `.provisional` | ✅ |
+| Edge: request throws | `NotificationServiceTests.swift:168-169` - one attempt, no notification posted | Launch continues, no notifications | ✅ |
+
+Every assertion maps to REL-01. `AppDelegate` wiring is build-verified; it skips the request while hosting tests (`XCTestConfigurationFilePath`) so test runs never prompt. Gate: 155 passed, 0 failed (was 151).
+
+**Verdict**: Covered and necessary; no spec deviation.
 
 #### T2: Observe wake on the workspace notification center
 
