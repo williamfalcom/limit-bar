@@ -128,14 +128,27 @@ The test helper gained `wakeCenter` and `blockingSleep` parameters; existing tes
 **Requirement**: REL-04
 
 **Done when**:
-- [ ] Silent process returns within timeout + 2 s and is terminated.
-- [ ] Process whose child holds stdout open still returns within timeout + 2 s.
-- [ ] Completion condition returns before the timeout with the collected output and terminates the process.
-- [ ] Writing to an exited process throws; the test process survives.
-- [ ] Quick gate passes.
+- [x] Silent process returns within timeout + 2 s and is terminated.
+- [x] Process whose child holds stdout open still returns within timeout + 2 s.
+- [x] Completion condition returns before the timeout with the collected output and terminates the process.
+- [x] Writing to an exited process throws; the test process survives.
+- [x] Quick gate passes.
 
 **Tests**: unit (`Tests/LimitBarTests/CLIProcessRunnerTests.swift`)
 **Gate**: Quick
+
+**T3 Post-Gate Review**:
+
+| Criterion | `file:line` + assertion | Spec outcome | Covered? |
+|---|---|---|---|
+| REL-04 AC1 | `CLIProcessRunnerTests.swift:39-42` - `outcome == .timedOut`, `elapsed < 0.5 + 2`, `await isTerminated(childPID)` | Returns within timeout + 2 s; process terminated | ✅ |
+| REL-04 AC2 | `CLIProcessRunnerTests.swift:57-59` - `outcome == .timedOut`, `elapsed < 0.5 + 2`, output `"started\n"` | Held-open stdout still bounded | ✅ |
+| REL-04 AC3 | `CLIProcessRunnerTests.swift:74-79` - `outcome == .completed`, `elapsed < 2` with a 10 s timeout, last line `"ping"`, `await isTerminated(childPID)` | Early return with output; process terminated | ✅ |
+| REL-04 AC4 | `CLIProcessRunnerTests.swift:83` - `#expect(throws: (any Error).self)` writing 1 MB to `/usr/bin/true` | Throws; app keeps running | ✅ |
+
+AC4 is backed by a manual probe on 2026-11-03: the same write without `F_SETNOSIGPIPE` killed the process with exit 141 (`SIGPIPE`). The runner also sends stderr to `/dev/null`, since an unread stderr pipe can stall the child. Gate: 162 passed, 0 failed.
+
+**Verdict**: Covered and necessary; no spec deviation.
 
 #### T4: Route Codex through the runner with per-account CODEX_HOME
 
