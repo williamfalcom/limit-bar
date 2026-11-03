@@ -257,3 +257,13 @@ The first Verifier run returned FAIL: 15/19 mutants killed. Fixes:
 | REL-05 AC3: locale-dependent check (M14) | `networkErrorMessage(_:bundle:)` tested against the pt-BR bundle | `LocalizationTests.swift` - `networkMessageUsesLocaleTable` |
 
 Residual: deleting the single `Task { await Self.startServices(...) }` line in `applicationDidFinishLaunching` is still build-only. It would also stop polling, so a manual smoke test catches it. Gate: 185 passed, 0 failed.
+
+## Verification Fix Iteration 2
+
+The second Verifier run returned FAIL. Every earlier gap was closed, but `9aa5fe3` made `startServices` await the permission prompt before `engine.start()`, so a first launch would not poll until the user answered.
+
+| Gap | Fix | Evidence |
+|---|---|---|
+| Polling blocked by the pending prompt | `startServices` starts the engine first, then requests authorization | `NotificationServiceTests.swift` - `launchServicesPollWhilePromptPending` (fake prompt never answers; fetch count ≥ 1) |
+
+Accepted residual: on an English machine, `AccountStore.apply` hard-coding English is output-identical to the localized call; `networkMessageUsesLocaleTable` covers the function with a fixed pt-BR bundle. Gate: 186 passed, 0 failed.

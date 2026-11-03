@@ -10,11 +10,13 @@ private final class FakeNotificationCenter: NotificationCentering, @unchecked Se
     private var _authorizationRequests: [UNAuthorizationOptions] = []
     private let grantOnRequest: Bool
     private let failOnRequest: Bool
+    private let hangOnRequest: Bool
 
-    init(status: UNAuthorizationStatus, grantOnRequest: Bool = true, failOnRequest: Bool = false) {
+    init(status: UNAuthorizationStatus, grantOnRequest: Bool = true, failOnRequest: Bool = false, hangOnRequest: Bool = false) {
         _status = status
         self.grantOnRequest = grantOnRequest
         self.failOnRequest = failOnRequest
+        self.hangOnRequest = hangOnRequest
     }
 
     var requests: [UNNotificationRequest] {
@@ -36,7 +38,10 @@ private final class FakeNotificationCenter: NotificationCentering, @unchecked Se
     struct RequestFailure: Error {}
 
     func requestAuthorization(options: UNAuthorizationOptions) async throws -> Bool {
-        try recordAuthorizationRequest(options)
+        let granted = try recordAuthorizationRequest(options)
+        // Simulates a prompt the user never answers; ends only on cancellation.
+        if hangOnRequest { try await Task.sleep(for: .seconds(3600)) }
+        return granted
     }
 
     private func recordAuthorizationRequest(_ options: UNAuthorizationOptions) throws -> Bool {
@@ -159,6 +164,33 @@ struct NotificationServiceTests {
     }
 
     @MainActor
+    @Test("Polling starts while the permission prompt is still unanswered")
+    func launchServicesPollWhilePromptPending() async {
+        let center = FakeNotificationCenter(status: .notDetermined, hangOnRequest: true)
+        let service = NotificationService(center: center)
+        let store = AccountStore(persistence: NoPersistence())
+        let account = Account(id: UUID(), provider: .claudeCode, label: "Claude", displayedWindow: .fiveHour, codexHomeOverride: nil)
+        store.add(account: account)
+        let fetches = FetchCounter()
+        let engine = PollingEngine(
+            store: store,
+            adapters: [.claudeCode: CountingAdapter(counter: fetches)],
+            wakeCenter: NotificationCenter()
+        )
+
+        let launch = Task { await AppDelegate.startServices(notifications: service, engine: engine, environment: [:]) }
+        let deadline = Date().addingTimeInterval(2)
+        while fetches.count == 0 && Date() < deadline {
+            try? await Task.sleep(for: .milliseconds(10))
+        }
+        launch.cancel()
+        await engine.stop()
+
+        #expect(center.authorizationRequests == [[.alert, .sound]])
+        #expect(fetches.count >= 1)
+    }
+
+    @MainActor
     @Test("App launch services never prompt while hosting tests")
     func launchServicesSkipAuthorizationUnderTests() async {
         let (service, center) = makeService(status: .notDetermined)
@@ -222,4 +254,30 @@ struct NotificationServiceTests {
 private struct NoPersistence: StatePersisting {
     func load() -> AppState? { nil }
     func save(_ state: AppState) {}
+}
+
+private final class FetchCounter: @unchecked Sendable {
+    private let lock = NSLock()
+    private var value = 0
+
+    func increment() {
+        lock.lock()
+        defer { lock.unlock() }
+        value += 1
+    }
+
+    var count: Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return value
+    }
+}
+
+private struct CountingAdapter: ProviderAdapter {
+    let counter: FetchCounter
+
+    func fetchUsage(for account: Account) async throws -> [LimitWindow] {
+        counter.increment()
+        return []
+    }
 }

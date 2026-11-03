@@ -90,17 +90,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         observeIconChanges()
     }
 
-    /// Launch-time background work: ask for notification permission and start polling.
+    /// Launch-time background work: start polling, then ask for notification permission.
+    /// Polling starts first because the permission prompt waits for the user.
     /// The app hosts the unit tests, so a test run never prompts for permission.
     static func startServices(
         notifications: NotificationService,
         engine: PollingEngine,
         environment: [String: String]
     ) async {
+        await engine.start()
         if environment["XCTestConfigurationFilePath"] == nil {
             await notifications.requestAuthorizationIfNeeded()
         }
-        await engine.start()
     }
 
     // MARK: - Icon
