@@ -158,13 +158,28 @@ AC4 is backed by a manual probe on 2026-11-03: the same write without `F_SETNOSI
 **Requirement**: REL-03, REL-04
 
 **Done when**:
-- [ ] Adapter passes the tilde-expanded override to the app-server closure; `nil` when absent.
-- [ ] Environment builder sets `CODEX_HOME` and preserves other variables; returns the inherited environment for `nil`.
-- [ ] Silent Codex output throws.
-- [ ] Quick gate passes.
+- [x] Adapter passes the tilde-expanded override to the app-server closure; `nil` when absent.
+- [x] Environment builder sets `CODEX_HOME` and preserves other variables; returns the inherited environment for `nil`.
+- [x] Silent Codex output throws.
+- [x] Quick gate passes.
 
 **Tests**: unit (`Tests/LimitBarTests/CodexAdapterTests.swift`)
 **Gate**: Quick
+
+**T4 Post-Gate Review**:
+
+| Criterion | `file:line` + assertion | Spec outcome | Covered? |
+|---|---|---|---|
+| REL-03 AC1 (adapter) | `CodexAdapterTests.swift:346` - `recorder.recorded == [home + "/alt-codex"]` | Tilde-expanded override reaches the client | ✅ |
+| REL-03 AC1 (process) | `CodexAdapterTests.swift:382` - child prints `$CODEX_HOME` == `/tmp/alt-codex-home` | Launched process sees the override | ✅ |
+| REL-03 AC2 | `CodexAdapterTests.swift:355` - `recorded == [nil]`; `:369` - `environment(codexHome: nil, …) == nil` | Inherited environment unchanged | ✅ |
+| REL-03 AC3 | `CodexAdapterTests.swift:364` - full dictionary equality with `PATH`/`HOME` kept | Other variables preserved | ✅ |
+| REL-04 AC7 | `CodexAdapterTests.swift:393-396` - throws, elapsed `< 0.3 + 2` | Silent Codex throws | ✅ |
+| Edge: > 4 MiB | `CodexAdapterTests.swift:409-410` - output `> maxOutputBytes`, elapsed `< 5` with a 20 s timeout | Stops reading, returns collected output | ✅ |
+
+The completion check now searches bytes for `"id":2` instead of decoding the whole buffer on every chunk; the 5 MB case dropped from 10.4 s to 0.19 s. Existing adapter tests keep their zero-argument closures through the helper wrapper. Gate: 169 passed, 0 failed.
+
+**Verdict**: Covered and necessary; no spec deviation.
 
 #### T5: Route Copilot through the runner with a 15 s timeout
 

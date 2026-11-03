@@ -4,14 +4,17 @@ struct CodexAdapter: ProviderAdapter, Sendable {
     static let usageURL = URL(string: "https://chatgpt.com/backend-api/codex/usage")!
     static let weeklyThresholdSeconds: TimeInterval = 6 * 86_400
 
-    private let appServerStdout: @Sendable () async throws -> String
+    /// Receives the account's tilde-expanded `CODEX_HOME` override, or `nil` to inherit.
+    private let appServerStdout: @Sendable (String?) async throws -> String
     private let environmentHome: @Sendable () -> String?
     private let readFile: @Sendable (URL) throws -> Data
     private let now: @Sendable () -> Date
     private let session: URLSession
 
     init(
-        appServerStdout: @escaping @Sendable () async throws -> String = { try await CodexAppServerClient().fetchRateLimitsStdout() },
+        appServerStdout: @escaping @Sendable (String?) async throws -> String = {
+            try await CodexAppServerClient().fetchRateLimitsStdout(codexHome: $0)
+        },
         environmentHome: @escaping @Sendable () -> String? = { ProcessInfo.processInfo.environment["CODEX_HOME"] },
         readFile: @escaping @Sendable (URL) throws -> Data = { try Data(contentsOf: $0) },
         now: @escaping @Sendable () -> Date = { Date() },
@@ -26,7 +29,7 @@ struct CodexAdapter: ProviderAdapter, Sendable {
 
     func fetchUsage(for account: Account) async throws -> [LimitWindow] {
         do {
-            let stdout = try await appServerStdout()
+            let stdout = try await appServerStdout(account.codexHomeOverride.map(Self.expandingTilde))
             return try Self.parseAppServerOutput(stdout, now: now())
         } catch {
             return try await fetchViaAuthJSON(account)
@@ -177,48 +180,56 @@ struct CodexAdapter: ProviderAdapter, Sendable {
 
 struct CodexAppServerClient: Sendable {
     static let responseTimeout: TimeInterval = 6
+    static let maxOutputBytes = 4 * 1_024 * 1_024
+    private static let readResponseMarker = Data(#""id":2"#.utf8)
 
-    func fetchRateLimitsStdout() async throws -> String {
-        try await Task.detached(priority: .utility) {
-            let process = Process()
-            // GUI apps launched from Finder/Dock get a minimal PATH
-            // (/usr/bin:/bin:/usr/sbin:/sbin), so "/usr/bin/env codex" fails when
-            // the CLI is installed via Homebrew/npm. Resolve the absolute path,
-            // falling back to a login shell that sources the user's profile.
-            if let codex = Self.locateExecutable("codex") {
-                process.executableURL = codex
-                process.arguments = ["app-server", "--stdio"]
-            } else {
-                process.executableURL = URL(fileURLWithPath: "/bin/zsh")
-                process.arguments = ["-l", "-c", "exec codex app-server --stdio"]
-            }
-            let stdin = Pipe()
-            let stdout = Pipe()
-            process.standardInput = stdin
-            process.standardOutput = stdout
-            process.standardError = Pipe()
-            try process.run()
-            defer { process.terminateIfNeeded() }
+    /// Fixed executable and arguments; `nil` resolves the installed `codex` CLI.
+    private let launch: (executable: URL, arguments: [String])?
+    private let timeout: TimeInterval
 
-            let initialize = #"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"clientInfo":{"name":"limit-bar","title":"limit-bar","version":"1.0.0"}}}"# + "\n"
-            let read = #"{"jsonrpc":"2.0","id":2,"method":"account/rateLimits/read","params":{}}"# + "\n"
-            stdin.fileHandleForWriting.write(Data(initialize.utf8))
-            stdin.fileHandleForWriting.write(Data(read.utf8))
+    init(launch: (executable: URL, arguments: [String])? = nil, timeout: TimeInterval = Self.responseTimeout) {
+        self.launch = launch
+        self.timeout = timeout
+    }
 
-            var collected = Data()
-            let deadline = Date().addingTimeInterval(Self.responseTimeout)
-            while Date() < deadline {
-                let chunk = stdout.fileHandleForReading.availableData
-                if chunk.isEmpty { break }
-                collected.append(chunk)
-                if String(decoding: collected, as: UTF8.self).contains(#""id":2"#) { break }
-                if collected.count > 4 * 1_024 * 1_024 { break }
+    func fetchRateLimitsStdout(codexHome: String?) async throws -> String {
+        let (executable, arguments) = launch ?? Self.resolveLaunch()
+        let initialize = #"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"clientInfo":{"name":"limit-bar","title":"limit-bar","version":"1.0.0"}}}"# + "\n"
+        let read = #"{"jsonrpc":"2.0","id":2,"method":"account/rateLimits/read","params":{}}"# + "\n"
+
+        let result = try await CLIProcessRunner.run(
+            executableURL: executable,
+            arguments: arguments,
+            environment: Self.environment(codexHome: codexHome, base: ProcessInfo.processInfo.environment),
+            input: Data((initialize + read).utf8),
+            timeout: timeout,
+            isComplete: { collected in
+                collected.count > Self.maxOutputBytes || collected.range(of: Self.readResponseMarker) != nil
             }
-            guard !collected.isEmpty else {
-                throw CocoaError(.fileNoSuchFile)
-            }
-            return String(decoding: collected, as: UTF8.self)
-        }.value
+        )
+        guard !result.output.isEmpty else {
+            throw CocoaError(.fileNoSuchFile)
+        }
+        return String(decoding: result.output, as: UTF8.self)
+    }
+
+    /// Child environment for one account: `nil` inherits limit-bar's environment unchanged.
+    static func environment(codexHome: String?, base: [String: String]) -> [String: String]? {
+        guard let codexHome else { return nil }
+        var environment = base
+        environment["CODEX_HOME"] = codexHome
+        return environment
+    }
+
+    private static func resolveLaunch() -> (URL, [String]) {
+        // GUI apps launched from Finder/Dock get a minimal PATH
+        // (/usr/bin:/bin:/usr/sbin:/sbin), so "/usr/bin/env codex" fails when
+        // the CLI is installed via Homebrew/npm. Resolve the absolute path,
+        // falling back to a login shell that sources the user's profile.
+        if let codex = locateExecutable("codex") {
+            return (codex, ["app-server", "--stdio"])
+        }
+        return (URL(fileURLWithPath: "/bin/zsh"), ["-l", "-c", "exec codex app-server --stdio"])
     }
 
     /// Directories that are searched in addition to `$PATH`. GUI processes do not
@@ -251,12 +262,5 @@ struct CodexAppServerClient: Sendable {
             }
         }
         return nil
-    }
-}
-
-extension Process {
-    fileprivate func terminateIfNeeded() {
-        guard isRunning else { return }
-        terminate()
     }
 }
