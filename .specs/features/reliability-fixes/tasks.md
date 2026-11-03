@@ -189,13 +189,27 @@ The completion check now searches bytes for `"id":2` instead of decoding the who
 **Requirement**: REL-04
 
 **Done when**:
-- [ ] Frame parser returns the second frame body from two complete frames, including split chunks.
-- [ ] Incomplete output after timeout throws `ProviderError.network(URLError(.timedOut))`.
-- [ ] Client timeout constant is 15 s.
-- [ ] Quick gate passes.
+- [x] Frame parser returns the second frame body from two complete frames, including split chunks.
+- [x] Incomplete output after timeout throws `ProviderError.network(URLError(.timedOut))`.
+- [x] Client timeout constant is 15 s.
+- [x] Quick gate passes.
 
 **Tests**: unit (`Tests/LimitBarTests/CopilotAdapterTests.swift`)
 **Gate**: Quick
+
+**T5 Post-Gate Review**:
+
+| Criterion | `file:line` + assertion | Spec outcome | Covered? |
+|---|---|---|---|
+| REL-04 AC6 (one buffer) | `CopilotAdapterTests.swift:161` - both bodies in order | Second frame body available | ✅ |
+| REL-04 AC6 (split writes) | `CopilotAdapterTests.swift:184` - `response == #"{"result":1}"#` with the header split across writes | Returns second frame body | ✅ |
+| REL-04 AC6 (partial) | `CopilotAdapterTests.swift:174` - only the first body | Incomplete frame never returned | ✅ |
+| REL-04 AC5 | `CopilotAdapterTests.swift:193-196` - throws `ProviderError.network(URLError(.timedOut))`, elapsed `< 0.3 + 2` | Timeout maps to `.timedOut` | ✅ |
+| REL-04 AC5 (bound) | `CopilotAdapterTests.swift:201` - `responseTimeout == 15` | 15 s default | ✅ |
+
+The old reader discarded bytes after the first frame, so two frames in one chunk blocked the second read forever; the buffer-wide parser removes that hang. End of output before two frames keeps the previous `networkConnectionLost` mapping. Gate: 174 passed, 0 failed.
+
+**Verdict**: Covered and necessary; no spec deviation.
 
 ### Phase 3: Localization
 
