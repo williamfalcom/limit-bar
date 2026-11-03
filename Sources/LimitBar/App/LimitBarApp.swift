@@ -54,11 +54,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        // The app hosts the unit tests; never prompt for permission during a test run.
-        if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil {
-            Task { await notifications.requestAuthorizationIfNeeded() }
+        let notifications = notifications
+        let engine = engine
+        Task {
+            await Self.startServices(
+                notifications: notifications,
+                engine: engine,
+                environment: ProcessInfo.processInfo.environment
+            )
         }
-        Task { await engine.start() }
 
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         item.button?.imageScaling = .scaleProportionallyDown
@@ -84,6 +88,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         redrawIcon()
         observeIconChanges()
+    }
+
+    /// Launch-time background work: ask for notification permission and start polling.
+    /// The app hosts the unit tests, so a test run never prompts for permission.
+    static func startServices(
+        notifications: NotificationService,
+        engine: PollingEngine,
+        environment: [String: String]
+    ) async {
+        if environment["XCTestConfigurationFilePath"] == nil {
+            await notifications.requestAuthorizationIfNeeded()
+        }
+        await engine.start()
     }
 
     // MARK: - Icon

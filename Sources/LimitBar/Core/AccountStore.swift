@@ -109,8 +109,11 @@ final class AccountStore {
         persist()
     }
 
-    static func networkErrorMessage(_ error: URLError) -> String {
-        String(format: NSLocalizedString("Network error: %d", comment: "network failure with URLError code"), error.code.rawValue)
+    nonisolated static func networkErrorMessage(_ error: URLError, bundle: Bundle = .main) -> String {
+        String(
+            format: NSLocalizedString("Network error: %d", bundle: bundle, comment: "network failure with URLError code"),
+            error.code.rawValue
+        )
     }
 
     private func persist() {

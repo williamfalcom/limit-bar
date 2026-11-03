@@ -241,3 +241,19 @@ The old reader discarded bytes after the first frame, so two frames in one chunk
 Two existing assertions (`AccountStoreTests.swift:210`, `PollingEngineTests.swift:300`) compared against the hard-coded English `"Network error: …"`. REL-05 AC3 changes that message on purpose, and the developer machine runs pt-BR, so they now compare against the same exact string built from `NSLocalizedString`. Specificity is unchanged: full-string equality. Gate: `scripts/build.sh test` - 179 passed, 0 failed.
 
 **Verdict**: Covered and necessary; no spec deviation.
+
+---
+
+## Verification Fix Iteration 1
+
+The first Verifier run returned FAIL: 15/19 mutants killed. Fixes:
+
+| Gap | Fix | Evidence |
+|---|---|---|
+| REL-01 AC1: launch request untested (M12) | Launch work moved into `AppDelegate.startServices(notifications:engine:environment:)` | `NotificationServiceTests.swift` - `launchServicesRequestAuthorization`, `launchServicesSkipAuthorizationUnderTests` |
+| REL-03 AC2: inherited environment unchecked (M19) | Runner and Codex client tests compare the child's `HOME`/`PATH`/`CODEX_HOME` with the parent's | `CLIProcessRunnerTests.swift` - `nilEnvironmentInherits`; `CodexAdapterTests.swift` - `launchedProcessInheritsWithoutOverride` |
+| REL-04 AC7: 6 s default unpinned (M13) | `timeout` is now readable; test pins the default client | `CodexAdapterTests.swift` - `defaultCodexTimeoutIsSixSeconds` |
+| REL-04 AC5: 15 s default unpinned (M18) | Test pins `CopilotAppServerClient().timeout` | `CopilotAdapterTests.swift` - `defaultTimeoutIsFifteenSeconds` |
+| REL-05 AC3: locale-dependent check (M14) | `networkErrorMessage(_:bundle:)` tested against the pt-BR bundle | `LocalizationTests.swift` - `networkMessageUsesLocaleTable` |
+
+Residual: deleting the single `Task { await Self.startServices(...) }` line in `applicationDidFinishLaunching` is still build-only. It would also stop polling, so a manual smoke test catches it. Gate: 185 passed, 0 failed.

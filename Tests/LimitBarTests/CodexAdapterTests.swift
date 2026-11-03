@@ -382,6 +382,27 @@ struct CodexAdapterTests {
         #expect(stdout == #"{"id":2,"home":"/tmp/alt-codex-home"}"# + "\n")
     }
 
+    @Test("Without override the launched app-server keeps the inherited HOME and CODEX_HOME")
+    func launchedProcessInheritsWithoutOverride() async throws {
+        let script = #"printf '{"id":2,"home":"%s","codex":"%s"}\n' "$HOME" "${CODEX_HOME-unset}"; exec sleep 30"#
+        let client = CodexAppServerClient(
+            launch: (URL(fileURLWithPath: "/bin/sh"), ["-c", script]),
+            timeout: 5
+        )
+
+        let stdout = try await client.fetchRateLimitsStdout(codexHome: nil)
+
+        let inherited = ProcessInfo.processInfo.environment
+        let home = try #require(inherited["HOME"])
+        let codexHome = inherited["CODEX_HOME"] ?? "unset"
+        #expect(stdout == #"{"id":2,"home":"\#(home)","codex":"\#(codexHome)"}"# + "\n")
+    }
+
+    @Test("The default Codex client waits 6 seconds")
+    func defaultCodexTimeoutIsSixSeconds() {
+        #expect(CodexAppServerClient().timeout == 6)
+    }
+
     @Test("A Codex CLI that writes nothing fails within the timeout")
     func silentCodexThrows() async {
         let client = CodexAppServerClient(

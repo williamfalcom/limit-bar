@@ -146,6 +146,34 @@ struct NotificationServiceTests {
         #expect(center.authorizationRequests == [[.alert, .sound]])
     }
 
+    @MainActor
+    @Test("App launch services request notification authorization outside test runs")
+    func launchServicesRequestAuthorization() async {
+        let (service, center) = makeService(status: .notDetermined)
+        let engine = PollingEngine(store: AccountStore(persistence: NoPersistence()), adapters: [:], wakeCenter: NotificationCenter())
+
+        await AppDelegate.startServices(notifications: service, engine: engine, environment: [:])
+        await engine.stop()
+
+        #expect(center.authorizationRequests == [[.alert, .sound]])
+    }
+
+    @MainActor
+    @Test("App launch services never prompt while hosting tests")
+    func launchServicesSkipAuthorizationUnderTests() async {
+        let (service, center) = makeService(status: .notDetermined)
+        let engine = PollingEngine(store: AccountStore(persistence: NoPersistence()), adapters: [:], wakeCenter: NotificationCenter())
+
+        await AppDelegate.startServices(
+            notifications: service,
+            engine: engine,
+            environment: ["XCTestConfigurationFilePath": "/tmp/test.xctestconfiguration"]
+        )
+        await engine.stop()
+
+        #expect(center.authorizationRequests.isEmpty)
+    }
+
     @Test("Launch does not request authorization once the user has decided", arguments: [
         UNAuthorizationStatus.authorized, .denied, .provisional,
     ])
@@ -189,4 +217,9 @@ struct NotificationServiceTests {
         await service.process(success: [window(81, resetsAt: fixedNow.addingTimeInterval(3600))], accountID: accountID)
         #expect(center.requests.count == 1)
     }
+}
+
+private struct NoPersistence: StatePersisting {
+    func load() -> AppState? { nil }
+    func save(_ state: AppState) {}
 }

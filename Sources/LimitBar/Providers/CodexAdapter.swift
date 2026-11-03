@@ -185,7 +185,7 @@ struct CodexAppServerClient: Sendable {
 
     /// Fixed executable and arguments; `nil` resolves the installed `codex` CLI.
     private let launch: (executable: URL, arguments: [String])?
-    private let timeout: TimeInterval
+    let timeout: TimeInterval
 
     init(launch: (executable: URL, arguments: [String])? = nil, timeout: TimeInterval = Self.responseTimeout) {
         self.launch = launch

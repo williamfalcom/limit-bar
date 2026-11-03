@@ -199,6 +199,7 @@ struct CopilotAdapterTests {
     @Test("The Copilot client waits at most 15 seconds by default")
     func defaultTimeoutIsFifteenSeconds() {
         #expect(CopilotAppServerClient.responseTimeout == 15)
+        #expect(CopilotAppServerClient().timeout == 15)
     }
 
     private func makeAccount() -> Account {

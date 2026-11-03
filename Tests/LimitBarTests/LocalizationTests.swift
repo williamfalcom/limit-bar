@@ -66,12 +66,17 @@ struct LocalizationTests {
 
         store.apply(.failure(.network(URLError(.timedOut))), for: account.id)
 
-        let expected = String(
-            format: Bundle.main.localizedString(forKey: "Network error: %d", value: nil, table: nil),
-            URLError.timedOut.rawValue
-        )
+        let expected = AccountStore.networkErrorMessage(URLError(.timedOut))
         #expect(store.snapshot(for: account.id)?.state == .error(expected))
         #expect(expected.hasSuffix(": -1001"))
+    }
+
+    @Test("The network failure message is translated regardless of the machine language")
+    func networkMessageUsesLocaleTable() throws {
+        let path = try #require(Bundle.main.path(forResource: "pt-BR", ofType: "lproj"))
+        let portuguese = try #require(Bundle(path: path))
+
+        #expect(AccountStore.networkErrorMessage(URLError(.timedOut), bundle: portuguese) == "Erro de rede: -1001")
     }
 }
 

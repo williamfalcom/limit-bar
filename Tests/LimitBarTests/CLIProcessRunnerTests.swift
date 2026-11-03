@@ -79,6 +79,23 @@ struct CLIProcessRunnerTests {
         #expect(await isTerminated(childPID))
     }
 
+    @Test("Without an explicit environment the child inherits limit-bar's environment")
+    func nilEnvironmentInherits() async throws {
+        let result = try await CLIProcessRunner.run(
+            executableURL: shell,
+            arguments: ["-c", #"printf '%s|%s\n' "$HOME" "$PATH""#],
+            environment: nil,
+            input: Data(),
+            timeout: 5,
+            isComplete: { _ in false }
+        )
+
+        let inherited = ProcessInfo.processInfo.environment
+        let expected = "\(inherited["HOME"] ?? "")|\(inherited["PATH"] ?? "")\n"
+        #expect(String(decoding: result.output, as: UTF8.self) == expected)
+        #expect(!expected.hasPrefix("|"))
+    }
+
     @Test("Writing to a process that already exited throws instead of raising SIGPIPE")
     func writingToExitedProcessThrows() async {
         // More input than a pipe buffers, so the write must reach the closed read end.
