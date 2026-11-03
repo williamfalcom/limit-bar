@@ -6,11 +6,11 @@ A full code review on 2026-11-03 found four behaviors users believe work but do 
 
 ## Goals
 
-- [ ] An 80% threshold crossing posts a macOS notification after the user grants permission.
-- [ ] Waking the Mac refreshes accounts whose data is older than the poll interval.
-- [ ] Each Codex account reports the limits of its own `CODEX_HOME`.
-- [ ] A Codex or Copilot CLI that never answers releases the polling loop within its timeout.
-- [ ] Every UI string named in this spec resolves in en, pt-BR, and es.
+- [x] An 80% threshold crossing posts a macOS notification after the user grants permission.
+- [x] Waking the Mac refreshes accounts whose data is older than the poll interval.
+- [x] Each Codex account reports the limits of its own `CODEX_HOME`.
+- [x] A Codex or Copilot CLI that never answers releases the polling loop within its timeout.
+- [x] Every UI string named in this spec resolves in en, pt-BR, and es.
 
 ## Out of Scope
 
@@ -143,11 +143,11 @@ A full code review on 2026-11-03 found four behaviors users believe work but do 
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| REL-01 | P1: Threshold notifications reach the user | Execute | Implementing |
-| REL-02 | P1: Wake refresh runs after sleep | Execute | Implementing |
-| REL-03 | P1: Codex accounts honor their CODEX_HOME | Execute | Implementing |
-| REL-04 | P1: A silent CLI cannot freeze polling | Execute | Implementing |
-| REL-05 | P2: Complete localization of reviewed strings | Execute | Implementing |
+| REL-01 | P1: Threshold notifications reach the user | Execute | Verified |
+| REL-02 | P1: Wake refresh runs after sleep | Execute | Verified |
+| REL-03 | P1: Codex accounts honor their CODEX_HOME | Execute | Verified |
+| REL-04 | P1: A silent CLI cannot freeze polling | Execute | Verified |
+| REL-05 | P2: Complete localization of reviewed strings | Execute | Verified |
 
 **Coverage:** 5 total, 5 mapped to tasks, 0 unmapped
 
@@ -155,5 +155,5 @@ A full code review on 2026-11-03 found four behaviors users believe work but do 
 
 ## Success Criteria
 
-- [ ] All five requirements verified by Swift Testing cases; full gate passes with no removed tests.
+- [x] All five requirements verified by Swift Testing cases; full gate passes with no removed tests.
 - [ ] Manual check: one notification appears after granting permission and crossing 80%.

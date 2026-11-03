@@ -7,7 +7,7 @@ Implement these tasks with the `tlc-spec-driven` skill: follow its Execute flow,
 ---
 
 **Spec**: `.specs/features/reliability-fixes/spec.md`
-**Status**: Complete (pending verification)
+**Status**: Complete (Verifier PASS, iteration 3)
 
 ## Test Coverage Matrix
 
