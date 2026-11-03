@@ -93,7 +93,7 @@ final class AccountStore {
             case .parseFailed:
                 next = AccountSnapshot(windows: previous?.windows ?? [], fetchedAt: previous?.fetchedAt, state: .error(Self.parseFailureMessage))
             case .network(let urlError):
-                next = AccountSnapshot(windows: previous?.windows ?? [], fetchedAt: previous?.fetchedAt, state: .error("Network error: \(urlError.code.rawValue)"))
+                next = AccountSnapshot(windows: previous?.windows ?? [], fetchedAt: previous?.fetchedAt, state: .error(Self.networkErrorMessage(urlError)))
             case .rateLimited:
                 next = AccountSnapshot(windows: previous?.windows ?? [], fetchedAt: previous?.fetchedAt, state: .stale)
             }
@@ -107,6 +107,10 @@ final class AccountStore {
         snapshot.state = .stale
         snapshots[accountID] = snapshot
         persist()
+    }
+
+    static func networkErrorMessage(_ error: URLError) -> String {
+        String(format: NSLocalizedString("Network error: %d", comment: "network failure with URLError code"), error.code.rawValue)
     }
 
     private func persist() {

@@ -12,7 +12,7 @@
 
 "Sign-in required" = "Se requiere iniciar sesión";
 "The Claude Code credential was rejected, missing, or Keychain access was denied. Log in with the Claude Code CLI and allow limit-bar to read \"Claude Code-credentials\" when macOS asks." = "La credencial de Claude Code fue rechazada, falta o se denegó el acceso al llavero. Inicia sesión con la CLI de Claude Code y permite que limit-bar lea \"Claude Code-credentials\" cuando macOS lo pregunte.";
-"The Codex authentication failed or auth.json is missing. Log in again with the Codex CLI, then refresh." = "La autenticación de Codex falló o falta auth.json. Inicia sesión de nuevo con la CLI de Codex y actualiza.";
+"Codex authentication failed or auth.json is missing. Log in again with the Codex CLI, then refresh." = "La autenticación de Codex falló o falta auth.json. Inicia sesión de nuevo con la CLI de Codex y actualiza.";
 "Your OpenCode API key was rejected. Paste a valid key in Settings." = "Tu clave de API de OpenCode fue rechazada. Pega una clave válida en Ajustes.";
 
 "OpenCode usage API not available yet" = "La API de uso de OpenCode aún no está disponible";
@@ -71,3 +71,9 @@
 "Remove this account and its locally stored credentials?" = "¿Eliminar esta cuenta y sus credenciales almacenadas localmente?";
 "Could not remove account" = "No se pudo eliminar la cuenta";
 "Local credential cleanup did not complete. The account is still configured. Try again; some credentials may already have been removed." = "No se completó la limpieza de las credenciales locales. La cuenta sigue configurada. Inténtalo de nuevo; es posible que algunas credenciales ya se hayan eliminado.";
+"Quit limit-bar" = "Salir de limit-bar";
+"Settings…" = "Ajustes…";
+"Remove" = "Eliminar";
+"Seconds" = "Segundos";
+"Network error: %d" = "Error de red: %d";
+"Your GitHub Copilot authentication was rejected. Log in with the Copilot CLI and refresh." = "Tu autenticación de GitHub Copilot fue rechazada. Inicia sesión con la CLI de Copilot y actualiza.";

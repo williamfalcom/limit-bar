@@ -7,7 +7,7 @@ Implement these tasks with the `tlc-spec-driven` skill: follow its Execute flow,
 ---
 
 **Spec**: `.specs/features/reliability-fixes/spec.md`
-**Status**: In Progress
+**Status**: Complete (pending verification)
 
 ## Test Coverage Matrix
 
@@ -221,10 +221,23 @@ The old reader discarded bytes after the first frame, so two frames in one chunk
 **Requirement**: REL-05
 
 **Done when**:
-- [ ] The three tables have identical key sets.
-- [ ] All seven keys from REL-05 AC2 exist.
-- [ ] A network failure stores the localized `Network error: %d` message with the code.
-- [ ] Full gate passes.
+- [x] The three tables have identical key sets.
+- [x] All seven keys from REL-05 AC2 exist.
+- [x] A network failure stores the localized `Network error: %d` message with the code.
+- [x] Full gate passes.
 
 **Tests**: unit (`Tests/LimitBarTests/LocalizationTests.swift`, `Tests/LimitBarTests/AccountStoreTests.swift`)
 **Gate**: Full
+
+**T6 Post-Gate Review**:
+
+| Criterion | `file:line` + assertion | Spec outcome | Covered? |
+|---|---|---|---|
+| REL-05 AC1 | `LocalizationTests.swift:35-36` - both set differences empty for pt-BR and es | Identical key sets | ✅ |
+| REL-05 AC2 | `LocalizationTests.swift:44` - `missing.isEmpty` for each locale | Seven keys present | ✅ |
+| REL-05 AC3 | `LocalizationTests.swift:73-74` - snapshot state equals the localized format for `-1001` | Localized message with code | ✅ |
+| REL-05 AC3 (translation) | `LocalizationTests.swift:51`, `:57` - every locale ends in `: -1001`; pt-BR is `"Erro de rede: -1001"` | Code kept; message translated | ✅ |
+
+Two existing assertions (`AccountStoreTests.swift:210`, `PollingEngineTests.swift:300`) compared against the hard-coded English `"Network error: …"`. REL-05 AC3 changes that message on purpose, and the developer machine runs pt-BR, so they now compare against the same exact string built from `NSLocalizedString`. Specificity is unchanged: full-string equality. Gate: `scripts/build.sh test` - 179 passed, 0 failed.
+
+**Verdict**: Covered and necessary; no spec deviation.

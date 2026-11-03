@@ -297,7 +297,7 @@ struct PollingEngineTests {
         await engine.runCycle()
 
         let snapshot = store.snapshot(for: claude.id)
-        #expect(snapshot?.state == .error("Network error: \(URLError.notConnectedToInternet.rawValue)"))
+        #expect(snapshot?.state == .error(String(format: NSLocalizedString("Network error: %d", comment: ""), URLError.notConnectedToInternet.rawValue)))
         #expect(snapshot?.windows == sampleWindows)
         #expect(snapshot?.fetchedAt == fixedNow)
     }

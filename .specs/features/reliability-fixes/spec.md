@@ -143,11 +143,11 @@ A full code review on 2026-11-03 found four behaviors users believe work but do 
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| REL-01 | P1: Threshold notifications reach the user | Tasks | Pending |
-| REL-02 | P1: Wake refresh runs after sleep | Tasks | Pending |
-| REL-03 | P1: Codex accounts honor their CODEX_HOME | Tasks | Pending |
-| REL-04 | P1: A silent CLI cannot freeze polling | Tasks | Pending |
-| REL-05 | P2: Complete localization of reviewed strings | Tasks | Pending |
+| REL-01 | P1: Threshold notifications reach the user | Execute | Implementing |
+| REL-02 | P1: Wake refresh runs after sleep | Execute | Implementing |
+| REL-03 | P1: Codex accounts honor their CODEX_HOME | Execute | Implementing |
+| REL-04 | P1: A silent CLI cannot freeze polling | Execute | Implementing |
+| REL-05 | P2: Complete localization of reviewed strings | Execute | Implementing |
 
 **Coverage:** 5 total, 5 mapped to tasks, 0 unmapped
 
