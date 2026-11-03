@@ -98,13 +98,25 @@ Every assertion maps to REL-01. `AppDelegate` wiring is build-verified; it skips
 **Requirement**: REL-02
 
 **Done when**:
-- [ ] Posting `NSWorkspace.didWakeNotification` on the injected center refreshes stale accounts only.
-- [ ] Default center is `NSWorkspace.shared.notificationCenter`.
-- [ ] After `stop()`, a posted wake triggers no refresh.
-- [ ] Quick gate passes.
+- [x] Posting `NSWorkspace.didWakeNotification` on the injected center refreshes stale accounts only.
+- [x] Default center is `NSWorkspace.shared.notificationCenter`.
+- [x] After `stop()`, a posted wake triggers no refresh.
+- [x] Quick gate passes.
 
 **Tests**: unit (`Tests/LimitBarTests/PollingEngineTests.swift`)
 **Gate**: Quick
+
+**T2 Post-Gate Review**:
+
+| Criterion | `file:line` + assertion | Spec outcome | Covered? |
+|---|---|---|---|
+| REL-02 AC1 | `PollingEngineTests.swift:429-430` - `#expect(log.count(stale.id) == 2)`, `#expect(log.count(fresh.id) == 1)` | Only the stale account refreshes after a posted wake | ✅ |
+| REL-02 AC2 | `PollingEngineTests.swift:438-439` - `engine.wakeCenter === NSWorkspace.shared.notificationCenter`, `!== NotificationCenter.default` | Workspace center by default | ✅ |
+| REL-02 AC3 | `PollingEngineTests.swift:461` - `#expect(log.count(stale.id) == 1)` | No refresh after `stop()` | ✅ |
+
+The test helper gained `wakeCenter` and `blockingSleep` parameters; existing tests keep their defaults. Gate: 158 passed, 0 failed.
+
+**Verdict**: Covered and necessary; no spec deviation.
 
 ### Phase 2: CLI robustness
 

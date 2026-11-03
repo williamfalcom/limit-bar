@@ -55,6 +55,8 @@ actor PollingEngine {
     private let notifications: NotificationService?
     private let now: @Sendable () -> Date
     private let sleep: @Sendable (TimeInterval) async throws -> Void
+    /// `NSWorkspace.didWakeNotification` is posted only on the workspace center.
+    nonisolated let wakeCenter: NotificationCenter
 
     private var schedules: [UUID: Schedule] = [:]
     private var loopTask: Task<Void, Never>?
@@ -66,8 +68,10 @@ actor PollingEngine {
         adapters: [ProviderKind: any ProviderAdapter],
         notifications: NotificationService? = nil,
         now: @escaping @Sendable () -> Date = { Date() },
-        sleep: @escaping @Sendable (TimeInterval) async throws -> Void = { try await Task.sleep(for: .seconds($0)) }
+        sleep: @escaping @Sendable (TimeInterval) async throws -> Void = { try await Task.sleep(for: .seconds($0)) },
+        wakeCenter: NotificationCenter = NSWorkspace.shared.notificationCenter
     ) {
+        self.wakeCenter = wakeCenter
         self.store = store
         self.adapters = adapters
         self.notifications = notifications
@@ -82,7 +86,7 @@ actor PollingEngine {
                 await self.runCycle()
             }
         }
-        wakeObserver = NotificationCenter.default.addObserver(
+        wakeObserver = wakeCenter.addObserver(
             forName: NSWorkspace.didWakeNotification,
             object: nil,
             queue: nil
@@ -98,7 +102,7 @@ actor PollingEngine {
         sleepTask?.cancel()
         sleepTask = nil
         if let wakeObserver {
-            NotificationCenter.default.removeObserver(wakeObserver)
+            wakeCenter.removeObserver(wakeObserver)
             self.wakeObserver = nil
         }
     }
