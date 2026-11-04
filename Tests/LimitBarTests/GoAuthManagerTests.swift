@@ -443,8 +443,9 @@ struct GoAuthManagerTests {
         #expect(second == "new-access")
         #expect(await client.refreshCallCount(for: "old-refresh") == 1)
         #expect(await client.refreshCallCount(for: "new-refresh") == 0)
-        // One initial read plus the read before the refresh (REL-06 AC1); none after rotation.
-        #expect(store.readCount(forKey: GoCredentialVault.oauthKey(for: account.id)) == 2)
+        // The first read is already current, so no second read before the refresh (REL-06 AC9);
+        // none after rotation (AC2).
+        #expect(store.readCount(forKey: GoCredentialVault.oauthKey(for: account.id)) == 1)
     }
 
     @Test("Stored API keys and completed authorizations are served without a Keychain read")
@@ -539,6 +540,28 @@ struct GoAuthManagerTests {
         #expect(token == "new-access")
         #expect(await client.refreshCallCount(for: "old-refresh") == 1)
         #expect(await client.refreshCallCount(for: "new-refresh") == 0)
+    }
+
+    @Test("An account whose refresh failed rethrows without reading the Keychain or resubmitting")
+    func failedRefreshStaysQuiet() async throws {
+        let account = makeAccount()
+        let prior = makeCredential(accessToken: "old-access", refreshToken: "old-refresh", expiresAt: now.addingTimeInterval(10))
+        let store = GoAuthCredentialStoreSpy()
+        try GoCredentialVault(credentials: store).storeOAuthCredential(prior, for: account.id)
+        let client = GoOAuthClientStub(
+            challenge: makeChallenge(),
+            refreshResults: ["old-refresh": .failure(.network(URLError(.timedOut)))]
+        )
+        let manager = makeManager(store: store, client: client)
+
+        for _ in 0..<4 {
+            await #expect(throws: GoOAuthClientError.network(URLError(.timedOut))) {
+                try await manager.bearerToken(for: account)
+            }
+        }
+
+        #expect(store.readCount(forKey: GoCredentialVault.oauthKey(for: account.id)) == 1)
+        #expect(await client.refreshCallCount(for: "old-refresh") == 1)
     }
 
     @Test("A reauthorization during an in-flight refresh wins over the refresh result", .timeLimit(.minutes(1)))

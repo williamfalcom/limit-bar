@@ -317,3 +317,14 @@ The Verifier returned FAIL for T7 (8/11 mutants killed) with three gaps:
 | AC5 API-key failure path untested | New test | `GoAuthManagerTests.swift` - `failedAPIKeyReadIsNotCached` |
 
 AC1 now allows one read before each refresh, so `rotatedCredentialServedWithoutRead` expects 2 reads (initial + pre-refresh) instead of 1; the post-rotation request still reads nothing. Discovery: before this fix every `xcodebuild test` run polled the developer's real accounts and read the real Keychain from a new Debug cdhash, which itself raised Keychain dialogs. Residual: two processes refreshing the same account at the same instant can still race (pre-existing; needs cross-process locking). Gate: `scripts/build.sh test` - 195 passed, 0 failed.
+
+## Verification Fix Iteration 5 (REL-06)
+
+The Verifier returned FAIL with one decision gap: after a local refresh failure, a credential rotated by another process was never picked up (mutant N4 survived, not equivalent).
+
+| Gap | Fix | Evidence |
+|---|---|---|
+| AC6 vs. failed-refresh state undecided | Decision: a recorded failed refresh wins (no Keychain re-read, no resubmission). AC6 narrowed; AC8 added and pinned | `GoAuthManagerTests.swift` - `failedRefreshStaysQuiet` (4 calls, 1 read, 1 refresh) |
+| Two dialogs back to back when the first poll finds a due token | No re-read when the value was just read from the Keychain (AC9) | `GoAuthManagerTests.swift` - `rotatedCredentialServedWithoutRead` now expects exactly 1 read (stricter than the previous 2) |
+
+The simultaneous two-process refresh race is now recorded in the spec assumptions as an accepted residual. Gate: `scripts/build.sh test` - 196 passed, 0 failed.
