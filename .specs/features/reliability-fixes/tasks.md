@@ -7,7 +7,7 @@ Implement these tasks with the `tlc-spec-driven` skill: follow its Execute flow,
 ---
 
 **Spec**: `.specs/features/reliability-fixes/spec.md`
-**Status**: Complete (Verifier PASS, iteration 3)
+**Status**: Complete (T7 pending verification)
 
 ## Test Coverage Matrix
 
@@ -239,6 +239,44 @@ The old reader discarded bytes after the first frame, so two frames in one chunk
 | REL-05 AC3 (translation) | `LocalizationTests.swift:51`, `:57` - every locale ends in `: -1001`; pt-BR is `"Erro de rede: -1001"` | Code kept; message translated | ✅ |
 
 Two existing assertions (`AccountStoreTests.swift:210`, `PollingEngineTests.swift:300`) compared against the hard-coded English `"Network error: …"`. REL-05 AC3 changes that message on purpose, and the developer machine runs pt-BR, so they now compare against the same exact string built from `NSLocalizedString`. Specificity is unchanged: full-string equality. Gate: `scripts/build.sh test` - 179 passed, 0 failed.
+
+**Verdict**: Covered and necessary; no spec deviation.
+
+### Phase 4: Keychain prompt reduction
+
+```text
+T7
+```
+
+#### T7: Cache OpenCode credentials in the auth manager
+
+**What**: Keep each account's API key or OAuth credential in `GoAuthManager` memory after the first successful read; update it on store, authorize, and refresh; clear it on delete; never cache failures.
+**Where**: `Sources/LimitBar/Core/GoAuthManager.swift`
+**Depends on**: None
+**Requirement**: REL-06
+
+**Done when**:
+- [x] Repeated API-key and OAuth bearer requests read the Keychain once.
+- [x] After a rotation, the next request returns the rotated token with no further read.
+- [x] Store and authorize serve the new credential with no read.
+- [x] Delete forces a new read; failed reads are retried.
+- [x] Full gate passes.
+
+**Tests**: unit (`Tests/LimitBarTests/GoAuthManagerTests.swift`)
+**Gate**: Full
+
+**T7 Post-Gate Review**:
+
+| Criterion | `file:line` + assertion | Spec outcome | Covered? |
+|---|---|---|---|
+| REL-06 AC1 (API key) | `GoAuthManagerTests.swift:410-411` - three equal tokens, `readCount == 1` | One Keychain read | ✅ |
+| REL-06 AC1 (OAuth) | `GoAuthManagerTests.swift:425-426` - three equal tokens, `readCount == 1` | One Keychain read | ✅ |
+| REL-06 AC2 | `GoAuthManagerTests.swift:442-446` - both calls `"new-access"`, one refresh of `old-refresh`, none of `new-refresh`, `readCount == 1` | Rotated token from memory | ✅ |
+| REL-06 AC3 | `GoAuthManagerTests.swift:461-464` - stored key and authorized token returned, `readCount == 0` for both | No read after store/authorize | ✅ |
+| REL-06 AC4 | `GoAuthManagerTests.swift:476-479` - `missingCredentials` after delete, `readCount == 1` | Delete forces a read | ✅ |
+| REL-06 AC5 | `GoAuthManagerTests.swift:488-495` - first read fails, later read succeeds, `readCount == 2` | Failure not cached | ✅ |
+
+Red-green: the four cache tests failed before the change (`readCount` 3/3/2/1 instead of 1/1/1/0); AC4 and AC5 already held and keep guarding the invalidation paths. The cache is cleared before deletion so a partial delete still forces a fresh read. Gate: `scripts/build.sh test` - 192 passed, 0 failed.
 
 **Verdict**: Covered and necessary; no spec deviation.
 

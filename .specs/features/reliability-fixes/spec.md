@@ -23,6 +23,8 @@ A full code review on 2026-11-03 found four behaviors users believe work but do 
 | Parallel polling of accounts | Bounded timeouts remove the freeze; parallelism changes rate-limit behavior |
 | Persisting error kinds instead of localized messages | Requires a `SnapshotState` schema change |
 | Version bump / release | Release is a separate, explicitly authorized step |
+| Signing with an Apple Team ID | Only a `teamid:` partition survives rebuilds; no Apple identity is available yet (user decision 2026-11-03) |
+| Moving tokens out of the Keychain | Would revert AD-008; user chose the in-memory cache |
 
 ---
 
@@ -40,6 +42,9 @@ A full code review on 2026-11-03 found four behaviors users believe work but do 
 | Codex override path | `~` is expanded; the override is set as `CODEX_HOME` in the child environment; without override the inherited environment is unchanged | Matches `authFileURL` override semantics | y |
 | Codex key mismatch | Code key stays `Codex authentication failed or auth.json is missing. Log in again with the Codex CLI, then refresh.`; pt-BR/es keys are renamed to it | English table and code already agree | y |
 | Network error message | `Network error: %d` becomes a localized format key | Smallest change; still shows the code | y |
+
+| Cache scope (REL-06) | Process memory inside `GoAuthManager`; never persisted; cleared on delete | Only limit-bar writes these items, always through the manager | y |
+| Cached failures (REL-06) | Not cached; a denied or missing read retries on the next poll | A denial must stay recoverable without a restart | y |
 
 **Open questions:** none - all resolved or logged above.
 
@@ -131,6 +136,24 @@ A full code review on 2026-11-03 found four behaviors users believe work but do 
 
 ---
 
+### P1: OpenCode credentials do not prompt on every poll ⭐ MVP
+
+**User Story**: As a user of an ad-hoc signed build, I want the Keychain approval to be asked at most once per app run so that polling does not open password dialogs every 5 minutes.
+
+**Why P1**: Found in v0.3.2 install testing on 2026-11-03. Keychain ACLs and partition IDs of ad-hoc signed apps are bound to the build's cdhash, so each new build prompts on every Keychain read until "Always Allow" is granted with the login password.
+
+**Acceptance Criteria**:
+
+1. WHEN bearer tokens are requested repeatedly for the same OpenCode account THEN the auth manager SHALL read that account's Keychain credential at most once while the app runs
+2. WHEN an OAuth refresh rotates the credential THEN later bearer requests SHALL return the rotated access token without reading the Keychain
+3. WHEN an API key is stored or a device authorization completes THEN the next bearer request for that account SHALL return the new credential without reading the Keychain
+4. WHEN an account's credentials are deleted THEN the next bearer request SHALL read the Keychain again
+5. IF a Keychain read fails THEN the auth manager SHALL NOT cache the failure, and the next request SHALL read the Keychain again
+
+**Independent Test**: Install a new build, approve the Keychain dialog once with "Allow" (not "Always Allow"), and see no further dialogs during later polls until the app restarts.
+
+---
+
 ## Edge Cases
 
 - IF the Codex override is `~/alt` THEN the child `CODEX_HOME` SHALL be `<home>/alt`
@@ -148,8 +171,9 @@ A full code review on 2026-11-03 found four behaviors users believe work but do 
 | REL-03 | P1: Codex accounts honor their CODEX_HOME | Execute | Verified |
 | REL-04 | P1: A silent CLI cannot freeze polling | Execute | Verified |
 | REL-05 | P2: Complete localization of reviewed strings | Execute | Verified |
+| REL-06 | P1: OpenCode credentials do not prompt on every poll | Execute | Implementing |
 
-**Coverage:** 5 total, 5 mapped to tasks, 0 unmapped
+**Coverage:** 6 total, 6 mapped to tasks, 0 unmapped
 
 ---
 

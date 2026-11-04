@@ -19,7 +19,19 @@ actor GoAuthManager {
         var task: Task<GoOAuthCredential, Error>
     }
 
+    /// Last credential read from or written to the Keychain, per account.
+    ///
+    /// Ad-hoc signed builds trigger a Keychain dialog on reads until the user grants
+    /// "Always Allow", so polling must not read the Keychain on every cycle. Only this
+    /// actor writes these items, which keeps the cache authoritative. Failures are
+    /// never cached.
+    private enum CachedCredential {
+        case apiKey(String)
+        case oauth(GoOAuthCredential)
+    }
+
     private let vault: GoCredentialVault
+    private var credentialCache: [UUID: CachedCredential] = [:]
     private let oauthClient: any GoOAuthClientProtocol
     private let now: @Sendable () -> Date
     private var refreshWorkByAccount: [UUID: RefreshWork] = [:]
@@ -42,15 +54,19 @@ actor GoAuthManager {
         let credential = try await oauthClient.pollForAuthorization(authorization)
         try Task.checkCancellation()
         try vault.storeOAuthCredential(credential, for: accountID)
+        credentialCache[accountID] = .oauth(credential)
         refreshWorkByAccount[accountID] = nil
     }
 
     func storeAPIKey(_ apiKey: String, for accountID: UUID) throws {
         try vault.storeAPIKey(apiKey, for: accountID)
+        credentialCache[accountID] = .apiKey(apiKey)
         refreshWorkByAccount[accountID] = nil
     }
 
     func deleteCredentials(for accountID: UUID) throws {
+        // Even a partial deletion must force the next request back to the Keychain.
+        credentialCache[accountID] = nil
         try vault.deleteCredentials(for: accountID)
         refreshWorkByAccount[accountID] = nil
     }
@@ -58,8 +74,13 @@ actor GoAuthManager {
     func bearerToken(for account: Account) async throws -> String {
         switch account.effectiveGoAuthMethod {
         case .apiKey:
+            if case .apiKey(let cached) = credentialCache[account.id] {
+                return cached
+            }
             do {
-                return try vault.apiKey(for: account.id)
+                let apiKey = try vault.apiKey(for: account.id)
+                credentialCache[account.id] = .apiKey(apiKey)
+                return apiKey
             } catch KeychainStore.KeychainError.itemNotFound {
                 throw GoAuthManagerError.missingCredentials
             }
@@ -73,8 +94,13 @@ actor GoAuthManager {
     }
 
     private func loadOAuthCredential(for accountID: UUID) throws -> GoOAuthCredential {
+        if case .oauth(let cached) = credentialCache[accountID] {
+            return cached
+        }
         do {
-            return try vault.oauthCredential(for: accountID)
+            let credential = try vault.oauthCredential(for: accountID)
+            credentialCache[accountID] = .oauth(credential)
+            return credential
         } catch KeychainStore.KeychainError.itemNotFound {
             throw GoAuthManagerError.missingCredentials
         }
@@ -105,6 +131,7 @@ actor GoAuthManager {
             let result: GoOAuthCredential
             if current == work.baseCredential {
                 try vault.storeOAuthCredential(refreshed, for: accountID)
+                credentialCache[accountID] = .oauth(refreshed)
                 result = refreshed
             } else {
                 result = current
