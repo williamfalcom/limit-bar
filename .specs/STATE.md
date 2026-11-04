@@ -74,6 +74,7 @@
 - **Root cause recorded**: ad-hoc signing binds Keychain ACLs and `partition_id` to the cdhash; a self-signed certificate stabilizes the ACL requirement but not the partition (verified on the login keychain 2026-11-03). Only an Apple Team ID (`teamid:` partition) makes approvals survive rebuilds.
 - **In-progress**: none.
 - **Manual UAT**: 2026-11-04, build 113: user confirmed no repeated Keychain dialogs (REL-06 passed) and reported tests OK.
+- **Release authorization**: on 2026-11-04 the user explicitly authorized administrative merge of PR #5 and publication of v0.3.2. The notification manual check was not confirmed and is disclosed as pending in the release notes; this authorization is not evidence that it passed.
 - **Next step**: merge PR #5, rebuild from merged `main` (`scripts/build.sh prod --dmg`), tag `v0.3.2`, and publish.
 - **Blockers**: none. Merge needs an approval or explicit admin-merge authorization (the author cannot approve their own PR).
 - **Deferred**: Apple Team ID signing (user has no identity yet); persistence corruption backup; Claude `URLError` mapping; Codex HTTP fallback removal; OAuth refresh retry policy; interval-change sleep interruption; Retry-After/backoff on manual refresh; Settings window `isReleasedWhenClosed`; UX items; CI workflow; cross-process refresh locking.
