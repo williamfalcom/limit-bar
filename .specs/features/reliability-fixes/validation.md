@@ -1,181 +1,179 @@
 ## Validation: reliability-fixes - PASS ✅
 
-**Verdict (iteration 3 of 3)**: PASS.
+**Verdict**: PASS. All six requirements are verified.
 
-- All 18 acceptance criteria and all 3 edge cases have discriminating, spec-matching assertions.
-- The iteration-2 regression is fixed and guarded: `startServices` now starts polling before the permission prompt, and the new test kills the reverted order.
-- Every gating mutant across the three iterations is killed in the final code.
-- The gate passes: 186 passed, 0 failed.
+- REL-01..REL-05 were verified in iteration 3. REL-06 is verified in its iteration 3 at `ff0c233`.
+- Commit `ff0c233` resolves the last decision gap. A failed refresh now wins (AC8, pinned by `failedRefreshStaysQuiet`), AC6 is narrowed accordingly, and the redundant second Keychain read on a cold start is gone (AC9).
+- Every REL-06 mutant is killed, including N4, which survived last round.
+- The four scratch probes match the spec at HEAD: cross-process rotation, cold start after rotation elsewhere, local failure vs. rotation elsewhere, and the failed-state read budget.
+- The gate passes: 196 passed, 0 failed.
 
-Two survivors remain. Both are accepted residuals, explained below: deleting the launch line, and an English-host call-site revert.
+The remaining items are documented, accepted residuals.
 
-- **Date**: 2026-11-03
+- **Date**: 2026-11-04
 - **Spec**: `.specs/features/reliability-fixes/spec.md`
-- **Diff range**: `853fa4e..c15acd7` (9 commits: 7 feature commits, plus fix commits `9aa5fe3` and `c15acd7`)
+- **Diff range**: REL-01..05 `853fa4e..c15acd7`; REL-06 `d200197..ff0c233` (T7 `02fa504`, fixes `c3bb18e`, `ff0c233`)
 - **Verifier**: independent sub-agent (author ≠ verifier)
 
 ---
 
 ## Iteration History
 
-| Iteration | HEAD | Gate | Sensor | Verdict | Findings |
-| --------- | ---- | ---- | ------ | ------- | -------- |
-| 1 | `3f0ec72` | 179 passed, 0 failed | 15/19 killed | ❌ | M12 (REL-01 AC1 launch), M13 (REL-04 AC7 6 s), M18 (REL-04 AC5 15 s), M19 (REL-03 AC2 env) survived; M14 (REL-05 AC3) caught only on a non-en host |
-| 2 | `9aa5fe3` | 185 passed, 0 failed | 9/9 gating killed | ❌ | All iteration-1 gaps closed. New regression: `startServices` awaited the permission prompt before `engine.start()`. A scratch probe recorded 0 fetches while the prompt was pending |
-| 3 | `c15acd7` | 186 passed, 0 failed | 3/3 killed | ✅ | Regression fixed and guarded; no new findings |
+| Scope | Iteration | HEAD | Gate | Sensor | Verdict | Findings |
+| ----- | --------- | ---- | ---- | ------ | ------- | -------- |
+| REL-01..05 | 1 | `3f0ec72` | 179 passed, 0 failed | 15/19 killed | ❌ | M12, M13, M18, M19 survived; M14 locale-dependent |
+| REL-01..05 | 2 | `9aa5fe3` | 185 passed, 0 failed | 9/9 gating killed | ❌ | Gaps closed; polling blocked behind the permission prompt |
+| REL-01..05 | 3 | `c15acd7` | 186 passed, 0 failed | 3/3 killed | ✅ | Fixed; residuals M12r, M14-en accepted |
+| REL-06 | 1 | `02fa504` | 192 passed, 0 failed | 8/11 killed | ❌ | R6-7b (AC5), R6-9 (AC3) survived; F1 cross-process resubmission |
+| REL-06 | 2 | `c3bb18e` | 195 passed, 0 failed | 6/7 killed | ❌ | F1 fixed; N4 survived (failed-refresh state unspecified) |
+| REL-06 | 3 | `ff0c233` | 196 passed, 0 failed | 4/4 killed (N4, N5, N6, N1); probes B, B2, C, D pass | ✅ | Decision recorded (AC6 narrowed, AC8, AC9); no new findings |
 
 ---
 
-## Task Completion
+## REL-06: OpenCode credentials do not prompt on every poll
+
+### Task Completion
 
 | Task | Status | Notes |
 | ---- | ------ | ----- |
-| T1 Notification permission | ✅ Done | Launch logic is tested via `AppDelegate.startServices`; polling starts before the prompt |
-| T2 Wake center | ✅ Done | - |
-| T3 CLI runner | ✅ Done | - |
-| T4 Codex via runner | ✅ Done | - |
-| T5 Copilot via runner | ✅ Done | - |
-| T6 Localization | ✅ Done | Accepted en call-site residual (below) |
-| Fix iteration 1 (`9aa5fe3`) | ✅ Done | Closed 5 gaps |
-| Fix iteration 2 (`c15acd7`) | ✅ Done | Launch order fixed; `launchServicesPollWhilePromptPending` added |
+| T7 Cache credentials (`02fa504`) | ✅ Done | - |
+| Fix iteration 4 (`c3bb18e`) | ✅ Done | Pre-refresh Keychain re-read (AC6); test host does not poll (AC7) |
+| Fix iteration 5 (`ff0c233`) | ✅ Done | Failed refresh stays quiet (AC8); no redundant read on a cold start (AC9); two-process race recorded in the spec |
+
+### Spec-Anchored Acceptance Criteria (at `ff0c233`)
+
+| Criterion | Spec-defined outcome | `file:line` + assertion | Verdict |
+| --------- | -------------------- | ----------------------- | ------- |
+| AC1: one read, plus one before each OAuth refresh | 1 read over repeated requests | `GoAuthManagerTests.swift:410`, `:411` - API key `readCount == 1`; `:425`, `:426` - OAuth `readCount == 1`; `:448` - `readCount == 1` across a cold-start refresh and a later request | ✅ PASS (R6-1, R6-2 it1; N5 killed at `:448`) |
+| AC2: after a rotation, the rotated token is served without a read | `"new-access"`; no re-refresh | `:442-445`, `:448` | ✅ PASS (R6-3 it1) |
+| AC3: after store/authorize, including mid-refresh, the new credential is served without a read | New credential; 0 reads; the reauthorization wins | `:463-466` (sequential); `:588` - in-flight `== "reauth-access"`, `:589` - next `== "reauth-access"`, `:590` - vault holds `reauthorized` | ✅ PASS (R6-4, R6-5 it1; R6-9 it2) |
+| AC4: after delete, the next request reads the Keychain | `missingCredentials`; read happens | `:478`, `:481` | ✅ PASS (R6-6 it1) |
+| AC5: a failed read is not cached (both kinds) | Retry reads and succeeds | OAuth `:490`, `:496`, `:497`; API key `:506`, `:511`, `:512` | ✅ PASS (R6-7a it1; R6-7b it2) |
+| AC6: due + no recorded failure + rotated elsewhere → use the stored credential; never submit the consumed token | `"new-access"`; `refreshCallCount("old-refresh") == 1` | `:534`, `:536`, `:540` - `token == "new-access"`; `:541` - `refreshCallCount("old-refresh") == 1`; `:542` - `"new-refresh"` never submitted | ✅ PASS (N1 killed at `:541`; N6 killed at `:541`; probes B, B2 pass) |
+| AC7: the unit-test host does not poll | No fetch, no prompt | `NotificationServiceTests.swift:214`, `:215` - `fetches.count == 0` | ✅ PASS (N3 it2) |
+| AC8: a failed refresh rethrows without reading the Keychain or resubmitting, until credentials are stored, authorized, or deleted | The same error each time; 1 read total; 1 submission | `:558` - 4× `#expect(throws: GoOAuthClientError.network(URLError(.timedOut)))`; `:563` - `readCount == 1`; `:564` - `refreshCallCount("old-refresh") == 1` | ✅ PASS (N4 killed at `:563`; N5, N6 killed at `:563`; probes C, D pass). Release clause: see the note below |
+| AC9: a cold-start request with a due token reads the Keychain once before refreshing | 1 read | `:448` - `readCount == 1` | ✅ PASS (N5, N6 killed at `:448`; probe B2: 1 read) |
+
+**Status**: ✅ 9/9 ACs covered with spec-matching assertions.
+
+**AC8 release clause ("until … stored, authorized, or deleted")**: no committed test runs the sequence "failed refresh → reauthorize → request". Release works structurally:
+
+- `authorize` and `storeAPIKey` overwrite the cache and clear the refresh work (`GoAuthManager.swift:56-58`, `:62-64`).
+- `deleteCredentials` clears both (`:69-71`).
+- The next request is then served from the new cached credential and never reaches the failed work.
+
+The overwrite this depends on is guarded (removing it, R6-5, is killed at `:466`). Optional hardening: a direct "failed refresh → `authorize` → `"authorized-access"`" test. Non-gating.
+
+### Discrimination Sensor, REL-06 iteration 3 (HEAD `ff0c233`)
+
+The scratch worktree's unmutated baseline was 196/196.
+
+| # | File:line | Mutation | Spec | Outcome |
+| - | --------- | -------- | ---- | ------- |
+| N4 | `GoAuthManager.swift` `reloadOAuthCredential` | Drop the `refreshWorkByAccount == nil` guard | AC8 | ✅ Killed (`GoAuthManagerTests.swift:563`: 4 reads instead of 1) |
+| N5 | `GoAuthManager.swift` bearer OAuth path | Always reload, even when the value was just read (`let stored = try reloadOAuthCredential(…)`) | AC9 / AC8 | ✅ Killed (`:448`, `:563`) |
+| N6 | same | Inverted: reload only on a cache miss, refresh from a cached value (`wasCached ? cached : reload`) | AC6 / AC9 / AC8 | ✅ Killed (`:448`, `:541`: consumed `old-refresh` resubmitted, `:563`) |
+| N1 (regression) | same | Never reload (`let stored = cached`) | AC6 | ✅ Killed (`:541`) |
+
+**Score**: 4/4 killed.
+
+### Scratch Probes (appended to `GoAuthManagerTests.swift` in the scratch copy only; never committed)
+
+| Probe | Scenario | Expected per spec | HEAD | Under N4 | Under N6 |
+| ----- | -------- | ----------------- | ---- | -------- | -------- |
+| B | Process B caches `prior`; process A rotates; B makes a request | AC6: `"new-access"`, 1 submission | ✅ | ✅ | ❌ 2 submissions |
+| B2 | Process A rotates; a fresh process C starts (cache miss) with the due token | AC6 + AC9: `"new-access"`, 1 read, 1 submission | ✅ | ✅ | ✅ |
+| C | This process's refresh fails; another process rotates; this process makes a request | AC8: rethrows `network(timedOut)`; 0 reads during the request; 1 local submission | ✅ | ❌ returns `"new-access"`, 1 read | ✅ |
+| D | Refresh fails; 4 polls on one manager | AC8: 1 read total; 1 submission | ✅ | ❌ 4 reads | ❌ 2 reads |
+
+**Reading B2**: skipping the reload on a cache miss does **not** reopen the stale-cache replay. The cache-miss check (`wasCached`) and `loadOAuthCredential` run in one non-suspending actor segment, so a value read on a miss is the current Keychain value. B2 is the cold-start variant of F1, and it uses the rotated credential with one read and no resubmission.
+
+### Safety Summary (REL-06, at `ff0c233`)
+
+| Guarantee | Status | Evidence |
+| --------- | ------ | -------- |
+| Consumed refresh token never resubmitted in-process | ✅ | Coalescing `:626`; invalid grant `:704`; transient `:733`; persistence failure `:760-768` (R6-10 it1); failed state `:564` |
+| Cross-process rotation used instead of resubmitting (no local failure) | ✅ | `:540-542`; probes B and B2 |
+| After a local failure, the failure wins (no read, no resubmission) | ✅ | `:558`, `:563`, `:564`; probe C |
+| Reauthorization mid-refresh wins | ✅ | `:588-590` |
+| Test host never polls real accounts | ✅ | `NotificationServiceTests.swift:215` |
+
+### Residuals (REL-06), accepted
+
+- **Simultaneous two-process refresh race**: two processes that both find the token due within one network round trip can submit the same refresh token. This existed before T7, needs cross-process locking, and is now recorded in the spec's assumptions table ("Simultaneous refresh in two processes (REL-06)").
+- **Failed refresh vs. rotation elsewhere**: by decision, a recorded failure wins until reconnect or restart. This is recorded in the spec assumptions and AC6/AC8, and pinned by `:563`.
+- **R6-8 (equivalent)**: kind isolation is unreachable in the app, because an account's sign-in method is fixed at creation (`SettingsView.swift:386`).
+
+### Final Sensor Table, REL-06 (latest outcome per mutant)
+
+| # | Mutation | Spec | Latest outcome |
+| - | -------- | ---- | -------------- |
+| R6-1 | OAuth read never populates the cache | AC1 | ✅ Killed (it1) |
+| R6-2 | API-key read never populates the cache | AC1 | ✅ Killed (it1) |
+| R6-3 | Cache not updated after rotation | AC2 | ✅ Killed (it1; not re-run since `c3bb18e`) |
+| R6-4 | `storeAPIKey` does not update the cache | AC3 | ✅ Killed (it1) |
+| R6-5 | `authorize` does not update the cache | AC3 / AC8 release | ✅ Killed (it1) |
+| R6-6 | `deleteCredentials` does not clear the cache | AC4 | ✅ Killed (it1) |
+| R6-7a | OAuth failure cached | AC5 | ✅ Killed (it1) |
+| R6-7b | API-key failure cached | AC5 | ✅ Killed (it2) |
+| R6-8 | API-key branch serves cached `.oauth` | (kind isolation) | ⚠️ Equivalent (unreachable) |
+| R6-9 | Cache `refreshed` when `current != base` | AC3 | ✅ Killed (it2) |
+| R6-10 | Cache before the vault write in refresh | AC2 / persistence safety | ✅ Killed (it1) |
+| N1 | Never reload before refresh | AC6 | ✅ Killed (it3) |
+| N2 | Reload always keeps the cache | AC6 | ✅ Killed (it2) |
+| N3 | Test host starts the engine | AC7 | ✅ Killed (it2) |
+| N4 | Drop the refresh-work guard in reload | AC8 | ✅ Killed (it3) |
+| N5 | Always reload, even after a fresh read | AC9 | ✅ Killed (it3) |
+| N6 | Reload only on a cache miss | AC6 / AC9 | ✅ Killed (it3) |
+
+**REL-06 cumulative**: 16/16 gating mutants killed; 1 equivalent (R6-8).
 
 ---
 
-## Spec-Anchored Acceptance Criteria (at `c15acd7`)
+## REL-01..REL-05 (verified in iteration 3)
 
-### REL-01: Threshold notifications reach the user
+Since `c15acd7`, the only change to these requirements' sources is the test-host guard in `startServices`, which REL-06 AC7 covers. The launch-services tests still pass in the gate, and the M3 regression check was re-killed in REL-06 iteration 2.
 
-| Criterion | Spec-defined outcome | `file:line` + assertion | Verdict |
-| --------- | -------------------- | ----------------------- | ------- |
-| AC1: on launch, `.notDetermined` → request `.alert` + `.sound` exactly once | One request, `[.alert, .sound]`, made by the launch path | `NotificationServiceTests.swift:163` - `#expect(center.authorizationRequests == [[.alert, .sound]])` via `AppDelegate.startServices(…, environment: [:])`; `:189` - same, with a prompt that never answers; `:151` - service level; `:206` - `authorizationRequests.isEmpty` under the XCTest env key | ✅ PASS (M12′ killed in iterations 2 and 3) |
-| AC2: `.authorized` / `.denied` / `.provisional` → no request | Zero requests | `NotificationServiceTests.swift:217` - `#expect(center.authorizationRequests.isEmpty)`, parameterized over all three (`func` at `:212`) | ✅ PASS (M2 killed) |
-| AC3: crossing under `.provisional` → one notification | Exactly 1 posted | `NotificationServiceTests.swift:238` - `#expect(center.requests.count == 1)` | ✅ PASS (M3 killed) |
+| Requirement | Criteria | Key evidence (`file:line`) | Verdict |
+| ----------- | -------- | -------------------------- | ------- |
+| REL-01 | AC1 launch request `.alert` + `.sound` once; AC2 no request once decided; AC3 `.provisional` posts once | `NotificationServiceTests.swift:163`, `:189` (`authorizationRequests == [[.alert, .sound]]`), `:214` (none under the test host); parameterized `decidedStatusSkipsAuthorizationRequest`; `:247` (`requests.count == 1`) | ✅ PASS |
+| REL-02 | AC1 wake refreshes stale only; AC2 workspace center; AC3 none after `stop()` | `PollingEngineTests.swift:429-430`, `:438-439`, `:461` | ✅ PASS |
+| REL-03 | AC1 override reaches the child; AC2 inherited env; AC3 other vars kept | `CodexAdapterTests.swift:346`, `:382`; `CLIProcessRunnerTests.swift:95`, `CodexAdapterTests.swift:398`; `CodexAdapterTests.swift:364` | ✅ PASS |
+| REL-04 | AC1-AC3 runner timeout/termination/early return; AC4 no SIGPIPE; AC5 Copilot 15 s `.timedOut`; AC6 second frame; AC7 Codex 6 s | `CLIProcessRunnerTests.swift:39-42`, `:57-59`, `:74-79`, `:103`; `CopilotAdapterTests.swift:193`, `:196`, `:201`, `:202`, `:161`, `:174`, `:184`; `CodexAdapterTests.swift:403`, `:414`, `:417` | ✅ PASS |
+| REL-05 | AC1 key parity; AC2 required keys; AC3 localized network message | `LocalizationTests.swift:35-36`, `:44`, `:79`, `:70`, `:57` | ✅ PASS |
 
-### REL-02: Wake refresh runs after sleep
+**Edge cases**: `~/alt` → `CodexAdapterTests.swift:346`; > 4 MiB → `CodexAdapterTests.swift:430-431`; authorization throws → `failingAuthorizationRequestIsAbsorbed`, with polling started first in `startServices`.
 
-| Criterion | Spec-defined outcome | `file:line` + assertion | Verdict |
-| --------- | -------------------- | ----------------------- | ------- |
-| AC1: wake on the engine's center → refresh stale accounts | Only the stale account is refetched | `PollingEngineTests.swift:429` - `log.count(stale.id) == 2`; `:430` - `log.count(fresh.id) == 1` | ✅ PASS (M1 killed in iterations 1 and 2) |
-| AC2: default center is `NSWorkspace.shared.notificationCenter` | Identity | `PollingEngineTests.swift:438` - `===`; `:439` - `!== NotificationCenter.default` | ✅ PASS |
-| AC3: no refresh after `stop()` | Count unchanged | `PollingEngineTests.swift:461` - `log.count(stale.id) == 1` | ✅ PASS (M15 killed) |
+**Sensor**: 21/21 gating mutants killed across iterations 1-3 (M1-M19, M12′, MR1).
 
-### REL-03: Codex accounts honor their CODEX_HOME
+**Accepted residuals**:
 
-| Criterion | Spec-defined outcome | `file:line` + assertion | Verdict |
-| --------- | -------------------- | ----------------------- | ------- |
-| AC1: override → child `CODEX_HOME` = expanded override | Expanded path reaches the child | `CodexAdapterTests.swift:346` - `recorder.recorded == [home + "/alt-codex"]`; `:382` - child prints `/tmp/alt-codex-home` | ✅ PASS (M4, M6 killed) |
-| AC2: no override → inherited environment unchanged | Child sees the parent's `HOME`/`PATH`/`CODEX_HOME` | `CLIProcessRunnerTests.swift:95` - child `"$HOME\|$PATH"` == the parent's; `CodexAdapterTests.swift:398` - child `HOME`/`CODEX_HOME` == the parent's; `:355`, `:369` - `nil` passthrough | ✅ PASS (M19 killed in iterations 2 and 3) |
-| AC3: other variables preserved | Full dictionary equality | `CodexAdapterTests.swift:364` | ✅ PASS (M5 killed) |
-
-### REL-04: A silent CLI cannot freeze polling
-
-| Criterion | Spec-defined outcome | `file:line` + assertion | Verdict |
-| --------- | -------------------- | ----------------------- | ------- |
-| AC1: no output → within timeout + 2 s, process terminated | `.timedOut`, < t+2, PID gone | `CLIProcessRunnerTests.swift:39`, `:40`, `:42` | ✅ PASS (M7, M8 killed) |
-| AC2: child holds stdout → within timeout + 2 s | `.timedOut`, < t+2 | `CLIProcessRunnerTests.swift:57-59` | ✅ PASS (M8 killed) |
-| AC3: completion → early return with output, process terminated | `.completed`, < 2 s with a 10 s timeout, output, PID gone | `CLIProcessRunnerTests.swift:74`, `:75`, `:77`, `:79` | ✅ PASS (M7 killed) |
-| AC4: CLI exited before input → throws; app survives | Throws, no SIGPIPE | `CLIProcessRunnerTests.swift:103` - `await #expect(throws: (any Error).self)` | ✅ PASS (M10 killed by a crash) |
-| AC5: Copilot without both frames in 15 s → `ProviderError.network(URLError(.timedOut))` | Exact error; 15 s production bound | `CopilotAdapterTests.swift:193` - exact error; `:196` - elapsed; `:201` - `responseTimeout == 15`; `:202` - `CopilotAppServerClient().timeout == 15` | ✅ PASS (M16, M18 killed) |
-| AC6: two frames → second body | Second body | `CopilotAdapterTests.swift:161`, `:174`, `:184` | ✅ PASS (M9 killed) |
-| AC7: Codex silent within 6 s → throws | Throws; 6 s production bound | `CodexAdapterTests.swift:414` - throws; `:417` - elapsed; `:403` - `CodexAppServerClient().timeout == 6` | ✅ PASS (M13 killed) |
-
-### REL-05: Complete localization
-
-| Criterion | Spec-defined outcome | `file:line` + assertion | Verdict |
-| --------- | -------------------- | ----------------------- | ------- |
-| AC1: identical key sets | Both differences empty | `LocalizationTests.swift:35-36` | ✅ PASS (M11 killed) |
-| AC2: seven named keys present | All present per locale | `LocalizationTests.swift:44` | ✅ PASS (M11 killed) |
-| AC3: network failure → localized `Network error: %d` with the code | Localized format + code | `LocalizationTests.swift:79` - `networkErrorMessage(URLError(.timedOut), bundle: pt-BR) == "Erro de rede: -1001"`; `:70` - store state == `networkErrorMessage(…)`; `:57` - pt-BR table | ✅ PASS (M14 killed under pt-BR; M14b killed under en). Accepted residual: M14-en |
-
-**Status**: ✅ 18/18 ACs covered with spec-matching assertions.
+- **M12r**: deleting the launch `Task {}` line. All decision logic is tested in `startServices`, and deletion also stops polling, which is visible on any launch. Conditional on the spec's manual Success Criterion.
+- **M14-en**: an en-host call-site revert produces byte-identical en output. It is killed on pt-BR/es hosts, and the function is guarded on all hosts by `LocalizationTests.swift:79`.
 
 ---
 
-## Edge Cases
-
-- [x] `~/alt` → `<home>/alt`: `CodexAdapterTests.swift:346`
-- [x] > 4 MiB without marker → stop and return collected: `CodexAdapterTests.swift:430` (size), `:431` (elapsed < 5 with a 20 s timeout). M17 killed
-- [x] Authorization request throws → continue without notifications: `NotificationServiceTests.swift:228` (one attempt), `:229` (`requests.isEmpty`). Polling no longer depends on the request at all, because `engine.start()` runs first (`LimitBarApp.swift:101`)
-
----
-
-## Discrimination Sensor
-
-All runs used a scratch `git worktree` at `/tmp/lb-verify` with a separate `-derivedDataPath`, reset between mutants and removed afterwards. In every iteration, the real tree's `git status --porcelain` matched its baseline.
-
-### Final sensor table (all mutants, latest outcome)
-
-| # | File:line | Mutation | Spec | Latest outcome |
-| - | --------- | -------- | ---- | -------------- |
-| M1 | `PollingEngine.swift:89` | Wake observer on `NotificationCenter.default` | REL-02 AC1 | ✅ Killed (iteration 2) |
-| M2 | `NotificationService.swift:60` | Request also when `.denied`/`.provisional` | REL-01 AC2 | ✅ Killed (iteration 1) |
-| M3 | `NotificationService.swift:76` | `.provisional` no longer posts | REL-01 AC3 | ✅ Killed (iteration 1) |
-| M4 | `CodexAdapter.swift:32` | Adapter passes `nil` instead of the override | REL-03 AC1 | ✅ Killed (iteration 1) |
-| M5 | `CodexAdapter.swift:219` | Env builder drops base variables | REL-03 AC3 | ✅ Killed (iteration 1) |
-| M6 | `CodexAdapter.swift:203` | Env not passed to the runner | REL-03 AC1 | ✅ Killed (iteration 1) |
-| M7 | `CLIProcessRunner.swift:122` | No terminate on finish | REL-04 AC1/AC3 | ✅ Killed (iteration 2) |
-| M8 | `CLIProcessRunner.swift:88` | Timeout not scheduled | REL-04 AC1/2/5/7 | ✅ Killed (iteration 1) |
-| M9 | `CopilotAdapter.swift:129` | Only the first frame returned | REL-04 AC6 | ✅ Killed (iteration 2) |
-| M10 | `CLIProcessRunner.swift:46` | `F_SETNOSIGPIPE` removed | REL-04 AC4 | ✅ Killed by crash (iteration 1) |
-| M11 | `pt-BR.lproj/Localizable.strings:15` | Codex key reverted | REL-05 AC1/AC2 | ✅ Killed (iteration 1) |
-| M12′ | `LimitBarApp.swift:103` | Remove `requestAuthorizationIfNeeded()` in `startServices` | REL-01 AC1 | ✅ Killed (iteration 3: `NotificationServiceTests.swift:163`, `:189`) |
-| M13 | `CodexAdapter.swift:182` | Codex timeout 6 → 60 | REL-04 AC7 | ✅ Killed (iteration 2: `CodexAdapterTests.swift:403`) |
-| M14 | `AccountStore.swift:96` | Call site hard-codes English (default language pt-BR) | REL-05 AC3 | ✅ Killed (iteration 2) |
-| M14b | `AccountStore.swift` `networkErrorMessage` | Function hard-codes English (`-testLanguage en`) | REL-05 AC3 | ✅ Killed (iteration 2: `LocalizationTests.swift:79`) |
-| M15 | `PollingEngine.swift:105` | `stop()` keeps the observer | REL-02 AC3 | ✅ Killed (iteration 1) |
-| M16 | `CopilotAdapter.swift:101` | Timeout → `.networkConnectionLost` | REL-04 AC5 | ✅ Killed (iteration 1) |
-| M17 | `CodexAdapter.swift:207` | 4 MiB cap removed | Edge | ✅ Killed (iteration 1) |
-| M18 | `CopilotAdapter.swift:69` | Default `init` timeout → 150 | REL-04 AC5 | ✅ Killed (iteration 2: `CopilotAdapterTests.swift:202`) |
-| M19 | `CLIProcessRunner.swift:36-38` | `nil` env → `[:]` | REL-03 AC2 | ✅ Killed (iteration 3: `CLIProcessRunnerTests.swift:95`, `CodexAdapterTests.swift:398`) |
-| MR1 | `LimitBarApp.swift:101-104` | Await the permission request before `engine.start()` (iteration-2 regression reverted) | Launch polling (non-AC regression) | ✅ Killed (iteration 3: `NotificationServiceTests.swift:190`, `fetches.count >= 1`) |
-| M12r | `LimitBarApp.swift:59-65` | Delete the `Task { await Self.startServices(…) }` launch line | REL-01 AC1 | ⚠️ Survives (accepted residual) |
-| M14-en | `AccountStore.swift:96` | Call site hard-codes English, with `-testLanguage en` | REL-05 AC3 | ⚠️ Survives (accepted residual; en output identical) |
-
-**Iteration 3 runs** (HEAD `c15acd7`, scratch baseline 186/186): MR1 killed, M12′ killed, M19 killed (regression spot-check, REL-03). Score: **3/3**.
-
-**Cumulative**: 21/21 gating mutants killed; 2 accepted residuals.
-
-**Sensor depth**: expanded (P1 feature, ≥5 mutations per iteration in iterations 1 and 2)
-
-### Accepted residuals
-
-**M12r (deleting the launch `Task {}` line).** I accept this residual for four reasons:
-
-1. All REL-01 AC1 decision logic lives in `AppDelegate.startServices`, and M12′ and MR1 discriminate it: whether to ask, which options, the test-host skip, and that polling starts first.
-2. What remains is one unconditional call in the `NSApplicationDelegate` entry point.
-3. Deleting it also disables `engine.start()`, so every account stays blank. Any launch shows this immediately, and both the spec's Independent Test and its manual Success Criterion catch it.
-4. Covering it automatically would need a test-only "started" flag on the delegate.
-
-**Condition**: the manual check in `spec.md` → Success Criteria must be performed before release.
-
-**M14-en (English-host call-site revert).** If `AccountStore.apply` bypasses `networkErrorMessage` with a hard-coded `"Network error: \(code)"`, the output on an en host is byte-identical to the localized en string, so the mutant is equivalent there. On pt-BR and es hosts it is killed (`LocalizationTests.swift:70`, `AccountStoreTests.swift:210`, `PollingEngineTests.swift:300`). The function itself is guarded on every host by `LocalizationTests.swift:79`, which uses a fixed pt-BR bundle. Optional hardening: inject a `Bundle` into `AccountStore`.
-
----
-
-## Code Quality
+## Code Quality (`ff0c233`)
 
 | Principle | Status |
 | --------- | ------ |
-| Minimum code | ✅ |
-| Surgical changes | ✅ `c15acd7` is a 1-line reorder plus doc comment; the test fake gains a `hangOnRequest` flag |
-| No scope creep | ✅ Nothing from Out of Scope was touched |
-| Matches patterns | ✅ Injected fakes guarded by `NSLock`, Swift Testing, real `/bin/sh` processes |
-| Spec-anchored outcome check | ✅ 18/18 |
-| Per-layer coverage expectation | ✅ App wiring is unit-tested via `startServices`; entry-point residual accepted |
-| Every test maps to a spec requirement | ✅ The new `launchServicesPollWhilePromptPending` maps to REL-01 AC1 (request made) plus the launch-polling regression guard |
-| Would a senior engineer approve? | ✅ |
+| Minimum code | ✅ One `wasCached` flag and a conditional reload |
+| Surgical changes | ✅ `GoAuthManager.swift` (+7/-4), its tests, the spec, tasks |
+| No scope creep | ✅ Retry policy and cross-process locking stay out of scope, as recorded in the spec |
+| Matches patterns | ✅ |
+| Spec-anchored outcome check | ✅ 9/9 (REL-06), 18/18 (REL-01..05) |
+| Tests changed | ✅ `:448` tightened from `readCount == 2` to `== 1` (stricter, per AC9) |
 | Documented guidelines followed | ✅ `AGENTS.md` |
 
 ---
 
 ## Gate Check
 
-- **Gate command**: `scripts/build.sh test` (real tree, HEAD `c15acd7`)
-- **Exit code**: 0, `** TEST SUCCEEDED **`
-- **Counts** (xcresult summary): **186 passed, 0 failed, 0 skipped, 0 expected failures**. Counting each parameterized case, the device total is 192.
-- **Test count**: 151 before the feature (`853fa4e`) → 179 (`3f0ec72`) → 185 (`9aa5fe3`) → 186 (`c15acd7`)
-- **Delta**: +35; no tests removed. Two pre-existing assertions (`AccountStoreTests.swift:210`, `PollingEngineTests.swift:300`) were rewritten from hard-coded English to the localized format, which is still full-string equality.
-- **Isolation**: real-tree `git status --porcelain` showed only this report before and after all sensor work. The scratch worktree, derived data, and harness were removed.
+- **Gate command**: `scripts/build.sh test` (real tree, HEAD `ff0c233`)
+- **Exit code**: 0
+- **Counts** (xcresult summary): **196 passed, 0 failed, 0 skipped, 0 expected failures**. Counting each parameterized case, the device total is 202.
+- **Test count**: 151 (`853fa4e`) → 179 → 185 → 186 (`c15acd7`) → 192 (`02fa504`) → 195 (`c3bb18e`) → 196 (`ff0c233`); no tests removed
+- **Isolation**: before the sensor work, the real tree's `git status --porcelain` showed only this report (` M validation.md`), and it is unchanged after cleanup. The scratch worktree, derived data, harness, and probes were removed.
 
 ---
 
@@ -183,11 +181,12 @@ All runs used a scratch `git worktree` at `/tmp/lb-verify` with a separate `-der
 
 | Requirement | Previous Status | New Status |
 | ----------- | --------------- | ---------- |
-| REL-01 | ✅ ACs verified; launch regression open | ✅ Verified |
+| REL-01 | ✅ Verified | ✅ Verified |
 | REL-02 | ✅ Verified | ✅ Verified |
 | REL-03 | ✅ Verified | ✅ Verified |
 | REL-04 | ✅ Verified | ✅ Verified |
-| REL-05 | ✅ Verified (minor residual) | ✅ Verified (accepted residual M14-en) |
+| REL-05 | ✅ Verified | ✅ Verified (accepted residual M14-en) |
+| REL-06 | ❌ Needs Fix | ✅ Verified (accepted residuals: two-process race, failure-wins decision) |
 
 (spec.md was not edited: the Verifier's only write is this report. The orchestrator may update the traceability table.)
 
@@ -197,21 +196,19 @@ All runs used a scratch `git worktree` at `/tmp/lb-verify` with a separate `-der
 
 **Overall**: ✅ Ready
 
-- **Spec-anchored check**: 18/18 ACs matched the spec outcome; all 3 edge cases are covered.
-- **Sensor**: 3/3 killed this iteration; 21/21 gating mutants killed cumulatively; 2 accepted residuals.
-- **Gate**: 186 passed, 0 failed, 0 skipped
+- **Spec-anchored check**: REL-01..05: 18/18 ACs and 3/3 edge cases. REL-06: 9/9 ACs.
+- **Sensor**: REL-06 16/16 gating mutants killed, plus 1 equivalent. REL-01..05 21/21, plus 2 accepted residuals.
+- **Gate**: 196 passed, 0 failed, 0 skipped
 
-**What works**:
+**What works**: all six reliability fixes, including:
 
-- Notification permission at launch, without blocking polling
-- Provisional posting
-- Wake refresh on the workspace center
-- Per-account `CODEX_HOME` with an inherited environment
-- Timeout-bounded CLI runner with termination and SIGPIPE safety
-- Copilot frame parsing and timeout mapping
-- Synchronized localization tables
+- an OpenCode credential cache that reads the Keychain once per run, plus once per due refresh
+- picking up a credential that another process rotated
+- quiet handling of a failed refresh
+- a test host that never touches real accounts
+- every single-use refresh-token guarantee, both in-process and across processes, except the accepted simultaneous-refresh race
 
 **Next steps**:
 
-- Perform the manual success-criterion check (grant permission, cross 80%, one notification) before release. The M12r acceptance depends on it.
-- Optional: inject a `Bundle` into `AccountStore` to close M14-en.
+1. Perform the spec's manual Success Criteria before release: one notification after granting permission and crossing 80% (M12r depends on it), and the REL-06 Independent Test on an ad-hoc build.
+2. Optional: add a direct "failed refresh → reauthorize" test for the AC8 release clause.

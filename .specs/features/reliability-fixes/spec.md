@@ -179,7 +179,7 @@ A full code review on 2026-11-03 found four behaviors users believe work but do 
 | REL-03 | P1: Codex accounts honor their CODEX_HOME | Execute | Verified |
 | REL-04 | P1: A silent CLI cannot freeze polling | Execute | Verified |
 | REL-05 | P2: Complete localization of reviewed strings | Execute | Verified |
-| REL-06 | P1: OpenCode credentials do not prompt on every poll | Execute | Implementing |
+| REL-06 | P1: OpenCode credentials do not prompt on every poll | Execute | Verified |
 
 **Coverage:** 6 total, 6 mapped to tasks, 0 unmapped
 

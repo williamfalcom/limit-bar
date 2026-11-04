@@ -68,12 +68,13 @@
 
 ## Handoff
 
-- **Feature**: Reliability fixes (`.specs/features/reliability-fixes/`)
-- **Phase / Task**: Execute complete; T1–T6 done; Verifier PASS on iteration 3 (`validation.md`)
-- **Completed**: notification permission at launch (polling starts first); wake observed on `NSWorkspace.shared.notificationCenter`; per-account `CODEX_HOME` passed to `codex app-server`; `CLIProcessRunner` bounds Codex (6 s) and Copilot (15 s) exchanges, ignores `SIGPIPE`, discards stderr; Copilot frame parser keeps buffered frames; locale tables synchronized and network error localized. `scripts/build.sh test`: 186 passed, 0 failed, 0 skipped (was 151).
+- **Feature**: Reliability fixes (`.specs/features/reliability-fixes/`), PR #5, version 0.3.2
+- **Phase / Task**: Execute complete; T1–T7 done; Verifier PASS (REL-01..05 iteration 3, REL-06 iteration 3)
+- **Completed**: REL-01..05 as before; REL-06 (found in v0.3.2 install testing): in-memory OpenCode credential cache in `GoAuthManager`, Keychain re-read before each due refresh, failed refreshes stay quiet, test host neither polls nor prompts. `scripts/build.sh test`: 196 passed, 0 failed, 0 skipped.
+- **Root cause recorded**: ad-hoc signing binds Keychain ACLs and `partition_id` to the cdhash; a self-signed certificate stabilizes the ACL requirement but not the partition (verified on the login keychain 2026-11-03). Only an Apple Team ID (`teamid:` partition) makes approvals survive rebuilds.
 - **In-progress**: none.
-- **Next step**: manual check before release: grant notification permission on first launch and cross 80% once; confirm one notification. `VERSION` bumped to 0.3.2 with notes in `docs/releases/v0.3.2.md`; PR opened from `fix/reliability-fixes`. After merge, rebuild artifacts from merged `main` (`scripts/build.sh prod --dmg`), then tag `v0.3.2` and publish.
-- **Blockers**: none. Accepted residuals are in `validation.md`: the `startServices` launch line is build-only; on English machines a hard-coded English network message at the `AccountStore` call site is output-identical.
-- **Deferred review items**: persistence corruption backup, Claude `URLError` mapping, Codex HTTP fallback removal, OAuth refresh retry exit, interval-change sleep interruption, Retry-After/backoff on manual refresh, Settings window `isReleasedWhenClosed`, UX items (live countdowns, day-based countdown, provider-aware window picker), CI workflow.
+- **Next step**: user installs the rebuilt test build and runs manual checks (notification after 80%; REL-06: at most one Keychain dialog per item per run). Then merge PR #5, rebuild from merged `main` (`scripts/build.sh prod --dmg`), tag `v0.3.2`, and publish.
+- **Blockers**: none. Merge needs an approval or explicit admin-merge authorization (the author cannot approve their own PR).
+- **Deferred**: Apple Team ID signing (user has no identity yet); persistence corruption backup; Claude `URLError` mapping; Codex HTTP fallback removal; OAuth refresh retry policy; interval-change sleep interruption; Retry-After/backoff on manual refresh; Settings window `isReleasedWhenClosed`; UX items; CI workflow; cross-process refresh locking.
 - **Uncommitted files**: none
-- **Branch**: `fix/reliability-fixes` (pushed; PR open)
+- **Branch**: `fix/reliability-fixes` (pushed; PR #5 open)
