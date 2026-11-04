@@ -92,16 +92,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// Launch-time background work: start polling, then ask for notification permission.
     /// Polling starts first because the permission prompt waits for the user.
-    /// The app hosts the unit tests, so a test run never prompts for permission.
+    /// The app hosts the unit tests; a test run must neither prompt nor poll the user's
+    /// real accounts (which would also read their Keychain items).
     static func startServices(
         notifications: NotificationService,
         engine: PollingEngine,
         environment: [String: String]
     ) async {
+        guard environment["XCTestConfigurationFilePath"] == nil else { return }
         await engine.start()
-        if environment["XCTestConfigurationFilePath"] == nil {
-            await notifications.requestAuthorizationIfNeeded()
-        }
+        await notifications.requestAuthorizationIfNeeded()
     }
 
     // MARK: - Icon

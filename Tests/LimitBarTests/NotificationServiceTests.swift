@@ -191,19 +191,28 @@ struct NotificationServiceTests {
     }
 
     @MainActor
-    @Test("App launch services never prompt while hosting tests")
+    @Test("App launch services neither prompt nor poll while hosting tests")
     func launchServicesSkipAuthorizationUnderTests() async {
         let (service, center) = makeService(status: .notDetermined)
-        let engine = PollingEngine(store: AccountStore(persistence: NoPersistence()), adapters: [:], wakeCenter: NotificationCenter())
+        let store = AccountStore(persistence: NoPersistence())
+        store.add(account: Account(id: UUID(), provider: .claudeCode, label: "Claude", displayedWindow: .fiveHour, codexHomeOverride: nil))
+        let fetches = FetchCounter()
+        let engine = PollingEngine(
+            store: store,
+            adapters: [.claudeCode: CountingAdapter(counter: fetches)],
+            wakeCenter: NotificationCenter()
+        )
 
         await AppDelegate.startServices(
             notifications: service,
             engine: engine,
             environment: ["XCTestConfigurationFilePath": "/tmp/test.xctestconfiguration"]
         )
+        try? await Task.sleep(for: .milliseconds(300))
         await engine.stop()
 
         #expect(center.authorizationRequests.isEmpty)
+        #expect(fetches.count == 0)
     }
 
     @Test("Launch does not request authorization once the user has decided", arguments: [

@@ -44,6 +44,8 @@ A full code review on 2026-11-03 found four behaviors users believe work but do 
 | Network error message | `Network error: %d` becomes a localized format key | Smallest change; still shows the code | y |
 
 | Cache scope (REL-06) | Process memory inside `GoAuthManager`; never persisted; cleared on delete | Only limit-bar writes these items, always through the manager | y |
+| Keychain read before refresh (REL-06 AC6) | Re-read once per due refresh, bypassing the cache | The refresh token is single-use; another limit-bar process (a second copy or the test host) may have rotated it. One read per token lifetime keeps prompts rare | y |
+| Test host polling (REL-06 AC7) | `startServices` skips both the permission request and `engine.start()` under `XCTestConfigurationFilePath` | The test host was polling real accounts and reading the real Keychain on every test run | y |
 | Cached failures (REL-06) | Not cached; a denied or missing read retries on the next poll | A denial must stay recoverable without a restart | y |
 
 **Open questions:** none - all resolved or logged above.
@@ -144,11 +146,13 @@ A full code review on 2026-11-03 found four behaviors users believe work but do 
 
 **Acceptance Criteria**:
 
-1. WHEN bearer tokens are requested repeatedly for the same OpenCode account THEN the auth manager SHALL read that account's Keychain credential at most once while the app runs
+1. WHEN bearer tokens are requested repeatedly for the same OpenCode account THEN the auth manager SHALL read that account's Keychain credential once, plus once before each OAuth refresh, while the app runs
 2. WHEN an OAuth refresh rotates the credential THEN later bearer requests SHALL return the rotated access token without reading the Keychain
-3. WHEN an API key is stored or a device authorization completes THEN the next bearer request for that account SHALL return the new credential without reading the Keychain
+3. WHEN an API key is stored or a device authorization completes, including while a refresh is in flight, THEN the next bearer request for that account SHALL return the new credential without reading the Keychain
 4. WHEN an account's credentials are deleted THEN the next bearer request SHALL read the Keychain again
-5. IF a Keychain read fails THEN the auth manager SHALL NOT cache the failure, and the next request SHALL read the Keychain again
+5. IF a Keychain read fails for an API-key or OAuth account THEN the auth manager SHALL NOT cache the failure, and the next request SHALL read the Keychain again
+6. WHEN an OAuth refresh is due AND the Keychain holds a credential that another limit-bar process already rotated THEN the auth manager SHALL use the stored credential and SHALL NOT submit the consumed refresh token
+7. WHILE limit-bar runs as the unit-test host the app SHALL NOT start polling
 
 **Independent Test**: Install a new build, approve the Keychain dialog once with "Allow" (not "Always Allow"), and see no further dialogs during later polls until the app restarts.
 

@@ -305,3 +305,15 @@ The second Verifier run returned FAIL. Every earlier gap was closed, but `9aa5fe
 | Polling blocked by the pending prompt | `startServices` starts the engine first, then requests authorization | `NotificationServiceTests.swift` - `launchServicesPollWhilePromptPending` (fake prompt never answers; fetch count ≥ 1) |
 
 Accepted residual: on an English machine, `AccountStore.apply` hard-coding English is output-identical to the localized call; `networkMessageUsesLocaleTable` covers the function with a fixed pt-BR bundle. Gate: 186 passed, 0 failed.
+
+## Verification Fix Iteration 4 (REL-06)
+
+The Verifier returned FAIL for T7 (8/11 mutants killed) with three gaps:
+
+| Gap | Fix | Evidence |
+|---|---|---|
+| A second limit-bar process (another app copy or the test host) could resubmit a consumed refresh token from a stale cache | The manager re-reads the Keychain before each due refresh and uses a credential that another process already rotated (REL-06 AC6). The test host no longer polls (AC7) | `GoAuthManagerTests.swift` - `crossProcessRotationIsNotReplayed`; `NotificationServiceTests.swift` - `launchServicesSkipAuthorizationUnderTests` (no prompt, no fetch) |
+| AC3 race untested: reauthorization during an in-flight refresh | Probe adopted as a test (current code already correct) | `GoAuthManagerTests.swift` - `reauthorizationDuringRefreshWins` |
+| AC5 API-key failure path untested | New test | `GoAuthManagerTests.swift` - `failedAPIKeyReadIsNotCached` |
+
+AC1 now allows one read before each refresh, so `rotatedCredentialServedWithoutRead` expects 2 reads (initial + pre-refresh) instead of 1; the post-rotation request still reads nothing. Discovery: before this fix every `xcodebuild test` run polled the developer's real accounts and read the real Keychain from a new Debug cdhash, which itself raised Keychain dialogs. Residual: two processes refreshing the same account at the same instant can still race (pre-existing; needs cross-process locking). Gate: `scripts/build.sh test` - 195 passed, 0 failed.

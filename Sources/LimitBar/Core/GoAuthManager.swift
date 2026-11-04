@@ -85,12 +85,27 @@ actor GoAuthManager {
                 throw GoAuthManagerError.missingCredentials
             }
         case .consoleOAuth:
-            let credential = try loadOAuthCredential(for: account.id)
-            guard credential.expiresAt.timeIntervalSince(now()) <= 60 else {
-                return credential.accessToken
-            }
-            return try await refreshedCredential(credential, for: account.id).accessToken
+            let cached = try loadOAuthCredential(for: account.id)
+            guard needsRefresh(cached) else { return cached.accessToken }
+            // The refresh token is single-use and another limit-bar process may already
+            // have rotated it, so never refresh from the cache: re-read the Keychain first.
+            let stored = try reloadOAuthCredential(for: account.id)
+            guard needsRefresh(stored) else { return stored.accessToken }
+            return try await refreshedCredential(stored, for: account.id).accessToken
         }
+    }
+
+    private func needsRefresh(_ credential: GoOAuthCredential) -> Bool {
+        credential.expiresAt.timeIntervalSince(now()) <= 60
+    }
+
+    /// Reads the Keychain, bypassing the cache unless a refresh for this account is
+    /// already in flight in this process (its result is not persisted yet).
+    private func reloadOAuthCredential(for accountID: UUID) throws -> GoOAuthCredential {
+        if refreshWorkByAccount[accountID] == nil {
+            credentialCache[accountID] = nil
+        }
+        return try loadOAuthCredential(for: accountID)
     }
 
     private func loadOAuthCredential(for accountID: UUID) throws -> GoOAuthCredential {
