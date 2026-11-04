@@ -328,3 +328,7 @@ The Verifier returned FAIL with one decision gap: after a local refresh failure,
 | Two dialogs back to back when the first poll finds a due token | No re-read when the value was just read from the Keychain (AC9) | `GoAuthManagerTests.swift` - `rotatedCredentialServedWithoutRead` now expects exactly 1 read (stricter than the previous 2) |
 
 The simultaneous two-process refresh race is now recorded in the spec assumptions as an accepted residual. Gate: `scripts/build.sh test` - 196 passed, 0 failed.
+
+## Manual UAT
+
+- 2026-11-04, build 0.3.2 (113), cdhash `4153b2c0…`: after one "Always Allow" approval, the user confirmed that no Keychain dialogs return during later polls (REL-06 Independent Test passed). The user reported "tests OK".
