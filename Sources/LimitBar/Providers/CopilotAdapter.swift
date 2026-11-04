@@ -60,38 +60,47 @@ struct CopilotAdapter: ProviderAdapter, Sendable {
 
 struct CopilotAppServerClient: Sendable {
     static let commandArguments = ["--headless", "--no-auto-update", "--stdio"]
+    static let responseTimeout: TimeInterval = 15
+
+    /// Fixed executable and arguments; `nil` resolves the installed `copilot` CLI.
+    private let launch: (executable: URL, arguments: [String])?
+    let timeout: TimeInterval
+
+    init(launch: (executable: URL, arguments: [String])? = nil, timeout: TimeInterval = Self.responseTimeout) {
+        self.launch = launch
+        self.timeout = timeout
+    }
 
     func fetchQuotaResponse() async throws -> String {
-        try await Task.detached(priority: .utility) {
-            let process = Process()
-            guard let executable = Self.locateExecutable("copilot") else {
+        let executable: URL
+        let arguments: [String]
+        if let launch {
+            (executable, arguments) = launch
+        } else {
+            guard let located = Self.locateExecutable("copilot") else {
                 throw ProviderError.network(URLError(.cannotFindHost))
             }
-            process.executableURL = executable
-            process.arguments = Self.commandArguments
-            let stdin = Pipe()
-            let stdout = Pipe()
-            process.standardInput = stdin
-            process.standardOutput = stdout
-            process.standardError = Pipe()
+            (executable, arguments) = (located, Self.commandArguments)
+        }
 
-            do {
-                try process.run()
-            } catch {
-                throw ProviderError.network(error as? URLError ?? URLError(.cannotConnectToHost))
-            }
-            defer {
-                if process.isRunning {
-                    process.terminate()
-                }
-            }
+        let result: CLIProcessRunner.Result
+        do {
+            result = try await CLIProcessRunner.run(
+                executableURL: executable,
+                arguments: arguments,
+                input: Self.requestFrame(method: "connect", id: 1) + Self.requestFrame(method: "account.getQuota", id: 2),
+                timeout: timeout,
+                isComplete: { ((try? Self.frames(in: $0))?.count ?? 0) >= 2 }
+            )
+        } catch {
+            throw ProviderError.network(error as? URLError ?? URLError(.cannotConnectToHost))
+        }
 
-            stdin.fileHandleForWriting.write(Self.requestFrame(method: "connect", id: 1))
-            stdin.fileHandleForWriting.write(Self.requestFrame(method: "account.getQuota", id: 2))
-            _ = try Self.readMessage(from: stdout.fileHandleForReading)
-            let quotaResponse = try Self.readMessage(from: stdout.fileHandleForReading)
-            return String(decoding: quotaResponse, as: UTF8.self)
-        }.value
+        let frames = try Self.frames(in: result.output)
+        guard frames.count >= 2 else {
+            throw ProviderError.network(URLError(result.outcome == .timedOut ? .timedOut : .networkConnectionLost))
+        }
+        return String(decoding: frames[1], as: UTF8.self)
     }
 
     static func requestFrame(method: String, id: Int) -> Data {
@@ -99,27 +108,27 @@ struct CopilotAppServerClient: Sendable {
         return Data("Content-Length: \(payload.count)\r\n\r\n".utf8) + payload
     }
 
-    private static func readMessage(from handle: FileHandle) throws -> Data {
-        var buffer = Data()
+    /// Bodies of the complete `Content-Length` frames in `buffer`, in order.
+    /// A trailing incomplete frame is left out.
+    static func frames(in buffer: Data) throws -> [Data] {
+        let bytes = Data(buffer)
         let separator = Data("\r\n\r\n".utf8)
-        while true {
-            let chunk = handle.availableData
-            guard !chunk.isEmpty else {
-                throw ProviderError.network(URLError(.networkConnectionLost))
-            }
-            buffer.append(chunk)
-            guard let headerEnd = buffer.range(of: separator) else { continue }
-            let header = String(decoding: buffer[..<headerEnd.lowerBound], as: UTF8.self)
+        var bodies: [Data] = []
+        var offset = bytes.startIndex
+        while let headerEnd = bytes.range(of: separator, in: offset..<bytes.endIndex) {
+            let header = String(decoding: bytes[offset..<headerEnd.lowerBound], as: UTF8.self)
             guard let lengthLine = header.split(separator: "\r\n").first(where: {
                 $0.lowercased().hasPrefix("content-length:")
             }),
             let length = Int(lengthLine.split(separator: ":", maxSplits: 1).last?.trimmingCharacters(in: .whitespaces) ?? "") else {
                 throw ProviderError.parseFailed
             }
-            let bodyStart = headerEnd.upperBound
-            guard buffer.count >= bodyStart + length else { continue }
-            return Data(buffer[bodyStart..<(bodyStart + length)])
+            let bodyEnd = headerEnd.upperBound + length
+            guard bodyEnd <= bytes.endIndex else { break }
+            bodies.append(Data(bytes[headerEnd.upperBound..<bodyEnd]))
+            offset = bodyEnd
         }
+        return bodies
     }
 
     private static func locateExecutable(_ name: String) -> URL? {

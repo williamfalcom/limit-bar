@@ -68,12 +68,15 @@
 
 ## Handoff
 
-- **Feature**: OpenCode Go dual authentication (`.specs/features/opencode-go-auth/`)
-- **Phase / Task**: v0.3.0 release preparation; T7/T8 retain the untested API-key replacement UAT
-- **Completed**: T1–T6 implementation and user-confirmed UAT; T7 implementation; trilingual docs and `VERSION=0.3.0`; release notes in `docs/releases/v0.3.0.md`. Fresh `scripts/build.sh test` on 2026-10-20: 151 passed, 0 failed, 0 skipped (xcresult summary). Strict spec/task validators, all `.strings` syntax checks, all 27 new auth keys in three locales, and high-confidence secret-pattern scan passed. One unrelated Codex localization-key mismatch in pt-BR/es predates this feature and remains unchanged. AGPLv3 licensing from PR #2 and its session closure from PR #3 are preserved; the only merge conflict was this handoff.
-- **In-progress** (file:line): release notes, fresh build/test gates, administrative merge of PR #4, and ZIP/DMG packaging from merged `main`.
-- **Next step**: rerun validation, merge PR #4, rebuild production artifacts from merged `main`, validate their signature/version/archive integrity, then publish annotated tag `v0.3.0` and GitHub release assets.
-- **Release authorization**: on 2026-10-20, the user explicitly authorized administrative merge without external approval and publication with the known API-key replacement UAT gap disclosed. The authenticated account is the PR author and cannot approve its own PR. This exception is not evidence that the manual test passed.
-- **Blockers**: no release blocker if fresh automated gates and package checks pass. API-key replacement manual UAT remains pending; no UI-test target exists. Test later with a temporary invalid-key account, repair locally, and remove it without sharing secrets or revoking a live Console session.
+- **Feature**: Reliability fixes (`.specs/features/reliability-fixes/`), PR #5, version 0.3.2
+- **Phase / Task**: Execute complete; T1–T7 done; Verifier PASS (REL-01..05 iteration 3, REL-06 iteration 3)
+- **Completed**: REL-01..05 as before; REL-06 (found in v0.3.2 install testing): in-memory OpenCode credential cache in `GoAuthManager`, Keychain re-read before each due refresh, failed refreshes stay quiet, test host neither polls nor prompts. `scripts/build.sh test`: 196 passed, 0 failed, 0 skipped.
+- **Root cause recorded**: ad-hoc signing binds Keychain ACLs and `partition_id` to the cdhash; a self-signed certificate stabilizes the ACL requirement but not the partition (verified on the login keychain 2026-11-03). Only an Apple Team ID (`teamid:` partition) makes approvals survive rebuilds.
+- **In-progress**: none.
+- **Manual UAT**: 2026-11-04, build 113: user confirmed no repeated Keychain dialogs (REL-06 passed) and reported tests OK.
+- **Release authorization**: on 2026-11-04 the user explicitly authorized administrative merge of PR #5 and publication of v0.3.2. The notification manual check was not confirmed and is disclosed as pending in the release notes; this authorization is not evidence that it passed.
+- **Next step**: merge PR #5, rebuild from merged `main` (`scripts/build.sh prod --dmg`), tag `v0.3.2`, and publish.
+- **Blockers**: none. Merge needs an approval or explicit admin-merge authorization (the author cannot approve their own PR).
+- **Deferred**: Apple Team ID signing (user has no identity yet); persistence corruption backup; Claude `URLError` mapping; Codex HTTP fallback removal; OAuth refresh retry policy; interval-change sleep interruption; Retry-After/backoff on manual refresh; Settings window `isReleasedWhenClosed`; UX items; CI workflow; cross-process refresh locking.
 - **Uncommitted files**: none
-- **Branch**: `feat/opencode-go-auth-v0.3`
+- **Branch**: `fix/reliability-fixes` (pushed; PR #5 open)

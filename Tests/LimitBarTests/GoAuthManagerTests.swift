@@ -6,6 +6,7 @@ private final class GoAuthCredentialStoreSpy: CredentialStore, @unchecked Sendab
     private let lock = NSLock()
     private var values: [String: String]
     private var failedWrites: Set<String> = []
+    private var reads: [String: Int] = [:]
 
     init(values: [String: String] = [:]) {
         self.values = values
@@ -32,9 +33,16 @@ private final class GoAuthCredentialStoreSpy: CredentialStore, @unchecked Sendab
         values[key] = secret
     }
 
+    func readCount(forKey key: String) -> Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return reads[key, default: 0]
+    }
+
     func secret(forKey key: String) throws -> String {
         lock.lock()
         defer { lock.unlock() }
+        reads[key, default: 0] += 1
         guard let value = values[key] else {
             throw KeychainStore.KeychainError.itemNotFound
         }
@@ -387,6 +395,199 @@ struct GoAuthManagerTests {
         #expect(token == "new-access")
         #expect(try vault.oauthCredential(for: account.id) == rotated)
         #expect(await client.refreshCallCount(for: "old-refresh") == 1)
+    }
+
+    @Test("Repeated API-key bearer requests read the Keychain once")
+    func repeatedAPIKeyRequestsReadOnce() async throws {
+        let account = makeAccount(method: .apiKey)
+        let store = GoAuthCredentialStoreSpy()
+        try GoCredentialVault(credentials: store).storeAPIKey("go-api-key", for: account.id)
+        let manager = makeManager(store: store, client: GoOAuthClientStub(challenge: makeChallenge()))
+
+        var tokens: [String] = []
+        for _ in 0..<3 { tokens.append(try await manager.bearerToken(for: account)) }
+
+        #expect(tokens == ["go-api-key", "go-api-key", "go-api-key"])
+        #expect(store.readCount(forKey: GoCredentialVault.apiKeyKey(for: account.id)) == 1)
+    }
+
+    @Test("Repeated OAuth bearer requests read the Keychain once")
+    func repeatedOAuthRequestsReadOnce() async throws {
+        let account = makeAccount()
+        let credential = makeCredential(accessToken: "current-access", refreshToken: "current-refresh", expiresAt: now.addingTimeInterval(3600))
+        let store = GoAuthCredentialStoreSpy()
+        try GoCredentialVault(credentials: store).storeOAuthCredential(credential, for: account.id)
+        let manager = makeManager(store: store, client: GoOAuthClientStub(challenge: makeChallenge()))
+
+        var tokens: [String] = []
+        for _ in 0..<3 { tokens.append(try await manager.bearerToken(for: account)) }
+
+        #expect(tokens == ["current-access", "current-access", "current-access"])
+        #expect(store.readCount(forKey: GoCredentialVault.oauthKey(for: account.id)) == 1)
+    }
+
+    @Test("A rotated OAuth credential is served from memory after refresh")
+    func rotatedCredentialServedWithoutRead() async throws {
+        let account = makeAccount()
+        let prior = makeCredential(accessToken: "old-access", refreshToken: "old-refresh", expiresAt: now.addingTimeInterval(10))
+        let rotated = makeCredential(accessToken: "new-access", refreshToken: "new-refresh", expiresAt: now.addingTimeInterval(3600))
+        let store = GoAuthCredentialStoreSpy()
+        try GoCredentialVault(credentials: store).storeOAuthCredential(prior, for: account.id)
+        let client = GoOAuthClientStub(challenge: makeChallenge(), refreshResults: ["old-refresh": .success(rotated)])
+        let manager = makeManager(store: store, client: client)
+
+        let first = try await manager.bearerToken(for: account)
+        let second = try await manager.bearerToken(for: account)
+
+        #expect(first == "new-access")
+        #expect(second == "new-access")
+        #expect(await client.refreshCallCount(for: "old-refresh") == 1)
+        #expect(await client.refreshCallCount(for: "new-refresh") == 0)
+        // The first read is already current, so no second read before the refresh (REL-06 AC9);
+        // none after rotation (AC2).
+        #expect(store.readCount(forKey: GoCredentialVault.oauthKey(for: account.id)) == 1)
+    }
+
+    @Test("Stored API keys and completed authorizations are served without a Keychain read")
+    func storedCredentialsServedWithoutRead() async throws {
+        let keyAccount = makeAccount(method: .apiKey)
+        let oauthAccount = makeAccount()
+        let authorized = makeCredential(accessToken: "authorized-access", refreshToken: "authorized-refresh", expiresAt: now.addingTimeInterval(3600))
+        let store = GoAuthCredentialStoreSpy()
+        let client = GoOAuthClientStub(challenge: makeChallenge(), authorizationResult: .success(authorized))
+        let manager = makeManager(store: store, client: client)
+
+        try await manager.storeAPIKey("replacement-key", for: keyAccount.id)
+        try await manager.authorize(makeChallenge(), for: oauthAccount.id)
+
+        #expect(try await manager.bearerToken(for: keyAccount) == "replacement-key")
+        #expect(try await manager.bearerToken(for: oauthAccount) == "authorized-access")
+        #expect(store.readCount(forKey: GoCredentialVault.apiKeyKey(for: keyAccount.id)) == 0)
+        #expect(store.readCount(forKey: GoCredentialVault.oauthKey(for: oauthAccount.id)) == 0)
+    }
+
+    @Test("Deleting credentials forces the next request to read the Keychain")
+    func deleteForcesKeychainRead() async throws {
+        let account = makeAccount(method: .apiKey)
+        let store = GoAuthCredentialStoreSpy()
+        let manager = makeManager(store: store, client: GoOAuthClientStub(challenge: makeChallenge()))
+        try await manager.storeAPIKey("go-api-key", for: account.id)
+
+        try await manager.deleteCredentials(for: account.id)
+
+        await #expect(throws: GoAuthManagerError.missingCredentials) {
+            try await manager.bearerToken(for: account)
+        }
+        #expect(store.readCount(forKey: GoCredentialVault.apiKeyKey(for: account.id)) == 1)
+    }
+
+    @Test("A failed Keychain read is retried on the next request")
+    func failedReadIsNotCached() async throws {
+        let account = makeAccount()
+        let store = GoAuthCredentialStoreSpy()
+        let manager = makeManager(store: store, client: GoOAuthClientStub(challenge: makeChallenge()))
+
+        await #expect(throws: GoAuthManagerError.missingCredentials) {
+            try await manager.bearerToken(for: account)
+        }
+        let credential = makeCredential(accessToken: "late-access", refreshToken: "late-refresh", expiresAt: now.addingTimeInterval(3600))
+        try GoCredentialVault(credentials: store).storeOAuthCredential(credential, for: account.id)
+
+        #expect(try await manager.bearerToken(for: account) == "late-access")
+        #expect(store.readCount(forKey: GoCredentialVault.oauthKey(for: account.id)) == 2)
+    }
+
+    @Test("A failed API-key read is retried on the next request")
+    func failedAPIKeyReadIsNotCached() async throws {
+        let account = makeAccount(method: .apiKey)
+        let store = GoAuthCredentialStoreSpy()
+        let manager = makeManager(store: store, client: GoOAuthClientStub(challenge: makeChallenge()))
+
+        await #expect(throws: GoAuthManagerError.missingCredentials) {
+            try await manager.bearerToken(for: account)
+        }
+        try GoCredentialVault(credentials: store).storeAPIKey("late-key", for: account.id)
+
+        #expect(try await manager.bearerToken(for: account) == "late-key")
+        #expect(store.readCount(forKey: GoCredentialVault.apiKeyKey(for: account.id)) == 2)
+    }
+
+    @Test("A credential rotated by another limit-bar process is used instead of resubmitting the consumed refresh token")
+    func crossProcessRotationIsNotReplayed() async throws {
+        final class MovingClock: @unchecked Sendable {
+            private let lock = NSLock()
+            private var date: Date
+            init(_ date: Date) { self.date = date }
+            func read() -> Date { lock.lock(); defer { lock.unlock() }; return date }
+            func set(_ value: Date) { lock.lock(); defer { lock.unlock() }; date = value }
+        }
+        let account = makeAccount()
+        let prior = makeCredential(accessToken: "old-access", refreshToken: "old-refresh", expiresAt: now.addingTimeInterval(120))
+        let rotated = makeCredential(accessToken: "new-access", refreshToken: "new-refresh", expiresAt: now.addingTimeInterval(3600))
+        let store = GoAuthCredentialStoreSpy()
+        try GoCredentialVault(credentials: store).storeOAuthCredential(prior, for: account.id)
+        let client = GoOAuthClientStub(challenge: makeChallenge(), refreshResults: ["old-refresh": .success(rotated)])
+        let clock = MovingClock(now)
+        let otherProcess = GoAuthManager(vault: GoCredentialVault(credentials: store), oauthClient: client, now: { clock.read() })
+        let thisProcess = GoAuthManager(vault: GoCredentialVault(credentials: store), oauthClient: client, now: { clock.read() })
+
+        #expect(try await thisProcess.bearerToken(for: account) == "old-access")
+        clock.set(now.addingTimeInterval(100))
+        #expect(try await otherProcess.bearerToken(for: account) == "new-access")
+
+        let token = try await thisProcess.bearerToken(for: account)
+
+        #expect(token == "new-access")
+        #expect(await client.refreshCallCount(for: "old-refresh") == 1)
+        #expect(await client.refreshCallCount(for: "new-refresh") == 0)
+    }
+
+    @Test("An account whose refresh failed rethrows without reading the Keychain or resubmitting")
+    func failedRefreshStaysQuiet() async throws {
+        let account = makeAccount()
+        let prior = makeCredential(accessToken: "old-access", refreshToken: "old-refresh", expiresAt: now.addingTimeInterval(10))
+        let store = GoAuthCredentialStoreSpy()
+        try GoCredentialVault(credentials: store).storeOAuthCredential(prior, for: account.id)
+        let client = GoOAuthClientStub(
+            challenge: makeChallenge(),
+            refreshResults: ["old-refresh": .failure(.network(URLError(.timedOut)))]
+        )
+        let manager = makeManager(store: store, client: client)
+
+        for _ in 0..<4 {
+            await #expect(throws: GoOAuthClientError.network(URLError(.timedOut))) {
+                try await manager.bearerToken(for: account)
+            }
+        }
+
+        #expect(store.readCount(forKey: GoCredentialVault.oauthKey(for: account.id)) == 1)
+        #expect(await client.refreshCallCount(for: "old-refresh") == 1)
+    }
+
+    @Test("A reauthorization during an in-flight refresh wins over the refresh result", .timeLimit(.minutes(1)))
+    func reauthorizationDuringRefreshWins() async throws {
+        let account = makeAccount()
+        let prior = makeCredential(accessToken: "old-access", refreshToken: "old-refresh", expiresAt: now.addingTimeInterval(10))
+        let rotated = makeCredential(accessToken: "rotated-access", refreshToken: "rotated-refresh", expiresAt: now.addingTimeInterval(3600))
+        let reauthorized = makeCredential(accessToken: "reauth-access", refreshToken: "reauth-refresh", expiresAt: now.addingTimeInterval(3600))
+        let store = GoAuthCredentialStoreSpy()
+        let vault = GoCredentialVault(credentials: store)
+        try vault.storeOAuthCredential(prior, for: account.id)
+        let client = GoOAuthClientStub(
+            challenge: makeChallenge(),
+            authorizationResult: .success(reauthorized),
+            blockedRefreshTokens: ["old-refresh"]
+        )
+        let manager = makeManager(store: store, client: client)
+
+        let inFlight = Task { try await manager.bearerToken(for: account) }
+        await client.waitForRefreshCall()
+        try await manager.authorize(makeChallenge(), for: account.id)
+        await client.releaseBlockedRefresh(with: rotated)
+
+        #expect(try await inFlight.value == "reauth-access")
+        #expect(try await manager.bearerToken(for: account) == "reauth-access")
+        #expect(try vault.oauthCredential(for: account.id) == reauthorized)
     }
 
     @Test("Concurrent requests for one account share a single refresh", .timeLimit(.minutes(1)))

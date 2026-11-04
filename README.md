@@ -47,7 +47,7 @@ limit-bar sits quietly in your menu bar and shows how much of your AI plan's tim
 
 **Requirements:** macOS 14 (Sonoma) or later.
 
-1. Download `limit-bar-v0.3.0.dmg` (or the `.zip`) from the [latest release](https://github.com/williamfalcom/limit-bar/releases/latest).
+1. Download `limit-bar-v0.3.2.dmg` (or the `.zip`) from the [latest release](https://github.com/williamfalcom/limit-bar/releases/latest).
 2. Open it and drag **limit-bar.app** into **Applications**.
 3. Launch limit-bar — its icon appears in the menu bar (the app has no Dock icon by design).
 
@@ -101,7 +101,7 @@ The project layout is generated from `project.yml`; run `xcodegen generate` afte
 
 ## Versioning
 
-Single source of truth: the [`VERSION`](VERSION) file (semver). Builds inject it as the bundle's marketing version; the git commit count becomes the build number. Releases are tagged `v<version>` — currently **v0.3.0**.
+Single source of truth: the [`VERSION`](VERSION) file (semver). Builds inject it as the bundle's marketing version; the git commit count becomes the build number. Releases are tagged `v<version>` — currently **v0.3.2**.
 
 ## License
 

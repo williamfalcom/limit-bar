@@ -19,7 +19,19 @@ actor GoAuthManager {
         var task: Task<GoOAuthCredential, Error>
     }
 
+    /// Last credential read from or written to the Keychain, per account.
+    ///
+    /// Ad-hoc signed builds trigger a Keychain dialog on reads until the user grants
+    /// "Always Allow", so polling must not read the Keychain on every cycle. Only this
+    /// actor writes these items, which keeps the cache authoritative. Failures are
+    /// never cached.
+    private enum CachedCredential {
+        case apiKey(String)
+        case oauth(GoOAuthCredential)
+    }
+
     private let vault: GoCredentialVault
+    private var credentialCache: [UUID: CachedCredential] = [:]
     private let oauthClient: any GoOAuthClientProtocol
     private let now: @Sendable () -> Date
     private var refreshWorkByAccount: [UUID: RefreshWork] = [:]
@@ -42,15 +54,19 @@ actor GoAuthManager {
         let credential = try await oauthClient.pollForAuthorization(authorization)
         try Task.checkCancellation()
         try vault.storeOAuthCredential(credential, for: accountID)
+        credentialCache[accountID] = .oauth(credential)
         refreshWorkByAccount[accountID] = nil
     }
 
     func storeAPIKey(_ apiKey: String, for accountID: UUID) throws {
         try vault.storeAPIKey(apiKey, for: accountID)
+        credentialCache[accountID] = .apiKey(apiKey)
         refreshWorkByAccount[accountID] = nil
     }
 
     func deleteCredentials(for accountID: UUID) throws {
+        // Even a partial deletion must force the next request back to the Keychain.
+        credentialCache[accountID] = nil
         try vault.deleteCredentials(for: accountID)
         refreshWorkByAccount[accountID] = nil
     }
@@ -58,23 +74,51 @@ actor GoAuthManager {
     func bearerToken(for account: Account) async throws -> String {
         switch account.effectiveGoAuthMethod {
         case .apiKey:
+            if case .apiKey(let cached) = credentialCache[account.id] {
+                return cached
+            }
             do {
-                return try vault.apiKey(for: account.id)
+                let apiKey = try vault.apiKey(for: account.id)
+                credentialCache[account.id] = .apiKey(apiKey)
+                return apiKey
             } catch KeychainStore.KeychainError.itemNotFound {
                 throw GoAuthManagerError.missingCredentials
             }
         case .consoleOAuth:
-            let credential = try loadOAuthCredential(for: account.id)
-            guard credential.expiresAt.timeIntervalSince(now()) <= 60 else {
-                return credential.accessToken
-            }
-            return try await refreshedCredential(credential, for: account.id).accessToken
+            let wasCached = credentialCache[account.id] != nil
+            let cached = try loadOAuthCredential(for: account.id)
+            guard needsRefresh(cached) else { return cached.accessToken }
+            // The refresh token is single-use and another limit-bar process may already
+            // have rotated it, so never refresh from a cached value: re-read the Keychain
+            // first. A value read just now is already current.
+            let stored = wasCached ? try reloadOAuthCredential(for: account.id) : cached
+            guard needsRefresh(stored) else { return stored.accessToken }
+            return try await refreshedCredential(stored, for: account.id).accessToken
         }
     }
 
+    private func needsRefresh(_ credential: GoOAuthCredential) -> Bool {
+        credential.expiresAt.timeIntervalSince(now()) <= 60
+    }
+
+    /// Reads the Keychain, bypassing the cache, unless refresh work is recorded for the
+    /// account: an in-flight refresh has not persisted its result yet, and a failed one
+    /// is kept so polling neither resubmits the token nor reads the Keychain (REL-06 AC8).
+    private func reloadOAuthCredential(for accountID: UUID) throws -> GoOAuthCredential {
+        if refreshWorkByAccount[accountID] == nil {
+            credentialCache[accountID] = nil
+        }
+        return try loadOAuthCredential(for: accountID)
+    }
+
     private func loadOAuthCredential(for accountID: UUID) throws -> GoOAuthCredential {
+        if case .oauth(let cached) = credentialCache[accountID] {
+            return cached
+        }
         do {
-            return try vault.oauthCredential(for: accountID)
+            let credential = try vault.oauthCredential(for: accountID)
+            credentialCache[accountID] = .oauth(credential)
+            return credential
         } catch KeychainStore.KeychainError.itemNotFound {
             throw GoAuthManagerError.missingCredentials
         }
@@ -105,6 +149,7 @@ actor GoAuthManager {
             let result: GoOAuthCredential
             if current == work.baseCredential {
                 try vault.storeOAuthCredential(refreshed, for: accountID)
+                credentialCache[accountID] = .oauth(refreshed)
                 result = refreshed
             } else {
                 result = current

@@ -54,11 +54,11 @@ struct CodexAdapterTests {
             var urls: [URL] = []
         }
         let box = Box()
-        let appServerImpl: @Sendable () async throws -> String
+        let appServerImpl: @Sendable (String?) async throws -> String
         if let overrideAppServer {
-            appServerImpl = overrideAppServer
+            appServerImpl = { _ in try await overrideAppServer() }
         } else {
-            appServerImpl = { throw TransportBoom() }
+            appServerImpl = { _ in throw TransportBoom() }
         }
         let adapter = CodexAdapter(
             appServerStdout: appServerImpl,
@@ -301,6 +301,134 @@ struct CodexAdapterTests {
         #expect(windows.map(\.usedPercent) == [33.5])
         #expect(recorded().count == 1)
         #expect(recorded()[0].lastPathComponent == "auth.json")
+    }
+
+    private final class HomeRecorder: @unchecked Sendable {
+        private let lock = NSLock()
+        private var homes: [String?] = []
+
+        func record(_ home: String?) {
+            lock.lock()
+            defer { lock.unlock() }
+            homes.append(home)
+        }
+
+        var recorded: [String?] {
+            lock.lock()
+            defer { lock.unlock() }
+            return homes
+        }
+    }
+
+    private func adapterRecordingHome(_ recorder: HomeRecorder) -> CodexAdapter {
+        let stdout = realAppServerStdout
+        return CodexAdapter(
+            appServerStdout: { home in
+                recorder.record(home)
+                return stdout
+            },
+            environmentHome: { nil },
+            readFile: { _ in throw TransportBoom() },
+            now: { self.fixedNow },
+            session: stubbedSession()
+        )
+    }
+
+    @Test("An account override reaches the app-server as a tilde-expanded CODEX_HOME")
+    func overrideIsPassedToAppServerExpanded() async throws {
+        let recorder = HomeRecorder()
+        var overridden = account
+        overridden.codexHomeOverride = "~/alt-codex"
+
+        _ = try await adapterRecordingHome(recorder).fetchUsage(for: overridden)
+
+        let home = FileManager.default.homeDirectoryForCurrentUser.path
+        #expect(recorder.recorded == [home + "/alt-codex"])
+    }
+
+    @Test("An account without override launches the app-server with no CODEX_HOME change")
+    func missingOverridePassesNil() async throws {
+        let recorder = HomeRecorder()
+
+        _ = try await adapterRecordingHome(recorder).fetchUsage(for: account)
+
+        #expect(recorder.recorded == [nil])
+    }
+
+    @Test("The child environment sets CODEX_HOME and keeps every other inherited variable")
+    func environmentSetsCodexHomeAndPreservesOthers() {
+        let base = ["PATH": "/usr/bin:/bin", "HOME": "/Users/someone", "CODEX_HOME": "/old"]
+
+        let environment = CodexAppServerClient.environment(codexHome: "/alt", base: base)
+
+        #expect(environment == ["PATH": "/usr/bin:/bin", "HOME": "/Users/someone", "CODEX_HOME": "/alt"])
+    }
+
+    @Test("Without override the child inherits the environment unchanged")
+    func environmentWithoutOverrideInherits() {
+        #expect(CodexAppServerClient.environment(codexHome: nil, base: ["PATH": "/bin"]) == nil)
+    }
+
+    @Test("The launched app-server process sees the account CODEX_HOME")
+    func launchedProcessSeesCodexHome() async throws {
+        let script = #"printf '{"id":2,"home":"%s"}\n' "$CODEX_HOME"; exec sleep 30"#
+        let client = CodexAppServerClient(
+            launch: (URL(fileURLWithPath: "/bin/sh"), ["-c", script]),
+            timeout: 5
+        )
+
+        let stdout = try await client.fetchRateLimitsStdout(codexHome: "/tmp/alt-codex-home")
+
+        #expect(stdout == #"{"id":2,"home":"/tmp/alt-codex-home"}"# + "\n")
+    }
+
+    @Test("Without override the launched app-server keeps the inherited HOME and CODEX_HOME")
+    func launchedProcessInheritsWithoutOverride() async throws {
+        let script = #"printf '{"id":2,"home":"%s","codex":"%s"}\n' "$HOME" "${CODEX_HOME-unset}"; exec sleep 30"#
+        let client = CodexAppServerClient(
+            launch: (URL(fileURLWithPath: "/bin/sh"), ["-c", script]),
+            timeout: 5
+        )
+
+        let stdout = try await client.fetchRateLimitsStdout(codexHome: nil)
+
+        let inherited = ProcessInfo.processInfo.environment
+        let home = try #require(inherited["HOME"])
+        let codexHome = inherited["CODEX_HOME"] ?? "unset"
+        #expect(stdout == #"{"id":2,"home":"\#(home)","codex":"\#(codexHome)"}"# + "\n")
+    }
+
+    @Test("The default Codex client waits 6 seconds")
+    func defaultCodexTimeoutIsSixSeconds() {
+        #expect(CodexAppServerClient().timeout == 6)
+    }
+
+    @Test("A Codex CLI that writes nothing fails within the timeout")
+    func silentCodexThrows() async {
+        let client = CodexAppServerClient(
+            launch: (URL(fileURLWithPath: "/bin/sh"), ["-c", "exec sleep 30"]),
+            timeout: 0.3
+        )
+        let started = Date()
+
+        await #expect(throws: (any Error).self) {
+            _ = try await client.fetchRateLimitsStdout(codexHome: nil)
+        }
+        #expect(Date().timeIntervalSince(started) < 0.3 + 2)
+    }
+
+    @Test("Output beyond 4 MiB without a completion marker stops the read early")
+    func oversizedOutputStopsEarly() async throws {
+        let client = CodexAppServerClient(
+            launch: (URL(fileURLWithPath: "/bin/sh"), ["-c", "head -c 5000000 /dev/zero | tr '\\0' a; exec sleep 30"]),
+            timeout: 20
+        )
+        let started = Date()
+
+        let stdout = try await client.fetchRateLimitsStdout(codexHome: nil)
+
+        #expect(stdout.utf8.count > CodexAppServerClient.maxOutputBytes)
+        #expect(Date().timeIntervalSince(started) < 5)
     }
 
     @Test("locateExecutable resolves a binary that lives only in extra search directories")

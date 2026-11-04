@@ -71,3 +71,9 @@
 "Remove this account and its locally stored credentials?" = "Remove this account and its locally stored credentials?";
 "Could not remove account" = "Could not remove account";
 "Local credential cleanup did not complete. The account is still configured. Try again; some credentials may already have been removed." = "Local credential cleanup did not complete. The account is still configured. Try again; some credentials may already have been removed.";
+"Quit limit-bar" = "Quit limit-bar";
+"Settings…" = "Settings…";
+"Remove" = "Remove";
+"Seconds" = "Seconds";
+"Network error: %d" = "Network error: %d";
+"Your GitHub Copilot authentication was rejected. Log in with the Copilot CLI and refresh." = "Your GitHub Copilot authentication was rejected. Log in with the Copilot CLI and refresh.";

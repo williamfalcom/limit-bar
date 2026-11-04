@@ -19,6 +19,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let store: AccountStore
     let engine: PollingEngine
     let authManager: GoAuthManager
+    private let notifications: NotificationService
     private let credentials: any CredentialStore
 
     private let popover = NSPopover()
@@ -39,8 +40,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             .openCodeGo: GoAdapter(credentials: credentials, authManager: authManager),
             .githubCopilot: CopilotAdapter(),
         ]
-        let engine = PollingEngine(store: store, adapters: adapters, notifications: NotificationService())
+        let notifications = NotificationService()
+        let engine = PollingEngine(store: store, adapters: adapters, notifications: notifications)
         self.store = store
+        self.notifications = notifications
         self.engine = engine
         self.authManager = authManager
         self.credentials = credentials
@@ -51,7 +54,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        Task { await engine.start() }
+        let notifications = notifications
+        let engine = engine
+        Task {
+            await Self.startServices(
+                notifications: notifications,
+                engine: engine,
+                environment: ProcessInfo.processInfo.environment
+            )
+        }
 
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         item.button?.imageScaling = .scaleProportionallyDown
@@ -77,6 +88,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         redrawIcon()
         observeIconChanges()
+    }
+
+    /// Launch-time background work: start polling, then ask for notification permission.
+    /// Polling starts first because the permission prompt waits for the user.
+    /// The app hosts the unit tests; a test run must neither prompt nor poll the user's
+    /// real accounts (which would also read their Keychain items).
+    static func startServices(
+        notifications: NotificationService,
+        engine: PollingEngine,
+        environment: [String: String]
+    ) async {
+        guard environment["XCTestConfigurationFilePath"] == nil else { return }
+        await engine.start()
+        await notifications.requestAuthorizationIfNeeded()
     }
 
     // MARK: - Icon

@@ -207,7 +207,7 @@ struct AccountStoreTests {
 
         let offline = URLError(.notConnectedToInternet)
         store.apply(.failure(.network(offline)), for: claude.id)
-        #expect(store.snapshot(for: claude.id)?.state == .error("Network error: \(URLError.notConnectedToInternet.rawValue)"))
+        #expect(store.snapshot(for: claude.id)?.state == .error(String(format: NSLocalizedString("Network error: %d", comment: ""), URLError.notConnectedToInternet.rawValue)))
         #expect(store.snapshot(for: claude.id)?.windows == cached)
     }
 }

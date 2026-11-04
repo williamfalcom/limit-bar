@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import Testing
 @testable import limit_bar
@@ -134,7 +135,9 @@ struct PollingEngineTests {
     @MainActor
     private func makeEngine(
         accounts: [Account],
-        outcomes: [ProviderKind: [ScriptedProvider.Outcome]]
+        outcomes: [ProviderKind: [ScriptedProvider.Outcome]],
+        wakeCenter: NotificationCenter = NotificationCenter(),
+        blockingSleep: Bool = false
     ) -> (PollingEngine, AccountStore, FetchLog, SleepLog, MutableClock) {
         let clock = MutableClock(fixedNow)
         let store = AccountStore(persistence: PersistingSpy(), now: { clock.now })
@@ -150,7 +153,11 @@ struct PollingEngineTests {
             store: store,
             adapters: adapters,
             now: { clock.now },
-            sleep: { sleeps.append($0) }
+            sleep: { delay in
+                sleeps.append(delay)
+                if blockingSleep { try await Task.sleep(for: .seconds(3600)) }
+            },
+            wakeCenter: wakeCenter
         )
         return (engine, store, log, sleeps, clock)
     }
@@ -290,7 +297,7 @@ struct PollingEngineTests {
         await engine.runCycle()
 
         let snapshot = store.snapshot(for: claude.id)
-        #expect(snapshot?.state == .error("Network error: \(URLError.notConnectedToInternet.rawValue)"))
+        #expect(snapshot?.state == .error(String(format: NSLocalizedString("Network error: %d", comment: ""), URLError.notConnectedToInternet.rawValue)))
         #expect(snapshot?.windows == sampleWindows)
         #expect(snapshot?.fetchedAt == fixedNow)
     }
@@ -387,6 +394,71 @@ struct PollingEngineTests {
 
         #expect(log.count(stale.id) == 1)
         #expect(log.count(fresh.id) == 0)
+    }
+
+    @MainActor
+    private func waitUntil(_ condition: () -> Bool) async {
+        let deadline = Date().addingTimeInterval(2)
+        while !condition() && Date() < deadline {
+            try? await Task.sleep(for: .milliseconds(10))
+        }
+    }
+
+    @MainActor
+    @Test("A wake posted on the engine's wake center refreshes exactly the stale accounts")
+    func postedWakeRefreshesStaleAccounts() async {
+        let stale = account(.claudeCode, "Old")
+        let fresh = account(.codex, "Recent")
+        let center = NotificationCenter()
+        let (engine, store, log, sleeps, clock) = makeEngine(
+            accounts: [stale, fresh],
+            outcomes: [.claudeCode: [], .codex: []],
+            wakeCenter: center,
+            blockingSleep: true
+        )
+        await engine.start()
+        await waitUntil { !sleeps.recorded.isEmpty }
+        #expect(log.count(stale.id) == 1)
+        #expect(log.count(fresh.id) == 1)
+
+        clock.advance(1000)
+        store.apply(.success(sampleWindows), for: fresh.id)
+        center.post(name: NSWorkspace.didWakeNotification, object: nil)
+        await waitUntil { log.count(stale.id) == 2 }
+
+        #expect(log.count(stale.id) == 2)
+        #expect(log.count(fresh.id) == 1)
+        await engine.stop()
+    }
+
+    @Test("The default wake center is the NSWorkspace notification center")
+    @MainActor
+    func defaultWakeCenterIsWorkspaceCenter() {
+        let engine = PollingEngine(store: AccountStore(persistence: PersistingSpy()), adapters: [:])
+        #expect(engine.wakeCenter === NSWorkspace.shared.notificationCenter)
+        #expect(engine.wakeCenter !== NotificationCenter.default)
+    }
+
+    @MainActor
+    @Test("After stop, a posted wake triggers no refresh")
+    func stoppedEngineIgnoresWake() async {
+        let stale = account(.claudeCode, "Old")
+        let center = NotificationCenter()
+        let (engine, _, log, sleeps, clock) = makeEngine(
+            accounts: [stale],
+            outcomes: [.claudeCode: []],
+            wakeCenter: center,
+            blockingSleep: true
+        )
+        await engine.start()
+        await waitUntil { !sleeps.recorded.isEmpty }
+        await engine.stop()
+
+        clock.advance(1000)
+        center.post(name: NSWorkspace.didWakeNotification, object: nil)
+        try? await Task.sleep(for: .milliseconds(200))
+
+        #expect(log.count(stale.id) == 1)
     }
 
     @MainActor
