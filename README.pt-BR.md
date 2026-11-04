@@ -47,7 +47,7 @@ O limit-bar fica quieto na sua barra de menus mostrando quanto da janela de uso 
 
 **Requisitos:** macOS 14 (Sonoma) ou superior.
 
-1. Baixe `limit-bar-v0.3.0.dmg` (ou o `.zip`) da [última release](https://github.com/williamfalcom/limit-bar/releases/latest).
+1. Baixe `limit-bar-v0.3.2.dmg` (ou o `.zip`) da [última release](https://github.com/williamfalcom/limit-bar/releases/latest).
 2. Abra e arraste o **limit-bar.app** para **Aplicativos**.
 3. Inicie o limit-bar — o ícone aparece na barra de menus (sem ícone no Dock, de propósito).
 
@@ -101,7 +101,7 @@ A estrutura do projeto é gerada a partir do `project.yml`; rode `xcodegen gener
 
 ## Versionamento
 
-Fonte única de verdade: o arquivo [`VERSION`](VERSION) (semver). Os builds injetam essa versão no bundle; a contagem de commits vira o número de build. Releases recebem tags `v<versão>` — atualmente **v0.3.0**.
+Fonte única de verdade: o arquivo [`VERSION`](VERSION) (semver). Os builds injetam essa versão no bundle; a contagem de commits vira o número de build. Releases recebem tags `v<versão>` — atualmente **v0.3.2**.
 
 ## Licença
 

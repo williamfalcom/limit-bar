@@ -72,8 +72,8 @@
 - **Phase / Task**: Execute complete; T1–T6 done; Verifier PASS on iteration 3 (`validation.md`)
 - **Completed**: notification permission at launch (polling starts first); wake observed on `NSWorkspace.shared.notificationCenter`; per-account `CODEX_HOME` passed to `codex app-server`; `CLIProcessRunner` bounds Codex (6 s) and Copilot (15 s) exchanges, ignores `SIGPIPE`, discards stderr; Copilot frame parser keeps buffered frames; locale tables synchronized and network error localized. `scripts/build.sh test`: 186 passed, 0 failed, 0 skipped (was 151).
 - **In-progress**: none.
-- **Next step**: manual check before release: grant notification permission on first launch and cross 80% once; confirm one notification. Then decide on version bump (`VERSION` still 0.3.0), push the branch, and open a PR.
+- **Next step**: manual check before release: grant notification permission on first launch and cross 80% once; confirm one notification. `VERSION` bumped to 0.3.2 with notes in `docs/releases/v0.3.2.md`; PR opened from `fix/reliability-fixes`. After merge, rebuild artifacts from merged `main` (`scripts/build.sh prod --dmg`), then tag `v0.3.2` and publish.
 - **Blockers**: none. Accepted residuals are in `validation.md`: the `startServices` launch line is build-only; on English machines a hard-coded English network message at the `AccountStore` call site is output-identical.
 - **Deferred review items**: persistence corruption backup, Claude `URLError` mapping, Codex HTTP fallback removal, OAuth refresh retry exit, interval-change sleep interruption, Retry-After/backoff on manual refresh, Settings window `isReleasedWhenClosed`, UX items (live countdowns, day-based countdown, provider-aware window picker), CI workflow.
 - **Uncommitted files**: none
-- **Branch**: `fix/reliability-fixes` (local only, not pushed)
+- **Branch**: `fix/reliability-fixes` (pushed; PR open)

@@ -16,7 +16,7 @@
 
 ## Versioning
 
-- Single source of truth: `VERSION` file at repo root (semver; current `0.1.0`). Bump it there only.
+- Single source of truth: `VERSION` file at repo root (semver; current `0.3.2`). Bump it there only.
 - `scripts/build.sh` injects it as `MARKETING_VERSION` (`CFBundleShortVersionString`); git commit count becomes `CURRENT_PROJECT_VERSION` (build number).
 - Releases are tagged `v<version>` (e.g., `v0.1.0`). Prod artifacts land in `dist/` (.app, .zip, optional .dmg via `--dmg`).
 - Localization: keys are English source strings; tables in `Sources/LimitBar/Resources/{en,pt-BR,es}.lproj/Localizable.strings`. When adding UI text, add the key to all three tables (missing keys fall back to English automatically).
